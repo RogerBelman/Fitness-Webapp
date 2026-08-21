@@ -1,0 +1,35 @@
+package com.example.workouttracker.controller;
+
+import java.net.URI;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.workouttracker.dto.SetEntryRequest;
+import com.example.workouttracker.dto.SetEntryResponse;
+import com.example.workouttracker.service.WorkoutService;
+
+@RestController
+@RequestMapping("/api/workout-exercises")
+public class WorkoutExerciseController {
+
+	private final WorkoutService workoutService;
+
+	public WorkoutExerciseController(WorkoutService workoutService) {
+		this.workoutService = workoutService;
+	}
+
+	@PostMapping("/{id}/sets")
+	public ResponseEntity<SetEntryResponse> addSet(
+			@PathVariable Long id,
+			@RequestBody SetEntryRequest request) {
+		SetEntryResponse response = workoutService.addSet(id, request);
+		return ResponseEntity
+				.created(URI.create("/api/workout-exercises/" + id + "/sets/" + response.id()))
+				.body(response);
+	}
+}

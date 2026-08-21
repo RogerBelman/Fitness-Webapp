@@ -1,0 +1,84 @@
+.AppShell {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-height: 100svh;
+  width: min(960px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 64px 0;
+}
+
+.IntroPanel {
+  display: grid;
+  gap: 16px;
+  padding: 40px;
+  color: #f8fafc;
+  background: #1f2937;
+  border: 1px solid #334155;
+  border-radius: 8px;
+}
+
+.IntroPanel h1 {
+  margin: 0;
+  color: inherit;
+}
+
+.IntroPanel p {
+  max-width: 680px;
+  color: #d1d5db;
+}
+
+.PhaseLabel {
+  width: fit-content;
+  padding: 4px 10px;
+  color: #0f172a;
+  background: #86efac;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.SetupGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.SetupCard {
+  display: grid;
+  gap: 8px;
+  min-height: 120px;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #dbe3ea;
+  border-radius: 8px;
+}
+
+.SetupCard span {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.SetupCard strong {
+  color: #111827;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+@media (max-width: 760px) {
+  .AppShell {
+    gap: 20px;
+    width: min(100% - 24px, 960px);
+    padding: 24px 0;
+  }
+
+  .IntroPanel {
+    padding: 28px;
+  }
+
+  .SetupGrid {
+    grid-template-columns: 1fr;
+  }
+}
