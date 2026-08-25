@@ -13,6 +13,8 @@ import com.example.workouttracker.dto.SetEntryRequest;
 import com.example.workouttracker.dto.SetEntryResponse;
 import com.example.workouttracker.service.WorkoutService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/workout-exercises")
 public class WorkoutExerciseController {
@@ -26,7 +28,7 @@ public class WorkoutExerciseController {
 	@PostMapping("/{id}/sets")
 	public ResponseEntity<SetEntryResponse> addSet(
 			@PathVariable Long id,
-			@RequestBody SetEntryRequest request) {
+			@Valid @RequestBody SetEntryRequest request) {
 		SetEntryResponse response = workoutService.addSet(id, request);
 		return ResponseEntity
 				.created(URI.create("/api/workout-exercises/" + id + "/sets/" + response.id()))

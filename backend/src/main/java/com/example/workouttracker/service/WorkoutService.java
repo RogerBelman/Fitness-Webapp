@@ -66,8 +66,12 @@ public class WorkoutService {
 	}
 
 	public WorkoutExerciseResponse addExercise(Long workoutId, AddWorkoutExerciseRequest request) {
+		if (request == null) {
+			throw new BadRequestException("Request body is required.");
+		}
+
 		Workout workout = getWorkout(workoutId);
-		Exercise exercise = getExercise(requiredLong(request == null ? null : request.exerciseId(), "exerciseId"));
+		Exercise exercise = getExercise(requiredPositiveLong(request.exerciseId(), "exerciseId"));
 		Integer exerciseOrder = resolveExerciseOrder(workoutId, request.exerciseOrder());
 		String notes = optionalText(request.notes());
 
@@ -153,6 +157,15 @@ public class WorkoutService {
 		}
 
 		return value;
+	}
+
+	private Long requiredPositiveLong(Long value, String fieldName) {
+		Long requiredValue = requiredLong(value, fieldName);
+		if (requiredValue <= 0) {
+			throw new BadRequestException(fieldName + " must be greater than 0.");
+		}
+
+		return requiredValue;
 	}
 
 	private Integer requiredPositive(Integer value, String fieldName) {

@@ -18,7 +18,7 @@ Build a resume-worthy workout tracker while learning how a React frontend talks 
 
 ## Current Phase
 
-Phase 5 adds the basic Workout REST API.
+Phase 6 adds validation and clean API error handling.
 
 Completed so far:
 
@@ -35,10 +35,11 @@ Completed so far:
 - Added CRUD endpoints for the exercise library.
 - Added Workout, WorkoutExercise, and SetEntry entities.
 - Added endpoints to create workouts, add exercises to workouts, add sets, and view workout details.
+- Added request validation for exercise, workout, workout exercise, and set request bodies.
+- Added a global exception handler for consistent API error responses.
 
 Not added yet:
 
-- Full validation and clean API error bodies
 - Authentication
 
 ## Project Structure
@@ -236,6 +237,38 @@ workout_exercises
 ```
 
 `workout_exercises` is the join table with extra data. It connects one workout to one exercise, but also stores workout-specific fields like `exercise_order` and notes. `set_entries` belongs to a workout exercise because sets are performed for a specific exercise inside a specific workout.
+
+## API Errors
+
+Validation runs at the controller boundary with request DTO annotations. Business-rule errors still come from the service layer.
+
+Error response body:
+
+```json
+{
+  "timestamp": "2026-08-24T00:00:00Z",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Validation failed.",
+  "path": "/api/workout-exercises/1/sets",
+  "fieldErrors": {
+    "reps": "reps must be greater than 0.",
+    "weight": "weight must be greater than or equal to 0."
+  }
+}
+```
+
+Common status codes:
+
+| Status | Meaning | Example |
+| --- | --- | --- |
+| `200 OK` | Successful read or update | Get one exercise |
+| `201 Created` | New resource created | Create workout |
+| `204 No Content` | Successful delete with no body | Delete exercise |
+| `400 Bad Request` | Invalid request body | Negative reps |
+| `404 Not Found` | Requested record does not exist | Missing exercise id |
+| `409 Conflict` | Request conflicts with existing data | Duplicate exercise name |
+| `500 Internal Server Error` | Unexpected backend failure | Unhandled exception |
 
 ## Phase Roadmap
 

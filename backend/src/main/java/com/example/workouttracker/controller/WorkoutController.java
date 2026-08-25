@@ -18,6 +18,8 @@ import com.example.workouttracker.dto.WorkoutRequest;
 import com.example.workouttracker.dto.WorkoutResponse;
 import com.example.workouttracker.service.WorkoutService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/workouts")
 public class WorkoutController {
@@ -29,7 +31,7 @@ public class WorkoutController {
 	}
 
 	@PostMapping
-	public ResponseEntity<WorkoutResponse> create(@RequestBody WorkoutRequest request) {
+	public ResponseEntity<WorkoutResponse> create(@Valid @RequestBody WorkoutRequest request) {
 		WorkoutResponse response = workoutService.create(request);
 		return ResponseEntity
 				.created(URI.create("/api/workouts/" + response.id()))
@@ -49,7 +51,7 @@ public class WorkoutController {
 	@PostMapping("/{id}/exercises")
 	public ResponseEntity<WorkoutExerciseResponse> addExercise(
 			@PathVariable Long id,
-			@RequestBody AddWorkoutExerciseRequest request) {
+			@Valid @RequestBody AddWorkoutExerciseRequest request) {
 		WorkoutExerciseResponse response = workoutService.addExercise(id, request);
 		return ResponseEntity
 				.created(URI.create("/api/workout-exercises/" + response.id()))

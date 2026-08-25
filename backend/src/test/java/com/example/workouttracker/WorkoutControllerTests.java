@@ -152,6 +152,29 @@ class WorkoutControllerTests {
 				.andExpect(jsonPath("$.weight").value(50));
 	}
 
+	@Test
+	void rejectsInvalidSetRequest() throws Exception {
+		Exercise exercise = exerciseRepository.save(new Exercise(unique("Front Squat"), "Legs", "Barbell"));
+		Workout workout = workoutRepository.save(new Workout(LocalDate.of(2026, 8, 20), "Leg Day", null));
+		WorkoutExercise workoutExercise = workoutExerciseRepository.save(new WorkoutExercise(workout, exercise, 1, null));
+
+		mockMvc.perform(post("/api/workout-exercises/{id}/sets", workoutExercise.getId())
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{
+						  "reps": -1,
+						  "weight": -10
+						}
+						"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.status").value(400))
+				.andExpect(jsonPath("$.error").value("Bad Request"))
+				.andExpect(jsonPath("$.message").value("Validation failed."))
+				.andExpect(jsonPath("$.path").value("/api/workout-exercises/" + workoutExercise.getId() + "/sets"))
+				.andExpect(jsonPath("$.fieldErrors.reps").value("reps must be greater than 0."))
+				.andExpect(jsonPath("$.fieldErrors.weight").value("weight must be greater than or equal to 0."));
+	}
+
 	private String unique(String prefix) {
 		return prefix + " " + UUID.randomUUID();
 	}
