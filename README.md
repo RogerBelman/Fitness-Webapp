@@ -18,7 +18,7 @@ Build a resume-worthy workout tracker while learning how a React frontend talks 
 
 ## Current Phase
 
-Phase 6 adds validation and clean API error handling.
+Phase 7 adds focused JUnit tests for backend service logic.
 
 Completed so far:
 
@@ -37,6 +37,7 @@ Completed so far:
 - Added endpoints to create workouts, add exercises to workouts, add sets, and view workout details.
 - Added request validation for exercise, workout, workout exercise, and set request bodies.
 - Added a global exception handler for consistent API error responses.
+- Added service-level JUnit tests for exercise creation, workout creation, invalid set data, and total workout volume.
 
 Not added yet:
 
@@ -270,6 +271,23 @@ Common status codes:
 | `409 Conflict` | Request conflicts with existing data | Duplicate exercise name |
 | `500 Internal Server Error` | Unexpected backend failure | Unhandled exception |
 
+## Backend Tests
+
+Controller tests call the REST API layer through `MockMvc`. They are useful when we want to verify endpoint paths, status codes, headers, and JSON response bodies.
+
+Service tests call service classes directly with mocked repositories. They are useful when we want to verify business rules without making an HTTP request or touching the database.
+
+Current test focus:
+
+| Test file | Purpose |
+| --- | --- |
+| `ExerciseControllerTests` | Exercise API endpoint behavior |
+| `WorkoutControllerTests` | Workout API endpoint behavior |
+| `ExerciseServiceTests` | Exercise creation business rules |
+| `WorkoutServiceTests` | Workout creation and set validation business rules |
+| `WorkoutMapperTests` | Total sets and total volume calculation |
+| `FlywayMigrationTests` | Database schema created by migrations |
+| `DatabaseConnectionTests` | Backend can connect to PostgreSQL |
 ## Phase Roadmap
 
 1. Project setup
