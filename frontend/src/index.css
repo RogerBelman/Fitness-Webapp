@@ -1,9 +1,14 @@
 :root {
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --text: #17211b;
+  --muted: #66736b;
+  --border: #d9e2dc;
+  --accent: #2563eb;
+  --background: #f7faf6;
 
   font: 16px/1.5 var(--sans);
-  color: #1f2937;
-  background: #f3f7f4;
+  color: var(--text);
+  background: var(--background);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -15,12 +20,15 @@
 }
 
 body {
+  min-width: 320px;
   margin: 0;
 }
 
-h1 {
-  font-size: clamp(40px, 8vw, 72px);
-  line-height: 1;
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 p {

@@ -1,84 +1,263 @@
 .AppShell {
+  min-height: 100svh;
+}
+
+.TopBar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  min-height: 100svh;
-  width: min(960px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 64px 0;
+  gap: 14px;
+  padding: 16px;
+  background: rgba(250, 251, 249, 0.96);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(16px);
 }
 
-.IntroPanel {
-  display: grid;
-  gap: 16px;
-  padding: 40px;
-  color: #f8fafc;
-  background: #1f2937;
-  border: 1px solid #334155;
-  border-radius: 8px;
-}
-
-.IntroPanel h1 {
-  margin: 0;
-  color: inherit;
-}
-
-.IntroPanel p {
-  max-width: 680px;
-  color: #d1d5db;
-}
-
-.PhaseLabel {
+.Brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   width: fit-content;
-  padding: 4px 10px;
-  color: #0f172a;
-  background: #86efac;
-  border-radius: 999px;
+  color: var(--text);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.BrandMark {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: #ffffff;
+  background: var(--text);
+  border-radius: 8px;
+  font-size: 12px;
+  letter-spacing: 0;
+}
+
+.MainNav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.NavLink {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 8px 12px;
+  color: var(--muted);
+  border: 1px solid transparent;
+  border-radius: 8px;
   font-size: 14px;
   font-weight: 700;
+  text-decoration: none;
 }
 
-.SetupGrid {
+.NavLinkActive {
+  color: var(--text);
+  background: #ffffff;
+  border-color: var(--border);
+}
+
+.PageShell {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0 56px;
+}
+
+.PageStack {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 20px;
 }
 
-.SetupCard {
+.PageHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.PageHeader h1,
+.SectionHeader h2 {
+  margin: 0;
+  color: var(--text);
+  letter-spacing: 0;
+}
+
+.PageHeader h1 {
+  font-size: 32px;
+  line-height: 1.1;
+}
+
+.PageHeader p {
+  max-width: 680px;
+  color: var(--muted);
+}
+
+.PageActions,
+.FormActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.Button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ButtonPrimary {
+  color: #ffffff;
+  background: var(--text);
+}
+
+.ButtonSecondary {
+  color: var(--text);
+  background: #ffffff;
+  border-color: var(--border);
+}
+
+.MetricGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.MetricCard {
   display: grid;
   gap: 8px;
-  min-height: 120px;
-  padding: 24px;
+  min-height: 112px;
+  padding: 20px;
   background: #ffffff;
-  border: 1px solid #dbe3ea;
+  border: 1px solid var(--border);
   border-radius: 8px;
 }
 
-.SetupCard span {
-  color: #64748b;
-  font-size: 14px;
-  font-weight: 700;
+.MetricCard span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
   text-transform: uppercase;
 }
 
-.SetupCard strong {
-  color: #111827;
-  font-size: 20px;
-  line-height: 1.25;
+.MetricCard strong {
+  color: var(--text);
+  font-size: 30px;
+  line-height: 1;
 }
 
-@media (max-width: 760px) {
-  .AppShell {
-    gap: 20px;
-    width: min(100% - 24px, 960px);
-    padding: 24px 0;
+.ContentBand,
+.FormSurface,
+.Toolbar {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.ContentBand {
+  display: grid;
+  gap: 16px;
+  min-height: 180px;
+  padding: 20px;
+}
+
+.SectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.SectionHeader h2 {
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.SectionHeader a {
+  color: var(--accent);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.EmptyState {
+  align-self: center;
+  color: var(--muted);
+}
+
+.Toolbar {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.FormSurface {
+  display: grid;
+  gap: 18px;
+  max-width: 720px;
+  padding: 18px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 11px;
+  color: var(--text);
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+}
+
+textarea {
+  resize: vertical;
+}
+
+@media (min-width: 720px) {
+  .TopBar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
   }
 
-  .IntroPanel {
-    padding: 28px;
+  .PageShell {
+    width: min(1120px, calc(100% - 48px));
+    padding-top: 36px;
   }
 
-  .SetupGrid {
-    grid-template-columns: 1fr;
+  .PageHeader {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .MetricGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .Toolbar {
+    grid-template-columns: 2fr 1fr 1fr;
   }
 }

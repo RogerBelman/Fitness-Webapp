@@ -13,12 +13,12 @@ Build a resume-worthy workout tracker while learning how a React frontend talks 
 - Database: PostgreSQL
 - Cloud database later: Neon
 - Migrations: Flyway
-- Local development later: Docker Compose
+- Local development: Docker Compose
 - Testing: JUnit
 
 ## Current Phase
 
-Phase 7 adds focused JUnit tests for backend service logic.
+Phase 8 adds the React frontend foundation: routes, page shells, shared layout, API client functions, and TypeScript API types.
 
 Completed so far:
 
@@ -38,9 +38,13 @@ Completed so far:
 - Added request validation for exercise, workout, workout exercise, and set request bodies.
 - Added a global exception handler for consistent API error responses.
 - Added service-level JUnit tests for exercise creation, workout creation, invalid set data, and total workout volume.
+- Added React Router and the first frontend page structure.
+- Added frontend API helper functions for the current exercise and workout endpoints.
+- Added TypeScript types matching the backend request and response DTOs.
 
 Not added yet:
 
+- Frontend forms connected to live backend data
 - Authentication
 
 ## Project Structure
@@ -55,6 +59,36 @@ The backend and frontend are separate because they have different jobs:
 
 - The backend owns business rules, database access, and API responses.
 - The frontend owns browser UI, user interactions, and calls to the backend API.
+
+## Frontend Foundation
+
+Phase 8 creates the browser app structure without wiring every screen to live data yet.
+
+Routes:
+
+| Path | Page |
+| --- | --- |
+| `/` | Dashboard |
+| `/exercises` | Exercise Library |
+| `/workouts/new` | New Workout |
+| `/workouts` | Workout History |
+| `/workouts/{id}` | Workout Detail |
+
+Frontend API files:
+
+| File | Purpose |
+| --- | --- |
+| `src/api/client.ts` | Shared `fetch` wrapper with base URL and API error handling |
+| `src/api/exercises.ts` | Exercise endpoint functions |
+| `src/api/workouts.ts` | Workout endpoint functions |
+| `src/types/exercise.ts` | Exercise request and response types |
+| `src/types/workout.ts` | Workout, workout exercise, and set entry types |
+
+The frontend reads `VITE_API_BASE_URL` when provided. Without that environment variable, it defaults to:
+
+```text
+http://localhost:8080
+```
 
 ## Run Locally
 
