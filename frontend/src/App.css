@@ -261,3 +261,80 @@ textarea {
     grid-template-columns: 2fr 1fr 1fr;
   }
 }
+
+.FormGrid {
+  display: grid;
+  gap: 14px;
+}
+
+.Alert {
+  padding: 12px 14px;
+  border: 1px solid;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.AlertError {
+  color: #991b1b;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.AlertSuccess {
+  color: #166534;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.RecordCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  min-height: 28px;
+  padding: 4px 10px;
+  color: var(--text);
+  background: #eef4f0;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ExerciseList {
+  display: grid;
+  gap: 10px;
+}
+
+.ExerciseCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.ExerciseCard h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.ExerciseCard p {
+  color: var(--muted);
+}
+
+.ExerciseCard span {
+  flex: 0 0 auto;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+@media (min-width: 720px) {
+  .FormGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

@@ -18,7 +18,7 @@ Build a resume-worthy workout tracker while learning how a React frontend talks 
 
 ## Current Phase
 
-Phase 8 adds the React frontend foundation: routes, page shells, shared layout, API client functions, and TypeScript API types.
+Phase 9A connects the Exercise Library frontend page to the Spring Boot exercise API.
 
 Completed so far:
 
@@ -41,10 +41,12 @@ Completed so far:
 - Added React Router and the first frontend page structure.
 - Added frontend API helper functions for the current exercise and workout endpoints.
 - Added TypeScript types matching the backend request and response DTOs.
+- Added backend CORS configuration for local React development.
+- Connected the Exercise Library page to list, filter, and create exercises through the backend API.
 
 Not added yet:
 
-- Frontend forms connected to live backend data
+- Workout frontend forms connected to live backend data
 - Authentication
 
 ## Project Structure
@@ -90,6 +92,25 @@ The frontend reads `VITE_API_BASE_URL` when provided. Without that environment v
 http://localhost:8080
 ```
 
+## Frontend to Backend Connection
+
+The Exercise Library page now uses the API helper functions in `src/api/exercises.ts`.
+
+Current connected behavior:
+
+| UI action | Frontend function | Backend endpoint |
+| --- | --- | --- |
+| Load exercises | `listExercises` | `GET /api/exercises` |
+| Filter by muscle group | `listExercises` | `GET /api/exercises?muscleGroup=...` |
+| Filter by category | `listExercises` | `GET /api/exercises?category=...` |
+| Create exercise | `createExercise` | `POST /api/exercises` |
+
+The backend allows local React requests through CORS. By default, these origins are allowed:
+
+```text
+http://localhost:5173
+http://127.0.0.1:5173
+```
 ## Run Locally
 
 Backend:
@@ -336,3 +357,4 @@ Current test focus:
 10. Progress tracking
 11. Neon cloud database
 12. Polish and resume readiness
+
