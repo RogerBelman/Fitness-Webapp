@@ -18,7 +18,7 @@ Build a resume-worthy workout tracker while learning how a React frontend talks 
 
 ## Current Phase
 
-Phase 9A connects the Exercise Library frontend page to the Spring Boot exercise API.
+Phase 9A connects the Exercise Library frontend page to the Spring Boot exercise API. The page is now split into smaller components and a hook so each responsibility is easier to follow.
 
 Completed so far:
 
@@ -43,6 +43,7 @@ Completed so far:
 - Added TypeScript types matching the backend request and response DTOs.
 - Added backend CORS configuration for local React development.
 - Connected the Exercise Library page to list, filter, and create exercises through the backend API.
+- Split Exercise Library API state, form, filters, and list rendering into focused files.
 
 Not added yet:
 
@@ -95,6 +96,8 @@ http://localhost:8080
 ## Frontend to Backend Connection
 
 The Exercise Library page now uses the API helper functions in `src/api/exercises.ts`.
+
+For the page flow, read `src/pages/ExerciseLibrary.tsx` first. It coordinates the parts. `src/hooks/useExercises.ts` calls the API and owns loading, saving, and message state. The files in `src/components/exercises/` render the form, filters, and list.
 
 Current connected behavior:
 
@@ -357,4 +360,3 @@ Current test focus:
 10. Progress tracking
 11. Neon cloud database
 12. Polish and resume readiness
-
