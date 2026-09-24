@@ -18,7 +18,7 @@ Build a resume-worthy workout tracker while learning how a React frontend talks 
 
 ## Current Phase
 
-Phase 9B connects the New Workout form to the Spring Boot workout API.
+Phase 9C connects Workout History to the Spring Boot workout API.
 
 Completed so far:
 
@@ -45,6 +45,7 @@ Completed so far:
 - Connected the Exercise Library page to list, filter, and create exercises through the backend API.
 - Split Exercise Library API state, form, filters, and list rendering into focused files.
 - Connected the New Workout form to create workouts through the backend API.
+- Connected Workout History to list saved workouts with set and volume totals.
 
 Not added yet:
 
@@ -114,6 +115,7 @@ The New Workout page uses `src/api/workouts.ts` to create the initial workout re
 | UI action | Frontend function | Backend endpoint |
 | --- | --- | --- |
 | Create workout | `createWorkout` | `POST /api/workouts` |
+| Load workout history | `listWorkouts` | `GET /api/workouts` |
 
 The backend allows local React requests through CORS. By default, these origins are allowed:
 

@@ -333,8 +333,79 @@ textarea {
   font-weight: 800;
 }
 
+.WorkoutList {
+  display: grid;
+  gap: 10px;
+}
+
+.WorkoutRow {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  color: inherit;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.WorkoutRow:hover {
+  border-color: var(--accent);
+}
+
+.WorkoutIdentity {
+  min-width: 0;
+}
+
+.WorkoutIdentity time {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.WorkoutIdentity h3 {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: 18px;
+}
+
+.WorkoutIdentity p {
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+
+.WorkoutMetrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.WorkoutMetrics div {
+  display: grid;
+  gap: 2px;
+}
+
+.WorkoutMetrics dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.WorkoutMetrics dd {
+  margin: 0;
+  color: var(--text);
+  font-weight: 800;
+}
+
 @media (min-width: 720px) {
   .FormGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .WorkoutRow {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, auto);
+    align-items: center;
   }
 }
