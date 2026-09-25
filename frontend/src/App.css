@@ -484,6 +484,20 @@ textarea {
   border-bottom: 0;
 }
 
+.SetEntryForm {
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.SetEntryFields {
+  display: grid;
+  gap: 12px;
+}
+
+.SetEntryFields .Button {
+  width: 100%;
+}
+
 @media (min-width: 720px) {
   .FormGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -491,6 +505,15 @@ textarea {
 
   .WorkoutExerciseForm .FormGrid {
     grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr);
+  }
+
+  .SetEntryFields {
+    grid-template-columns: minmax(100px, 140px) minmax(120px, 180px) auto;
+    align-items: end;
+  }
+
+  .SetEntryFields .Button {
+    width: auto;
   }
 
   .WorkoutRow {

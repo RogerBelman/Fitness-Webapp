@@ -11,9 +11,11 @@ export function WorkoutDetail() {
     workout,
     isLoading,
     isAddingExercise,
+    addingSetToExerciseId,
     errorMessage,
     successMessage,
     addExercise,
+    addSetEntry,
   } = useWorkout(workoutId)
   const {
     exercises,
@@ -53,7 +55,11 @@ export function WorkoutDetail() {
             isSaving={isAddingExercise}
             onAdd={addExercise}
           />
-          <WorkoutDetails workout={workout} />
+          <WorkoutDetails
+            addingSetToExerciseId={addingSetToExerciseId}
+            onAddSet={addSetEntry}
+            workout={workout}
+          />
         </>
       ) : null}
     </section>

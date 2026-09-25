@@ -18,7 +18,7 @@ Build a resume-worthy workout tracker while learning how a React frontend talks 
 
 ## Current Phase
 
-Phase 9E connects the add-exercise workflow on Workout Detail.
+Phase 9F connects the add-set workflow on Workout Detail.
 
 Completed so far:
 
@@ -48,10 +48,11 @@ Completed so far:
 - Connected Workout History to list saved workouts with set and volume totals.
 - Connected Workout Detail to display its exercises, sets, notes, and totals.
 - Connected Workout Detail to add an exercise from the exercise library.
+- Connected each workout exercise to add sets and refresh workout totals.
 
 Not added yet:
 
-- Frontend form for adding sets to workout exercises
+- Progress tracking and live dashboard analytics
 - Authentication
 
 ## Project Structure
@@ -120,6 +121,7 @@ The New Workout page uses `src/api/workouts.ts` to create the initial workout re
 | Load workout history | `listWorkouts` | `GET /api/workouts` |
 | Load workout details | `getWorkout` | `GET /api/workouts/{id}` |
 | Add exercise to workout | `addWorkoutExercise` | `POST /api/workouts/{id}/exercises` |
+| Add set to workout exercise | `addSet` | `POST /api/workout-exercises/{id}/sets` |
 
 The backend allows local React requests through CORS. By default, these origins are allowed:
 

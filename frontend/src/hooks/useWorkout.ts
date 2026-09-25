@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ApiError } from '../api/client'
-import { addWorkoutExercise, getWorkout } from '../api/workouts'
-import type { AddWorkoutExerciseRequest, WorkoutDetail } from '../types/workout'
+import { addSet, addWorkoutExercise, getWorkout } from '../api/workouts'
+import type {
+  AddWorkoutExerciseRequest,
+  SetEntryRequest,
+  WorkoutDetail,
+} from '../types/workout'
 
 export function useWorkout(workoutId: string | undefined) {
   const [workout, setWorkout] = useState<WorkoutDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAddingExercise, setIsAddingExercise] = useState(false)
+  const [addingSetToExerciseId, setAddingSetToExerciseId] = useState<number | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const id = parseWorkoutId(workoutId)
@@ -60,13 +65,40 @@ export function useWorkout(workoutId: string | undefined) {
     }
   }
 
+  async function addSetEntry(
+    workoutExerciseId: number,
+    request: SetEntryRequest,
+  ): Promise<boolean> {
+    setAddingSetToExerciseId(workoutExerciseId)
+    setErrorMessage(null)
+    setSuccessMessage(null)
+
+    try {
+      const exerciseName =
+        workout?.exercises.find((item) => item.id === workoutExerciseId)?.exercise.name ??
+        'Exercise'
+      const createdSet = await addSet(workoutExerciseId, request)
+
+      setSuccessMessage(`Set ${createdSet.setNumber} was added to ${exerciseName}.`)
+      await loadWorkout()
+      return true
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error))
+      return false
+    } finally {
+      setAddingSetToExerciseId(null)
+    }
+  }
+
   return {
     workout,
     isLoading,
     isAddingExercise,
+    addingSetToExerciseId,
     errorMessage,
     successMessage,
     addExercise,
+    addSetEntry,
   }
 }
 

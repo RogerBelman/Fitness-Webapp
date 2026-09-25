@@ -1,10 +1,17 @@
-import type { SetEntry, WorkoutDetail } from '../../types/workout'
+import type { SetEntry, SetEntryRequest, WorkoutDetail } from '../../types/workout'
+import { AddSetForm } from './AddSetForm'
 
 type WorkoutDetailsProps = {
   workout: WorkoutDetail
+  addingSetToExerciseId: number | null
+  onAddSet: (workoutExerciseId: number, request: SetEntryRequest) => Promise<boolean>
 }
 
-export function WorkoutDetails({ workout }: WorkoutDetailsProps) {
+export function WorkoutDetails({
+  workout,
+  addingSetToExerciseId,
+  onAddSet,
+}: WorkoutDetailsProps) {
   return (
     <>
       <section className="MetricGrid" aria-label="Workout summary">
@@ -63,6 +70,11 @@ export function WorkoutDetails({ workout }: WorkoutDetailsProps) {
                 ) : (
                   <SetTable sets={workoutExercise.sets} />
                 )}
+
+                <AddSetForm
+                  isSaving={addingSetToExerciseId === workoutExercise.id}
+                  onAdd={(request) => onAddSet(workoutExercise.id, request)}
+                />
               </article>
             ))}
           </div>
