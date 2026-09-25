@@ -399,6 +399,87 @@ textarea {
   font-weight: 800;
 }
 
+.WorkoutNotes {
+  min-height: auto;
+}
+
+.WorkoutNotes p {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+
+.WorkoutExerciseList {
+  display: grid;
+}
+
+.WorkoutExerciseRow {
+  display: grid;
+  gap: 14px;
+  padding: 18px 0;
+  border-top: 1px solid var(--border);
+}
+
+.WorkoutExerciseRow:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.WorkoutExerciseRow:last-child {
+  padding-bottom: 0;
+}
+
+.WorkoutExerciseHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.WorkoutExerciseHeader h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 18px;
+}
+
+.WorkoutExerciseHeader p,
+.WorkoutExerciseNotes {
+  margin-top: 5px;
+  color: var(--muted);
+}
+
+.WorkoutExerciseHeader span {
+  flex: 0 0 auto;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.TableScroll {
+  overflow-x: auto;
+}
+
+.SetTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.SetTable th,
+.SetTable td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.SetTable th {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.SetTable tbody tr:last-child td {
+  border-bottom: 0;
+}
+
 @media (min-width: 720px) {
   .FormGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
