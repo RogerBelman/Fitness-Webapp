@@ -403,6 +403,10 @@ textarea {
   min-height: auto;
 }
 
+.WorkoutExerciseForm {
+  max-width: none;
+}
+
 .WorkoutNotes p {
   overflow-wrap: anywhere;
   color: var(--muted);
@@ -483,6 +487,10 @@ textarea {
 @media (min-width: 720px) {
   .FormGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .WorkoutExerciseForm .FormGrid {
+    grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr);
   }
 
   .WorkoutRow {

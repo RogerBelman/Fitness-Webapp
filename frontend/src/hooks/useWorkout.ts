@@ -1,42 +1,78 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ApiError } from '../api/client'
-import { getWorkout } from '../api/workouts'
-import type { WorkoutDetail } from '../types/workout'
+import { addWorkoutExercise, getWorkout } from '../api/workouts'
+import type { AddWorkoutExerciseRequest, WorkoutDetail } from '../types/workout'
 
 export function useWorkout(workoutId: string | undefined) {
   const [workout, setWorkout] = useState<WorkoutDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isAddingExercise, setIsAddingExercise] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const id = parseWorkoutId(workoutId)
 
-  useEffect(() => {
-    const id = Number(workoutId)
-
-    if (!workoutId || !Number.isInteger(id) || id <= 0) {
+  const loadWorkout = useCallback(async () => {
+    if (id === null) {
       setWorkout(null)
       setErrorMessage('Workout ID is invalid.')
       setIsLoading(false)
       return
     }
 
-    async function loadWorkout() {
-      setWorkout(null)
-      setIsLoading(true)
-      setErrorMessage(null)
+    setWorkout(null)
+    setIsLoading(true)
+    setErrorMessage(null)
 
-      try {
-        const data = await getWorkout(id)
-        setWorkout(data)
-      } catch (error) {
-        setErrorMessage(getErrorMessage(error))
-      } finally {
-        setIsLoading(false)
-      }
+    try {
+      const data = await getWorkout(id)
+      setWorkout(data)
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error))
+    } finally {
+      setIsLoading(false)
+    }
+  }, [id])
+
+  useEffect(() => {
+    void loadWorkout()
+  }, [loadWorkout])
+
+  async function addExercise(request: AddWorkoutExerciseRequest): Promise<boolean> {
+    if (id === null) {
+      setErrorMessage('Workout ID is invalid.')
+      return false
     }
 
-    void loadWorkout()
-  }, [workoutId])
+    setIsAddingExercise(true)
+    setErrorMessage(null)
+    setSuccessMessage(null)
 
-  return { workout, isLoading, errorMessage }
+    try {
+      const workoutExercise = await addWorkoutExercise(id, request)
+      setSuccessMessage(`${workoutExercise.exercise.name} was added to the workout.`)
+      await loadWorkout()
+      return true
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error))
+      return false
+    } finally {
+      setIsAddingExercise(false)
+    }
+  }
+
+  return {
+    workout,
+    isLoading,
+    isAddingExercise,
+    errorMessage,
+    successMessage,
+    addExercise,
+  }
+}
+
+function parseWorkoutId(workoutId: string | undefined) {
+  const id = Number(workoutId)
+  return workoutId && Number.isInteger(id) && id > 0 ? id : null
 }
 
 function getErrorMessage(error: unknown) {

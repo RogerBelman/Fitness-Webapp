@@ -1,11 +1,25 @@
 import { Link, useParams } from 'react-router-dom'
 import { PageHeader } from '../components/PageHeader'
+import { AddWorkoutExerciseForm } from '../components/workouts/AddWorkoutExerciseForm'
 import { WorkoutDetails } from '../components/workouts/WorkoutDetails'
+import { useExercises } from '../hooks/useExercises'
 import { useWorkout } from '../hooks/useWorkout'
 
 export function WorkoutDetail() {
   const { workoutId } = useParams()
-  const { workout, isLoading, errorMessage } = useWorkout(workoutId)
+  const {
+    workout,
+    isLoading,
+    isAddingExercise,
+    errorMessage,
+    successMessage,
+    addExercise,
+  } = useWorkout(workoutId)
+  const {
+    exercises,
+    isLoading: isLoadingExercises,
+    errorMessage: exerciseLibraryError,
+  } = useExercises('', '')
 
   return (
     <section className="PageStack">
@@ -22,6 +36,8 @@ export function WorkoutDetail() {
       />
 
       {errorMessage ? <p className="Alert AlertError">{errorMessage}</p> : null}
+      {exerciseLibraryError ? <p className="Alert AlertError">{exerciseLibraryError}</p> : null}
+      {successMessage ? <p className="Alert AlertSuccess">{successMessage}</p> : null}
 
       {isLoading ? (
         <section className="ContentBand">
@@ -29,7 +45,17 @@ export function WorkoutDetail() {
         </section>
       ) : null}
 
-      {!isLoading && workout ? <WorkoutDetails workout={workout} /> : null}
+      {!isLoading && workout ? (
+        <>
+          <AddWorkoutExerciseForm
+            exercises={exercises}
+            isLoadingExercises={isLoadingExercises}
+            isSaving={isAddingExercise}
+            onAdd={addExercise}
+          />
+          <WorkoutDetails workout={workout} />
+        </>
+      ) : null}
     </section>
   )
 }
