@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.workouttracker.dto.ExercisePersonalRecordResponse;
+import com.example.workouttracker.dto.ExerciseProgressResponse;
 import com.example.workouttracker.entity.Exercise;
 import com.example.workouttracker.entity.SetEntry;
 import com.example.workouttracker.entity.Workout;
@@ -78,6 +80,41 @@ class ProgressServiceTests {
 	}
 
 	@Test
+	void calculatesProgressHistoryForWorkout() {
+		Long exerciseId = 12L;
+		Exercise exercise = new Exercise("Bench Press", "Chest", "Strength");
+		Workout workout = new Workout(LocalDate.of(2026, 9, 25), "Push Day", null);
+		WorkoutExercise workoutExercise = new WorkoutExercise(workout, exercise, 1, null);
+		SetEntry firstSet = new SetEntry(workoutExercise, 1, 10, new BigDecimal("135.00"));
+		SetEntry secondSet = new SetEntry(workoutExercise, 2, 5, new BigDecimal("185.00"));
+		when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.of(exercise));
+		when(setEntryRepository.findAllForExerciseHistory(exerciseId))
+				.thenReturn(List.of(firstSet, secondSet));
+
+		ExerciseProgressResponse response = progressService.findHistory(exerciseId);
+
+		assertThat(response.exerciseName()).isEqualTo("Bench Press");
+		assertThat(response.history()).hasSize(1);
+		assertThat(response.history().getFirst().workoutDate())
+				.isEqualTo(LocalDate.of(2026, 9, 25));
+		assertThat(response.history().getFirst().totalSets()).isEqualTo(2);
+		assertThat(response.history().getFirst().maxWeight()).isEqualByComparingTo("185.00");
+		assertThat(response.history().getFirst().totalVolume()).isEqualByComparingTo("2275.00");
+	}
+
+	@Test
+	void returnsEmptyHistoryWhenExerciseHasNoSets() {
+		Long exerciseId = 12L;
+		Exercise exercise = new Exercise("Bench Press", "Chest", "Strength");
+		when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.of(exercise));
+		when(setEntryRepository.findAllForExerciseHistory(exerciseId)).thenReturn(List.of());
+
+		ExerciseProgressResponse response = progressService.findHistory(exerciseId);
+
+		assertThat(response.history()).isEmpty();
+	}
+
+	@Test
 	void rejectsMissingExercise() {
 		Long exerciseId = 999L;
 		when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.empty());
@@ -87,5 +124,6 @@ class ProgressServiceTests {
 				.hasMessage("Exercise not found.");
 		verify(setEntryRepository, never())
 				.findFirstByWorkoutExercise_Exercise_IdOrderByWeightDescRepsDescIdDesc(exerciseId);
+		verify(setEntryRepository, never()).findAllForExerciseHistory(exerciseId);
 	}
 }

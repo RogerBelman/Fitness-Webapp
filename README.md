@@ -18,7 +18,7 @@ Build a resume-worthy workout tracker while learning how a React frontend talks 
 
 ## Current Phase
 
-Phase 10A adds the first progress endpoint for exercise personal records.
+Phase 10B adds exercise progress history grouped by workout.
 
 Completed so far:
 
@@ -51,10 +51,11 @@ Completed so far:
 - Connected each workout exercise to add sets and refresh workout totals.
 - Added a personal-record endpoint that returns the heaviest logged set for an exercise.
 - Added unit and integration tests for personal-record behavior.
+- Added exercise progress history with set count, maximum weight, and volume per workout.
 
 Not added yet:
 
-- Exercise progress history and charts
+- Exercise progress charts
 - Live dashboard analytics
 - Authentication
 
@@ -309,6 +310,7 @@ same weight, the set with more reps wins. An existing exercise with no logged se
 | Method | Path | Purpose | Success |
 | --- | --- | --- | --- |
 | `GET` | `/api/progress/exercises/{exerciseId}/personal-record` | Get an exercise's personal record | `200 OK` |
+| `GET` | `/api/progress/exercises/{exerciseId}/history` | Get progress points grouped by workout | `200 OK` |
 
 Workout relationship model:
 

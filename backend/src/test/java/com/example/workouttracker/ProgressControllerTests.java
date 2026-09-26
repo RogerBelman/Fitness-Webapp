@@ -1,5 +1,6 @@
 package com.example.workouttracker;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -74,6 +75,37 @@ class ProgressControllerTests {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.exerciseId").value(exercise.getId()))
 				.andExpect(jsonPath("$.personalRecord").doesNotExist());
+	}
+
+	@Test
+	void returnsProgressHistoryOldestFirst() throws Exception {
+		Exercise exercise = exerciseRepository.save(
+				new Exercise(unique("Squat"), "Legs", "Strength"));
+		Workout firstWorkout = workoutRepository.save(
+				new Workout(LocalDate.of(2026, 9, 10), "First Leg Day", null));
+		Workout secondWorkout = workoutRepository.save(
+				new Workout(LocalDate.of(2026, 9, 20), "Second Leg Day", null));
+		WorkoutExercise firstWorkoutExercise = workoutExerciseRepository.save(
+				new WorkoutExercise(firstWorkout, exercise, 1, null));
+		WorkoutExercise secondWorkoutExercise = workoutExerciseRepository.save(
+				new WorkoutExercise(secondWorkout, exercise, 1, null));
+		setEntryRepository.save(new SetEntry(firstWorkoutExercise, 1, 10, new BigDecimal("100.00")));
+		setEntryRepository.save(new SetEntry(firstWorkoutExercise, 2, 5, new BigDecimal("150.00")));
+		setEntryRepository.save(new SetEntry(secondWorkoutExercise, 1, 3, new BigDecimal("175.00")));
+
+		mockMvc.perform(get("/api/progress/exercises/{exerciseId}/history", exercise.getId()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.exerciseId").value(exercise.getId()))
+				.andExpect(jsonPath("$.exerciseName").value(exercise.getName()))
+				.andExpect(jsonPath("$.history", hasSize(2)))
+				.andExpect(jsonPath("$.history[0].workoutId").value(firstWorkout.getId()))
+				.andExpect(jsonPath("$.history[0].workoutDate").value("2026-09-10"))
+				.andExpect(jsonPath("$.history[0].totalSets").value(2))
+				.andExpect(jsonPath("$.history[0].maxWeight").value(150.00))
+				.andExpect(jsonPath("$.history[0].totalVolume").value(1750.00))
+				.andExpect(jsonPath("$.history[1].workoutId").value(secondWorkout.getId()))
+				.andExpect(jsonPath("$.history[1].workoutDate").value("2026-09-20"))
+				.andExpect(jsonPath("$.history[1].maxWeight").value(175.00));
 	}
 
 	private String unique(String prefix) {
