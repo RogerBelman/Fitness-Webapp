@@ -10,5 +10,7 @@ public interface SetEntryRepository extends JpaRepository<SetEntry, Long> {
 
 	Optional<SetEntry> findFirstByWorkoutExerciseIdOrderBySetNumberDesc(Long workoutExerciseId);
 
+	Optional<SetEntry> findFirstByWorkoutExercise_Exercise_IdOrderByWeightDescRepsDescIdDesc(Long exerciseId);
+
 	boolean existsByWorkoutExerciseIdAndSetNumber(Long workoutExerciseId, Integer setNumber);
 }

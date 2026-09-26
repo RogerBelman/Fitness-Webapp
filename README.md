@@ -18,7 +18,7 @@ Build a resume-worthy workout tracker while learning how a React frontend talks 
 
 ## Current Phase
 
-Phase 9F connects the add-set workflow on Workout Detail.
+Phase 10A adds the first progress endpoint for exercise personal records.
 
 Completed so far:
 
@@ -49,10 +49,13 @@ Completed so far:
 - Connected Workout Detail to display its exercises, sets, notes, and totals.
 - Connected Workout Detail to add an exercise from the exercise library.
 - Connected each workout exercise to add sets and refresh workout totals.
+- Added a personal-record endpoint that returns the heaviest logged set for an exercise.
+- Added unit and integration tests for personal-record behavior.
 
 Not added yet:
 
-- Progress tracking and live dashboard analytics
+- Exercise progress history and charts
+- Live dashboard analytics
 - Authentication
 
 ## Project Structure
@@ -296,6 +299,16 @@ Endpoints:
 | `GET` | `/api/workouts/{id}` | Get workout details with exercises and sets | `200 OK` |
 | `POST` | `/api/workouts/{id}/exercises` | Add an exercise to a workout | `201 Created` |
 | `POST` | `/api/workout-exercises/{id}/sets` | Add a set to a workout exercise | `201 Created` |
+
+## Progress API
+
+A personal record currently means the heaviest logged set for an exercise. If two sets use the
+same weight, the set with more reps wins. An existing exercise with no logged sets returns
+`personalRecord: null`.
+
+| Method | Path | Purpose | Success |
+| --- | --- | --- | --- |
+| `GET` | `/api/progress/exercises/{exerciseId}/personal-record` | Get an exercise's personal record | `200 OK` |
 
 Workout relationship model:
 

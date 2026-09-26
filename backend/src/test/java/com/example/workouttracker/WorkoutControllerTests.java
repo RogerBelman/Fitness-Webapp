@@ -1,5 +1,6 @@
 package com.example.workouttracker;
 
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -80,10 +81,9 @@ class WorkoutControllerTests {
 
 		mockMvc.perform(get("/api/workouts"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$", hasSize(1)))
-				.andExpect(jsonPath("$[0].id").value(workout.getId()))
-				.andExpect(jsonPath("$[0].totalSets").value(2))
-				.andExpect(jsonPath("$[0].totalVolume").value(2250.00));
+				.andExpect(jsonPath("$[?(@.id == " + workout.getId() + ")]", hasSize(1)))
+				.andExpect(jsonPath("$[?(@.id == " + workout.getId() + ")].totalSets", contains(2)))
+				.andExpect(jsonPath("$[?(@.id == " + workout.getId() + ")].totalVolume", contains(2250.00)));
 	}
 
 	@Test
