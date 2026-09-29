@@ -1,13 +1,25 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../components/PageHeader'
-
-const dashboardStats = [
-  { label: 'Workouts', value: '0' },
-  { label: 'Exercises', value: '0' },
-  { label: 'Total Volume', value: '0 lb' },
-]
+import { ProgressSelector } from '../components/progress/ProgressSelector'
+import { ProgressSummary } from '../components/progress/ProgressSummary'
+import { useExerciseProgress } from '../hooks/useExerciseProgress'
+import { useExercises } from '../hooks/useExercises'
 
 export function Dashboard() {
+  const [selectedExerciseId, setSelectedExerciseId] = useState<number | null>(null)
+  const {
+    exercises,
+    isLoading: isLoadingExercises,
+    errorMessage: exercisesError,
+  } = useExercises('', '')
+  const {
+    personalRecord,
+    progress,
+    isLoading: isLoadingProgress,
+    errorMessage: progressError,
+  } = useExerciseProgress(selectedExerciseId)
+
   return (
     <section className="PageStack">
       <PageHeader
@@ -20,22 +32,25 @@ export function Dashboard() {
         }
       />
 
-      <section className="MetricGrid" aria-label="Training summary">
-        {dashboardStats.map((stat) => (
-          <article className="MetricCard" key={stat.label}>
-            <span>{stat.label}</span>
-            <strong>{stat.value}</strong>
-          </article>
-        ))}
-      </section>
+      {exercisesError ? <p className="Alert AlertError">{exercisesError}</p> : null}
+      {progressError ? <p className="Alert AlertError">{progressError}</p> : null}
 
-      <section className="ContentBand">
-        <div className="SectionHeader">
-          <h2>Recent Workouts</h2>
-          <Link to="/workouts">View History</Link>
-        </div>
-        <p className="EmptyState">No workouts have been logged yet.</p>
-      </section>
+      <ProgressSelector
+        exercises={exercises}
+        isLoading={isLoadingExercises}
+        onChange={setSelectedExerciseId}
+        selectedExerciseId={selectedExerciseId}
+      />
+
+      {isLoadingProgress ? (
+        <section className="ContentBand">
+          <p className="EmptyState">Loading progress...</p>
+        </section>
+      ) : null}
+
+      {!isLoadingProgress && personalRecord && progress ? (
+        <ProgressSummary personalRecord={personalRecord} progress={progress} />
+      ) : null}
     </section>
   )
 }

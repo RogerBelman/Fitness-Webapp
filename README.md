@@ -18,7 +18,7 @@ Build a resume-worthy workout tracker while learning how a React frontend talks 
 
 ## Current Phase
 
-Phase 10B adds exercise progress history grouped by workout.
+Phase 10C connects personal records and exercise history to the React dashboard.
 
 Completed so far:
 
@@ -52,10 +52,11 @@ Completed so far:
 - Added a personal-record endpoint that returns the heaviest logged set for an exercise.
 - Added unit and integration tests for personal-record behavior.
 - Added exercise progress history with set count, maximum weight, and volume per workout.
+- Connected the dashboard to select an exercise and display its live personal record and history.
 
 Not added yet:
 
-- Exercise progress charts
+- Exercise progress chart
 - Live dashboard analytics
 - Authentication
 
@@ -93,7 +94,9 @@ Frontend API files:
 | `src/api/client.ts` | Shared `fetch` wrapper with base URL and API error handling |
 | `src/api/exercises.ts` | Exercise endpoint functions |
 | `src/api/workouts.ts` | Workout endpoint functions |
+| `src/api/progress.ts` | Personal-record and exercise-history endpoint functions |
 | `src/types/exercise.ts` | Exercise request and response types |
+| `src/types/progress.ts` | Personal-record and progress-history response types |
 | `src/types/workout.ts` | Workout, workout exercise, and set entry types |
 
 The frontend reads `VITE_API_BASE_URL` when provided. Without that environment variable, it defaults to:
