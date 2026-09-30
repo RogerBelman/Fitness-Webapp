@@ -18,7 +18,7 @@ Build a resume-worthy workout tracker while learning how a React frontend talks 
 
 ## Current Phase
 
-Phase 10C connects personal records and exercise history to the React dashboard.
+Phase 10D visualizes exercise progress on the React dashboard.
 
 Completed so far:
 
@@ -53,10 +53,10 @@ Completed so far:
 - Added unit and integration tests for personal-record behavior.
 - Added exercise progress history with set count, maximum weight, and volume per workout.
 - Connected the dashboard to select an exercise and display its live personal record and history.
+- Added a responsive maximum-weight chart for the selected exercise.
 
 Not added yet:
 
-- Exercise progress chart
 - Live dashboard analytics
 - Authentication
 

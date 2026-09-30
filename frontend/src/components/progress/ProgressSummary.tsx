@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { ExercisePersonalRecord, ExerciseProgress } from '../../types/progress'
+import { ProgressChart } from './ProgressChart'
 
 type ProgressSummaryProps = {
   personalRecord: ExercisePersonalRecord
@@ -36,6 +37,10 @@ export function ProgressSummary({ personalRecord, progress }: ProgressSummaryPro
           <small>{latestPoint ? formatWorkoutDate(latestPoint.workoutDate) : 'No history'}</small>
         </article>
       </section>
+
+      {progress.history.length > 0 ? (
+        <ProgressChart exerciseName={progress.exerciseName} history={progress.history} />
+      ) : null}
 
       <section className="ContentBand">
         <div className="SectionHeader">
