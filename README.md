@@ -11,14 +11,14 @@ Build a resume-worthy workout tracker while learning how a React frontend talks 
 - Frontend: React, TypeScript, Vite
 - Backend: Java, Spring Boot
 - Database: PostgreSQL
-- Cloud database later: Neon
+- Cloud database: Neon
 - Migrations: Flyway
 - Local development: Docker Compose
 - Testing: JUnit
 
 ## Current Phase
 
-Phase 10D visualizes exercise progress on the React dashboard.
+Phase 11 connects the Spring Boot backend to Neon PostgreSQL.
 
 Completed so far:
 
@@ -54,6 +54,8 @@ Completed so far:
 - Added exercise progress history with set count, maximum weight, and volume per workout.
 - Connected the dashboard to select an exercise and display its live personal record and history.
 - Added a responsive maximum-weight chart for the selected exercise.
+- Added a Neon Spring profile with required cloud credentials and a small connection pool.
+- Verified Flyway migrations and an API write/read cycle against Neon PostgreSQL.
 
 Not added yet:
 
@@ -171,7 +173,41 @@ Port: 5432
 JDBC URL: jdbc:postgresql://localhost:5432/workout_tracker
 ```
 
-Environment variables let each machine or deployment provide its own database settings without changing source code. For example, later Neon will provide a cloud PostgreSQL connection string, and Spring Boot can read it from `SPRING_DATASOURCE_URL`.
+Environment variables let each machine or deployment provide its own database settings without changing source code. Neon provides a cloud PostgreSQL connection string, and Spring Boot reads its JDBC form from `SPRING_DATASOURCE_URL`.
+
+## Connect to Neon
+
+Local development continues to use Docker PostgreSQL. To run the backend against Neon instead, create a Neon project and copy its direct connection details. Convert Neon's URL to JDBC format by adding the `jdbc:` prefix and keeping SSL enabled:
+
+```text
+postgresql://role:password@host/database?sslmode=require
+                         becomes
+jdbc:postgresql://host/database?sslmode=require
+```
+
+The username and password are supplied separately so special characters in the password do not need to be URL-encoded. In a PowerShell terminal, set the values for the current session:
+
+```powershell
+$env:SPRING_PROFILES_ACTIVE="neon"
+$env:SPRING_DATASOURCE_URL="jdbc:postgresql://<neon-host>/<database>?sslmode=require"
+$env:SPRING_DATASOURCE_USERNAME="<neon-role>"
+$env:SPRING_DATASOURCE_PASSWORD="<neon-password>"
+
+cd backend
+.\mvnw.cmd spring-boot:run
+```
+
+The `neon` profile requires all three datasource variables. This prevents an intended cloud startup from silently falling back to the local database. When Spring Boot connects successfully, Flyway automatically applies every migration that Neon has not recorded yet.
+
+Verify the migration in Neon's SQL Editor:
+
+```sql
+select installed_rank, version, description, success
+from flyway_schema_history
+order by installed_rank;
+```
+
+Never commit the real connection string or password. The root `.gitignore` excludes `.env` files while keeping `.env.example` as documentation.
 
 Useful database commands:
 
