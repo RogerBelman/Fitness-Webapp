@@ -19,6 +19,7 @@ import com.example.workouttracker.entity.Exercise;
 import com.example.workouttracker.entity.SetEntry;
 import com.example.workouttracker.entity.Workout;
 import com.example.workouttracker.entity.WorkoutExercise;
+import com.example.workouttracker.entity.TrainingType;
 import com.example.workouttracker.exception.BadRequestException;
 import com.example.workouttracker.exception.DuplicateResourceException;
 import com.example.workouttracker.exception.ResourceNotFoundException;
@@ -103,6 +104,7 @@ public class WorkoutService {
 
 	public SetEntryResponse updateSet(Long id, SetEntryRequest request) {
 		SetEntry setEntry = getSetEntry(id);
+		requireStrength(setEntry.getWorkoutExercise());
 		if (request == null) {
 			throw new BadRequestException("Request body is required.");
 		}
@@ -150,6 +152,7 @@ public class WorkoutService {
 
 	public SetEntryResponse addSet(Long workoutExerciseId, SetEntryRequest request) {
 		WorkoutExercise workoutExercise = getWorkoutExercise(workoutExerciseId);
+		requireStrength(workoutExercise);
 		SetValues values = normalizeSet(workoutExerciseId, request);
 
 		if (setEntryRepository.existsByWorkoutExerciseIdAndSetNumber(workoutExerciseId, values.setNumber())) {
@@ -163,6 +166,12 @@ public class WorkoutService {
 	private Workout getWorkout(Long id) {
 		return workoutRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Workout not found."));
+	}
+
+	private void requireStrength(WorkoutExercise exercise) {
+		if (exercise.getExercise().getTrainingType() != TrainingType.STRENGTH) {
+			throw new BadRequestException("Cardio exercises use duration and level instead of strength sets.");
+		}
 	}
 
 	private Exercise getExercise(Long id) {
@@ -181,7 +190,7 @@ public class WorkoutService {
 		}
 
 		LocalDate workoutDate = request.workoutDate() == null ? LocalDate.now() : request.workoutDate();
-		return new WorkoutValues(workoutDate, optionalText(request.title()), optionalText(request.notes()));
+		return new WorkoutValues(workoutDate, TextFormatting.titleCase(request.title()), optionalText(request.notes()));
 	}
 
 	private Integer resolveExerciseOrder(Long workoutId, Integer requestedOrder) {

@@ -51,7 +51,7 @@ class WorkoutEditingTests {
 				.content("""
 						{"workoutDate":"2026-08-21","title":" Updated workout ","notes":""}
 						"""))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.title").value("Updated workout"));
+				.andExpect(status().isOk()).andExpect(jsonPath("$.title").value("Updated Workout"));
 		flushAndClear();
 		mockMvc.perform(get("/api/workouts/{id}", fixture.workoutId()))
 				.andExpect(jsonPath("$.workoutDate").value("2026-08-21"))

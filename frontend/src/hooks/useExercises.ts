@@ -8,7 +8,7 @@ import {
 import { ApiError } from '../api/client'
 import type { Exercise, ExerciseRequest } from '../types/exercise'
 
-export function useExercises(muscleGroup: string, category: string) {
+export function useExercises(muscleGroup = '', trainingType = '') {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -22,8 +22,8 @@ export function useExercises(muscleGroup: string, category: string) {
 
     try {
       const data = await listExercises({
+        trainingType: trainingType || undefined,
         muscleGroup: muscleGroup || undefined,
-        category: category || undefined,
       })
       setExercises(data)
     } catch (error) {
@@ -31,7 +31,7 @@ export function useExercises(muscleGroup: string, category: string) {
     } finally {
       setIsLoading(false)
     }
-  }, [category, muscleGroup])
+  }, [muscleGroup, trainingType])
 
   useEffect(() => {
     void loadExercises()
@@ -71,6 +71,7 @@ export function useExercises(muscleGroup: string, category: string) {
     isSaving,
     errorMessage,
     successMessage,
+    refreshExercises: loadExercises,
     addExercise,
     saveExercise: (id: number, request: ExerciseRequest) =>
       mutate(() => updateExercise(id, request), 'Exercise updated.'),

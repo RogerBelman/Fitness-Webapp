@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import com.example.workouttracker.dto.SetEntryResponse;
+import com.example.workouttracker.dto.CardioEntryResponse;
+import com.example.workouttracker.entity.CardioEntry;
 import com.example.workouttracker.dto.WorkoutDetailResponse;
 import com.example.workouttracker.dto.WorkoutExerciseResponse;
 import com.example.workouttracker.dto.WorkoutResponse;
@@ -24,6 +26,7 @@ public final class WorkoutMapper {
 				workout.getNotes(),
 				totalSets(workout),
 				totalVolume(workout),
+				totalCardioMinutes(workout),
 				workout.getCreatedAt(),
 				workout.getUpdatedAt());
 	}
@@ -40,6 +43,7 @@ public final class WorkoutMapper {
 				workout.getNotes(),
 				totalSets(workout),
 				totalVolume(workout),
+				totalCardioMinutes(workout),
 				exercises,
 				workout.getCreatedAt(),
 				workout.getUpdatedAt());
@@ -56,6 +60,7 @@ public final class WorkoutMapper {
 				ExerciseMapper.toResponse(workoutExercise.getExercise()),
 				workoutExercise.getNotes(),
 				sets,
+				workoutExercise.getCardioEntries().stream().map(WorkoutMapper::toCardioEntryResponse).toList(),
 				workoutExercise.getCreatedAt(),
 				workoutExercise.getUpdatedAt());
 	}
@@ -68,6 +73,16 @@ public final class WorkoutMapper {
 				setEntry.getWeight(),
 				setEntry.getCreatedAt(),
 				setEntry.getUpdatedAt());
+	}
+
+	public static CardioEntryResponse toCardioEntryResponse(CardioEntry entry) {
+		return new CardioEntryResponse(entry.getId(), entry.getDurationMinutes(), entry.getLevel(), entry.getNotes(),
+				entry.getCreatedAt(), entry.getUpdatedAt());
+	}
+
+	private static BigDecimal totalCardioMinutes(Workout workout) {
+		return workout.getWorkoutExercises().stream().flatMap(exercise -> exercise.getCardioEntries().stream())
+				.map(CardioEntry::getDurationMinutes).reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
 	private static int totalSets(Workout workout) {

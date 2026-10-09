@@ -12,6 +12,7 @@ public record WorkoutDetailResponse(
 		String notes,
 		Integer totalSets,
 		BigDecimal totalVolume,
+		BigDecimal totalCardioMinutes,
 		List<WorkoutExerciseResponse> exercises,
 		Instant createdAt,
 		Instant updatedAt) {

@@ -51,6 +51,10 @@ public class WorkoutExercise {
 	@OrderBy("setNumber ASC")
 	private List<SetEntry> setEntries = new ArrayList<>();
 
+	@OneToMany(mappedBy = "workoutExercise", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OrderBy("id ASC")
+	private List<CardioEntry> cardioEntries = new ArrayList<>();
+
 	protected WorkoutExercise() {
 	}
 
@@ -73,6 +77,20 @@ public class WorkoutExercise {
 
 	public void removeSetEntry(SetEntry setEntry) {
 		setEntries.remove(setEntry);
+	}
+
+	public List<CardioEntry> getCardioEntries() {
+		return cardioEntries;
+	}
+
+	void addCardioEntry(CardioEntry entry) {
+		if (!cardioEntries.contains(entry)) {
+			cardioEntries.add(entry);
+		}
+	}
+
+	public void removeCardioEntry(CardioEntry entry) {
+		cardioEntries.remove(entry);
 	}
 
 	public Workout getWorkout() {

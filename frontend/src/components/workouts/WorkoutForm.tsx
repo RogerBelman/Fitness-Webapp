@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import type { WorkoutRequest } from '../../types/workout'
+import { getTodayDate } from '../../utils/workoutCalendar'
 
 type WorkoutFormValues = {
   workoutDate: string
@@ -13,6 +14,7 @@ type WorkoutFormProps = {
   onCreate: (request: WorkoutRequest) => Promise<boolean>
   initialValues?: WorkoutFormValues
   onCancel?: () => void
+  initialDate?: string
 }
 
 export function WorkoutForm({
@@ -20,9 +22,14 @@ export function WorkoutForm({
   onCreate,
   initialValues,
   onCancel,
+  initialDate,
 }: WorkoutFormProps) {
   const [form, setForm] = useState<WorkoutFormValues>(
-    () => initialValues ?? createEmptyForm(),
+    () =>
+      initialValues ?? {
+        ...createEmptyForm(),
+        workoutDate: initialDate ?? getTodayDate(),
+      },
   )
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -120,12 +127,4 @@ function createEmptyForm(): WorkoutFormValues {
     title: '',
     notes: '',
   }
-}
-
-function getTodayDate() {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
 }

@@ -34,8 +34,9 @@ public class ExerciseController {
 	@GetMapping
 	public List<ExerciseResponse> findAll(
 			@RequestParam Optional<String> muscleGroup,
-			@RequestParam Optional<String> category) {
-		return exerciseService.findAll(muscleGroup, category);
+			@RequestParam Optional<String> category,
+			@RequestParam Optional<String> trainingType) {
+		return exerciseService.findAll(muscleGroup, category, trainingType);
 	}
 
 	@GetMapping("/{id}")

@@ -8,7 +8,7 @@ import { useExercises } from '../hooks/useExercises'
 export function ExerciseLibrary() {
   const [searchTerm, setSearchTerm] = useState('')
   const [muscleGroupFilter, setMuscleGroupFilter] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('')
+  const [trainingTypeFilter, setTrainingTypeFilter] = useState('')
   const {
     exercises,
     isLoading,
@@ -18,36 +18,43 @@ export function ExerciseLibrary() {
     addExercise,
     saveExercise,
     removeExercise,
-  } = useExercises(muscleGroupFilter, categoryFilter)
+  } = useExercises('', trainingTypeFilter)
 
   const visibleExercises = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
 
-    if (!normalizedSearch) {
-      return exercises
-    }
-
-    return exercises.filter((exercise) =>
-      exercise.name.toLowerCase().includes(normalizedSearch),
+    return exercises.filter(
+      (exercise) =>
+        exercise.name.toLowerCase().includes(normalizedSearch) &&
+        (!muscleGroupFilter ||
+          exercise.muscleGroup?.toLowerCase() ===
+            muscleGroupFilter.toLowerCase()),
     )
-  }, [exercises, searchTerm])
+  }, [exercises, searchTerm, muscleGroupFilter])
+
+  function handleTrainingTypeChange(trainingType: string) {
+    setTrainingTypeFilter(trainingType)
+    if (trainingType === 'CARDIO') {
+      setMuscleGroupFilter('')
+    }
+  }
 
   return (
     <section className="PageStack">
       <PageHeader
         title="Exercise Library"
-        description="Manage reusable exercises by muscle group and category."
+        description="Manage strength and cardio exercises and their instructions."
       />
 
       <ExerciseForm isSaving={isSaving} onCreate={addExercise} />
 
       <ExerciseFilters
+        trainingType={trainingTypeFilter}
+        onTrainingTypeChange={handleTrainingTypeChange}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         muscleGroup={muscleGroupFilter}
         onMuscleGroupChange={setMuscleGroupFilter}
-        category={categoryFilter}
-        onCategoryChange={setCategoryFilter}
       />
 
       {errorMessage ? (

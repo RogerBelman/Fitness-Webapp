@@ -14,6 +14,8 @@ public final class ExerciseMapper {
 				exercise.getName(),
 				exercise.getMuscleGroup(),
 				exercise.getCategory(),
+				exercise.getInstructions(),
+				exercise.getTrainingType(),
 				exercise.getCreatedAt(),
 				exercise.getUpdatedAt());
 	}

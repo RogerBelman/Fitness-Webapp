@@ -2,23 +2,23 @@ import { apiRequest } from './client'
 import type { Exercise, ExerciseRequest } from '../types/exercise'
 
 type ExerciseFilters = {
+  trainingType?: string
   muscleGroup?: string
-  category?: string
 }
 
 export function listExercises(filters: ExerciseFilters = {}) {
   const searchParams = new URLSearchParams()
+  if (filters.trainingType)
+    searchParams.set('trainingType', filters.trainingType)
 
   if (filters.muscleGroup) {
     searchParams.set('muscleGroup', filters.muscleGroup)
   }
 
-  if (filters.category) {
-    searchParams.set('category', filters.category)
-  }
-
   const queryString = searchParams.toString()
-  return apiRequest<Exercise[]>(`/api/exercises${queryString ? `?${queryString}` : ''}`)
+  return apiRequest<Exercise[]>(
+    `/api/exercises${queryString ? `?${queryString}` : ''}`,
+  )
 }
 
 export function getExercise(id: number) {

@@ -1,15 +1,20 @@
 import { Fragment, useState } from 'react'
 import type {
   SetEntry,
+  CardioEntryRequest,
   SetEntryRequest,
   UpdateWorkoutExerciseRequest,
   WorkoutDetail,
 } from '../../types/workout'
 import { DeleteButton } from '../DeleteButton'
 import { AddSetForm } from './AddSetForm'
+import { CardioEntries } from './CardioEntries'
 import { EditWorkoutExerciseForm } from './EditWorkoutExerciseForm'
 
 type WorkoutDetailsProps = {
+  onAddCardio: (id: number, request: CardioEntryRequest) => Promise<boolean>
+  onSaveCardio: (id: number, request: CardioEntryRequest) => Promise<boolean>
+  onRemoveCardio: (id: number) => Promise<boolean>
   workout: WorkoutDetail
   isSaving: boolean
   onAddSet: (
@@ -26,6 +31,9 @@ type WorkoutDetailsProps = {
 }
 
 export function WorkoutDetails({
+  onAddCardio,
+  onSaveCardio,
+  onRemoveCardio,
   workout,
   isSaving,
   onAddSet,
@@ -39,18 +47,25 @@ export function WorkoutDetails({
   )
   return (
     <>
-      <section className="MetricGrid" aria-label="Workout summary">
+      <section
+        className="MetricGrid WorkoutSummary"
+        aria-label="Workout summary"
+      >
         <article className="MetricCard">
           <span>Exercises</span>
           <strong>{workout.exercises.length}</strong>
         </article>
         <article className="MetricCard">
-          <span>Total Sets</span>
+          <span>Strength Sets</span>
           <strong>{workout.totalSets}</strong>
         </article>
         <article className="MetricCard">
-          <span>Total Volume</span>
+          <span>Strength Volume</span>
           <strong>{formatWeight(workout.totalVolume)} lb</strong>
+        </article>
+        <article className="MetricCard">
+          <span>Cardio Duration</span>
+          <strong>{formatWeight(workout.totalCardioMinutes)} min</strong>
         </article>
       </section>
 
@@ -81,8 +96,12 @@ export function WorkoutDetails({
                   <div>
                     <h3>{workoutExercise.exercise.name}</h3>
                     <p>
-                      {workoutExercise.exercise.muscleGroup} /{' '}
-                      {workoutExercise.exercise.category}
+                      {workoutExercise.exercise.trainingType === 'CARDIO'
+                        ? 'Cardio'
+                        : 'Strength'}
+                      {workoutExercise.exercise.muscleGroup
+                        ? ` · ${workoutExercise.exercise.muscleGroup}`
+                        : ''}
                     </p>
                   </div>
                   <div className="RowActions">
@@ -100,12 +119,16 @@ export function WorkoutDetails({
                     <DeleteButton
                       label="Remove"
                       title={`Remove ${workoutExercise.exercise.name}?`}
-                      description="This removes the exercise and all its sets from this workout. The exercise stays in your library. This cannot be undone."
+                      description="This removes the exercise and all its logged entries from this workout. The exercise stays in your library. This cannot be undone."
                       disabled={isSaving || editingExerciseId !== null}
                       onDelete={() => onRemoveExercise(workoutExercise.id)}
                     />
                   </div>
-                  <span>{workoutExercise.sets.length} sets</span>
+                  <span>
+                    {workoutExercise.exercise.trainingType === 'CARDIO'
+                      ? `${formatWeight(workoutExercise.cardioEntries.reduce((total, entry) => total + entry.durationMinutes, 0))} min`
+                      : `${workoutExercise.sets.length} sets`}
+                  </span>
                 </div>
 
                 {editingExerciseId === workoutExercise.id ? (
@@ -124,28 +147,50 @@ export function WorkoutDetails({
                   />
                 ) : null}
 
+                {workoutExercise.exercise.instructions ? (
+                  <details className="ExerciseInstructions">
+                    <summary>Exercise Instructions</summary>
+                    <p>{workoutExercise.exercise.instructions}</p>
+                  </details>
+                ) : null}
+
                 {workoutExercise.notes ? (
                   <p className="WorkoutExerciseNotes">
                     {workoutExercise.notes}
                   </p>
                 ) : null}
 
-                {workoutExercise.sets.length === 0 ? (
-                  <p className="EmptyState">No sets logged.</p>
-                ) : (
-                  <SetTable
-                    sets={workoutExercise.sets}
+                {workoutExercise.exercise.trainingType === 'CARDIO' ? (
+                  <CardioEntries
+                    entries={workoutExercise.cardioEntries}
                     exerciseName={workoutExercise.exercise.name}
                     isSaving={isSaving}
-                    onSave={onSaveSet}
-                    onDelete={onRemoveSet}
+                    onAdd={(request) =>
+                      onAddCardio(workoutExercise.id, request)
+                    }
+                    onSave={onSaveCardio}
+                    onDelete={onRemoveCardio}
                   />
-                )}
+                ) : (
+                  <>
+                    {workoutExercise.sets.length === 0 ? (
+                      <p className="EmptyState">No sets logged.</p>
+                    ) : (
+                      <SetTable
+                        sets={workoutExercise.sets}
+                        exerciseName={workoutExercise.exercise.name}
+                        isSaving={isSaving}
+                        onSave={onSaveSet}
+                        onDelete={onRemoveSet}
+                      />
+                    )}
 
-                <AddSetForm
-                  isSaving={isSaving}
-                  onAdd={(request) => onAddSet(workoutExercise.id, request)}
-                />
+                    <AddSetForm
+                      isSaving={isSaving}
+                      onAdd={(request) => onAddSet(workoutExercise.id, request)}
+                    />
+                  </>
+                )}
               </article>
             ))}
           </div>

@@ -1,6 +1,7 @@
 package com.example.workouttracker.service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -9,12 +10,15 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.workouttracker.dto.ExerciseRequest;
 import com.example.workouttracker.dto.ExerciseResponse;
 import com.example.workouttracker.entity.Exercise;
+import com.example.workouttracker.entity.TrainingType;
 import com.example.workouttracker.exception.BadRequestException;
 import com.example.workouttracker.exception.DuplicateResourceException;
 import com.example.workouttracker.exception.ResourceNotFoundException;
 import com.example.workouttracker.mapper.ExerciseMapper;
 import com.example.workouttracker.repository.ExerciseRepository;
 import com.example.workouttracker.repository.WorkoutExerciseRepository;
+import com.example.workouttracker.repository.SetEntryRepository;
+import com.example.workouttracker.repository.CardioEntryRepository;
 
 @Service
 @Transactional
@@ -22,14 +26,27 @@ public class ExerciseService {
 
 	private final ExerciseRepository exerciseRepository;
 	private final WorkoutExerciseRepository workoutExerciseRepository;
+	private final SetEntryRepository setEntryRepository;
+	private final CardioEntryRepository cardioEntryRepository;
 
-	public ExerciseService(ExerciseRepository exerciseRepository, WorkoutExerciseRepository workoutExerciseRepository) {
+	public ExerciseService(ExerciseRepository exerciseRepository, WorkoutExerciseRepository workoutExerciseRepository,
+			SetEntryRepository setEntryRepository, CardioEntryRepository cardioEntryRepository) {
 		this.exerciseRepository = exerciseRepository;
 		this.workoutExerciseRepository = workoutExerciseRepository;
+		this.setEntryRepository = setEntryRepository;
+		this.cardioEntryRepository = cardioEntryRepository;
 	}
 
 	@Transactional(readOnly = true)
-	public List<ExerciseResponse> findAll(Optional<String> muscleGroup, Optional<String> category) {
+	public List<ExerciseResponse> findAll(Optional<String> muscleGroup, Optional<String> category,
+			Optional<String> trainingType) {
+		TrainingType requestedType = trainingType.filter(value -> !value.isBlank()).map(value -> {
+			try {
+				return TrainingType.valueOf(value.trim().toUpperCase(Locale.ROOT));
+			} catch (IllegalArgumentException exception) {
+				throw new BadRequestException("trainingType must be STRENGTH or CARDIO.");
+			}
+		}).orElse(null);
 		Optional<String> normalizedMuscleGroup = muscleGroup.map(String::trim).filter(value -> !value.isBlank());
 		Optional<String> normalizedCategory = category.map(String::trim).filter(value -> !value.isBlank());
 
@@ -47,6 +64,7 @@ public class ExerciseService {
 		}
 
 		return exercises.stream()
+				.filter(exercise -> requestedType == null || exercise.getTrainingType() == requestedType)
 				.map(ExerciseMapper::toResponse)
 				.toList();
 	}
@@ -57,24 +75,29 @@ public class ExerciseService {
 	}
 
 	public ExerciseResponse create(ExerciseRequest request) {
-		ExerciseValues values = normalize(request);
+		ExerciseValues values = normalize(request, TrainingType.STRENGTH);
 		if (exerciseRepository.existsByNameIgnoreCase(values.name())) {
 			throw new DuplicateResourceException("Exercise name already exists.");
 		}
 
-		Exercise exercise = new Exercise(values.name(), values.muscleGroup(), values.category());
+		Exercise exercise = new Exercise(values.name(), values.muscleGroup(), values.category(), values.instructions(), values.trainingType());
 		return ExerciseMapper.toResponse(exerciseRepository.save(exercise));
 	}
 
 	public ExerciseResponse update(Long id, ExerciseRequest request) {
 		Exercise exercise = getExercise(id);
-		ExerciseValues values = normalize(request);
+		ExerciseValues values = normalize(request, exercise.getTrainingType());
+		if (values.trainingType() != exercise.getTrainingType()
+				&& (setEntryRepository.existsByWorkoutExercise_Exercise_Id(id)
+						|| cardioEntryRepository.existsByWorkoutExercise_Exercise_Id(id))) {
+			throw new DuplicateResourceException("Remove logged entries before changing an exercise's training type.");
+		}
 
 		if (exerciseRepository.existsByNameIgnoreCaseAndIdNot(values.name(), id)) {
 			throw new DuplicateResourceException("Exercise name already exists.");
 		}
 
-		exercise.updateDetails(values.name(), values.muscleGroup(), values.category());
+		exercise.updateDetails(values.name(), values.muscleGroup(), values.category(), values.instructions(), values.trainingType());
 		exerciseRepository.flush();
 		return ExerciseMapper.toResponse(exercise);
 	}
@@ -97,15 +120,32 @@ public class ExerciseService {
 				.orElseThrow(() -> new ResourceNotFoundException("Exercise not found."));
 	}
 
-	private ExerciseValues normalize(ExerciseRequest request) {
+	private ExerciseValues normalize(ExerciseRequest request, TrainingType defaultType) {
 		if (request == null) {
 			throw new BadRequestException("Request body is required.");
 		}
 
+		TrainingType type = request.trainingType() == null ? defaultType : request.trainingType();
+		String equipment = optionalText(request.category());
 		return new ExerciseValues(
-				requiredText(request.name(), "name"),
-				requiredText(request.muscleGroup(), "muscleGroup"),
-				requiredText(request.category(), "category"));
+				requiredText(TextFormatting.titleCase(request.name()), "name"),
+				type == TrainingType.STRENGTH ? requiredText(request.muscleGroup(), "muscleGroup") : optionalText(request.muscleGroup()),
+				equipment == null ? "None" : equipment,
+				optionalInstructions(request.instructions()), type);
+	}
+
+	private String optionalText(String value) {
+		return value == null || value.isBlank() ? null : value.trim();
+	}
+
+	private String optionalInstructions(String instructions) {
+		if (instructions == null || instructions.isBlank()) {
+			return null;
+		}
+		if (instructions.length() > 500) {
+			throw new BadRequestException("instructions must be 500 characters or less.");
+		}
+		return instructions.trim();
 	}
 
 	private String requiredText(String value, String fieldName) {
@@ -116,6 +156,6 @@ public class ExerciseService {
 		return value.trim();
 	}
 
-	private record ExerciseValues(String name, String muscleGroup, String category) {
+	private record ExerciseValues(String name, String muscleGroup, String category, String instructions, TrainingType trainingType) {
 	}
 }

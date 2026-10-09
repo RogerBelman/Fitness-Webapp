@@ -39,9 +39,11 @@ export function ExerciseList({
               <article className="ExerciseCard">
                 <div>
                   <h3>{exercise.name}</h3>
-                  <p>{exercise.muscleGroup}</p>
+                  <p>
+                    {exercise.trainingType === 'CARDIO' ? 'Cardio' : 'Strength'}
+                    {exercise.muscleGroup ? ` · ${exercise.muscleGroup}` : ''}
+                  </p>
                 </div>
-                <span>{exercise.category}</span>
                 <div className="RowActions">
                   <button
                     className="Button ButtonSecondary"
@@ -59,11 +61,23 @@ export function ExerciseList({
                     onDelete={() => onDelete(exercise.id)}
                   />
                 </div>
+                {exercise.instructions ? (
+                  <div className="ExerciseInstructions">
+                    <strong>Instructions</strong>
+                    <p>{exercise.instructions}</p>
+                  </div>
+                ) : null}
               </article>
               {editingId === exercise.id ? (
                 <ExerciseForm
                   key={exercise.id}
-                  initialValues={exercise}
+                  initialValues={{
+                    name: exercise.name,
+                    muscleGroup: exercise.muscleGroup ?? '',
+                    trainingType: exercise.trainingType,
+                    category: exercise.category,
+                    instructions: exercise.instructions ?? '',
+                  }}
                   isSaving={isSaving}
                   onCancel={() => setEditingId(null)}
                   onCreate={async (request) => {

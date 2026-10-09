@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { DeleteButton } from '../components/DeleteButton'
 import { PageHeader } from '../components/PageHeader'
+import { ExerciseForm } from '../components/exercises/ExerciseForm'
 import { AddWorkoutExerciseForm } from '../components/workouts/AddWorkoutExerciseForm'
 import { WorkoutDetails } from '../components/workouts/WorkoutDetails'
 import { WorkoutForm } from '../components/workouts/WorkoutForm'
@@ -12,6 +13,7 @@ export function WorkoutDetail() {
   const { workoutId } = useParams()
   const navigate = useNavigate()
   const [isEditing, setIsEditing] = useState(false)
+  const [isCreatingExercise, setIsCreatingExercise] = useState(false)
   const {
     workout,
     isLoading,
@@ -19,6 +21,7 @@ export function WorkoutDetail() {
     errorMessage,
     successMessage,
     addExercise,
+    createAndAddExercise,
     addSetEntry,
     saveWorkout,
     removeWorkout,
@@ -26,12 +29,16 @@ export function WorkoutDetail() {
     removeExercise,
     saveSet,
     removeSet,
+    addCardio,
+    saveCardio,
+    removeCardio,
   } = useWorkout(workoutId)
   const {
     exercises,
     isLoading: isLoadingExercises,
     errorMessage: exerciseLibraryError,
-  } = useExercises('', '')
+    refreshExercises,
+  } = useExercises()
 
   return (
     <section className="PageStack">
@@ -40,7 +47,7 @@ export function WorkoutDetail() {
         description={
           workout
             ? formatWorkoutDate(workout.workoutDate)
-            : 'Workout exercises, sets, and volume.'
+            : 'Workout exercises, strength sets, and cardio duration.'
         }
         actions={
           <div className="RowActions">
@@ -57,7 +64,7 @@ export function WorkoutDetail() {
                 <DeleteButton
                   label="Delete Workout"
                   title="Delete this workout?"
-                  description="This permanently deletes the workout, all its exercises, and all logged sets. This cannot be undone."
+                  description="This permanently deletes the workout, all its exercises, and all logged entries. This cannot be undone."
                   disabled={isSaving || isEditing}
                   onDelete={async () => {
                     const deleted = await removeWorkout()
@@ -68,13 +75,13 @@ export function WorkoutDetail() {
               </>
             ) : null}
             <Link className="Button ButtonSecondary" to="/workouts">
-              Back to History
+              Back to Workouts
             </Link>
           </div>
         }
       />
 
-      {errorMessage ? (
+      {errorMessage && !isCreatingExercise ? (
         <p className="Alert AlertError" role="alert">
           {errorMessage}
         </p>
@@ -118,8 +125,35 @@ export function WorkoutDetail() {
             isLoadingExercises={isLoadingExercises}
             isSaving={isSaving}
             onAdd={addExercise}
+            onCreateNew={() => setIsCreatingExercise(true)}
+            isCreatingExercise={isCreatingExercise}
           />
+          {isCreatingExercise ? (
+            <div id="create-workout-exercise">
+              {errorMessage ? (
+                <p className="Alert AlertError" role="alert">
+                  {errorMessage}
+                </p>
+              ) : null}
+              <ExerciseForm
+                createInWorkout
+                isSaving={isSaving}
+                onCancel={() => setIsCreatingExercise(false)}
+                onCreate={async (request) => {
+                  const saved = await createAndAddExercise(request)
+                  if (saved) {
+                    setIsCreatingExercise(false)
+                    await refreshExercises()
+                  }
+                  return saved
+                }}
+              />
+            </div>
+          ) : null}
           <WorkoutDetails
+            onAddCardio={addCardio}
+            onSaveCardio={saveCardio}
+            onRemoveCardio={removeCardio}
             isSaving={isSaving}
             onAddSet={addSetEntry}
             workout={workout}

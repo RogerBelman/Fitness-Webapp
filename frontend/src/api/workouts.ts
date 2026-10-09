@@ -1,6 +1,9 @@
 import { apiRequest } from './client'
+import type { ExerciseRequest } from '../types/exercise'
 import type {
   AddWorkoutExerciseRequest,
+  CardioEntry,
+  CardioEntryRequest,
   SetEntry,
   SetEntryRequest,
   Workout,
@@ -16,6 +19,16 @@ export function listWorkouts() {
 
 export function getWorkout(id: number) {
   return apiRequest<WorkoutDetail>(`/api/workouts/${id}`)
+}
+
+export function createAndAddWorkoutExercise(
+  id: number,
+  request: ExerciseRequest,
+) {
+  return apiRequest<WorkoutExercise>(`/api/workouts/${id}/exercises/new`, {
+    method: 'POST',
+    body: request,
+  })
 }
 
 export function createWorkout(request: WorkoutRequest) {
@@ -79,4 +92,25 @@ export function updateSet(id: number, request: SetEntryRequest) {
 
 export function deleteSet(id: number) {
   return apiRequest<void>(`/api/sets/${id}`, { method: 'DELETE' })
+}
+
+export function addCardioEntry(id: number, request: CardioEntryRequest) {
+  return apiRequest<CardioEntry>(
+    `/api/workout-exercises/${id}/cardio-entries`,
+    {
+      method: 'POST',
+      body: request,
+    },
+  )
+}
+
+export function updateCardioEntry(id: number, request: CardioEntryRequest) {
+  return apiRequest<CardioEntry>(`/api/cardio-entries/${id}`, {
+    method: 'PUT',
+    body: request,
+  })
+}
+
+export function deleteCardioEntry(id: number) {
+  return apiRequest<void>(`/api/cardio-entries/${id}`, { method: 'DELETE' })
 }

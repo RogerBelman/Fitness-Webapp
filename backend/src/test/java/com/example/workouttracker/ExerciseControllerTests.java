@@ -160,6 +160,6 @@ class ExerciseControllerTests {
 	}
 
 	private String unique(String prefix) {
-		return prefix + " " + UUID.randomUUID();
+		return prefix + " " + Long.toUnsignedString(UUID.randomUUID().getMostSignificantBits());
 	}
 }

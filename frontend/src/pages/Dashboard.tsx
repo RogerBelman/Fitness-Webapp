@@ -1,55 +1,59 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { PageHeader } from '../components/PageHeader'
-import { ProgressSelector } from '../components/progress/ProgressSelector'
-import { ProgressSummary } from '../components/progress/ProgressSummary'
-import { useExerciseProgress } from '../hooks/useExerciseProgress'
-import { useExercises } from '../hooks/useExercises'
+import { WeeklyCalendar } from '../components/dashboard/WeeklyCalendar'
+import { DayWorkouts } from '../components/dashboard/DayWorkouts'
+import { useWorkouts } from '../hooks/useWorkouts'
+import { useDayWorkouts } from '../hooks/useDayWorkouts'
+import { getTodayDate } from '../utils/workoutCalendar'
 
 export function Dashboard() {
-  const [selectedExerciseId, setSelectedExerciseId] = useState<number | null>(null)
-  const {
-    exercises,
-    isLoading: isLoadingExercises,
-    errorMessage: exercisesError,
-  } = useExercises('', '')
-  const {
-    personalRecord,
-    progress,
-    isLoading: isLoadingProgress,
-    errorMessage: progressError,
-  } = useExerciseProgress(selectedExerciseId)
+  const today = getTodayDate()
+  const [selectedDate, setSelectedDate] = useState(getTodayDate)
+  const { workouts, isLoading, errorMessage, reloadWorkouts } = useWorkouts()
+  const day = useDayWorkouts(
+    selectedDate,
+    workouts,
+    !isLoading && !errorMessage,
+  )
 
   return (
     <section className="PageStack">
       <PageHeader
         title="Dashboard"
-        description="Training overview and progress snapshots."
-        actions={
-          <Link className="Button ButtonPrimary" to="/workouts/new">
-            New Workout
-          </Link>
-        }
+        description="Your week of training. Select a day to see its workouts and exercises."
       />
 
-      {exercisesError ? <p className="Alert AlertError">{exercisesError}</p> : null}
-      {progressError ? <p className="Alert AlertError">{progressError}</p> : null}
-
-      <ProgressSelector
-        exercises={exercises}
-        isLoading={isLoadingExercises}
-        onChange={setSelectedExerciseId}
-        selectedExerciseId={selectedExerciseId}
-      />
-
-      {isLoadingProgress ? (
-        <section className="ContentBand">
-          <p className="EmptyState">Loading progress...</p>
-        </section>
+      {errorMessage ? (
+        <div className="Alert AlertError DashboardError" role="alert">
+          <p>{errorMessage}</p>
+          <button
+            className="Button ButtonSecondary"
+            type="button"
+            onClick={reloadWorkouts}
+          >
+            Try Again
+          </button>
+        </div>
       ) : null}
 
-      {!isLoadingProgress && personalRecord && progress ? (
-        <ProgressSummary personalRecord={personalRecord} progress={progress} />
+      <WeeklyCalendar
+        workouts={workouts}
+        selectedDate={selectedDate}
+        today={today}
+        isLoading={isLoading}
+        hasError={Boolean(errorMessage)}
+        onSelectDate={setSelectedDate}
+      />
+      {!errorMessage ? (
+        <DayWorkouts
+          date={selectedDate}
+          today={today}
+          workouts={workouts}
+          details={day.details}
+          isLoading={isLoading}
+          isLoadingDetails={day.isLoading}
+          errorMessage={day.errorMessage}
+        />
       ) : null}
     </section>
   )

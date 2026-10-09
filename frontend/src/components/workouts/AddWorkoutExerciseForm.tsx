@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
 import type { Exercise } from '../../types/exercise'
 import type { AddWorkoutExerciseRequest } from '../../types/workout'
 
@@ -9,6 +8,8 @@ type AddWorkoutExerciseFormProps = {
   isLoadingExercises: boolean
   isSaving: boolean
   onAdd: (request: AddWorkoutExerciseRequest) => Promise<boolean>
+  onCreateNew: () => void
+  isCreatingExercise: boolean
 }
 
 export function AddWorkoutExerciseForm({
@@ -16,6 +17,8 @@ export function AddWorkoutExerciseForm({
   isLoadingExercises,
   isSaving,
   onAdd,
+  onCreateNew,
+  isCreatingExercise,
 }: AddWorkoutExerciseFormProps) {
   const [exerciseId, setExerciseId] = useState('')
   const [notes, setNotes] = useState('')
@@ -39,12 +42,12 @@ export function AddWorkoutExerciseForm({
     <form className="FormSurface WorkoutExerciseForm" onSubmit={handleSubmit}>
       <fieldset className="FormFieldset" disabled={isSaving}>
         <div className="SectionHeader">
-          <h2>Add Exercise</h2>
+          <h2>Add From Your Library</h2>
         </div>
 
         <div className="FormGrid">
           <label>
-            Exercise
+            Saved Exercise
             <select
               disabled={isLoadingExercises || !hasExercises}
               onChange={(event) => setExerciseId(event.target.value)}
@@ -54,11 +57,17 @@ export function AddWorkoutExerciseForm({
               <option value="">
                 {isLoadingExercises
                   ? 'Loading exercises...'
-                  : 'Select exercise'}
+                  : hasExercises
+                    ? 'Choose from your library'
+                    : 'No saved exercises yet'}
               </option>
               {exercises.map((exercise) => (
                 <option key={exercise.id} value={exercise.id}>
-                  {exercise.name} ({exercise.muscleGroup})
+                  {exercise.name} (
+                  {exercise.trainingType === 'CARDIO'
+                    ? 'Cardio'
+                    : exercise.muscleGroup || 'Strength'}
+                  )
                 </option>
               ))}
             </select>
@@ -79,17 +88,32 @@ export function AddWorkoutExerciseForm({
         <div className="FormActions">
           <button
             className="Button ButtonPrimary"
-            disabled={isSaving || isLoadingExercises || !hasExercises}
+            disabled={isSaving || isLoadingExercises || !exerciseId}
             type="submit"
           >
-            {isSaving ? 'Adding...' : 'Add Exercise'}
+            {isSaving ? 'Adding...' : 'Add to Workout'}
           </button>
+        </div>
 
-          {!isLoadingExercises && !hasExercises ? (
-            <Link className="Button ButtonSecondary" to="/exercises">
-              Open Exercise Library
-            </Link>
-          ) : null}
+        <div className="NewExerciseOption">
+          <div>
+            <h3>Not in your library?</h3>
+            <p id="new-exercise-help">
+              Create a new exercise, save it to your library, and add it to this
+              workout.
+            </p>
+          </div>
+          <button
+            className="Button ButtonSecondary"
+            type="button"
+            disabled={isSaving || isCreatingExercise}
+            aria-expanded={isCreatingExercise}
+            aria-controls="create-workout-exercise"
+            aria-describedby="new-exercise-help"
+            onClick={onCreateNew}
+          >
+            Create New Exercise
+          </button>
         </div>
       </fieldset>
     </form>

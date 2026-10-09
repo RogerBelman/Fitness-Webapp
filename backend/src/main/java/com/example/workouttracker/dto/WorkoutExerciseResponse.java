@@ -9,6 +9,7 @@ public record WorkoutExerciseResponse(
 		ExerciseResponse exercise,
 		String notes,
 		List<SetEntryResponse> sets,
+		List<CardioEntryResponse> cardioEntries,
 		Instant createdAt,
 		Instant updatedAt) {
 }

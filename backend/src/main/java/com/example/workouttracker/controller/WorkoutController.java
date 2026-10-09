@@ -14,11 +14,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.workouttracker.dto.AddWorkoutExerciseRequest;
+import com.example.workouttracker.dto.ExerciseRequest;
 import com.example.workouttracker.dto.WorkoutDetailResponse;
 import com.example.workouttracker.dto.WorkoutExerciseResponse;
 import com.example.workouttracker.dto.WorkoutRequest;
 import com.example.workouttracker.dto.WorkoutResponse;
 import com.example.workouttracker.service.WorkoutService;
+import com.example.workouttracker.service.WorkoutExerciseCreationService;
 
 import jakarta.validation.Valid;
 
@@ -27,9 +29,11 @@ import jakarta.validation.Valid;
 public class WorkoutController {
 
 	private final WorkoutService workoutService;
+	private final WorkoutExerciseCreationService exerciseCreationService;
 
-	public WorkoutController(WorkoutService workoutService) {
+	public WorkoutController(WorkoutService workoutService, WorkoutExerciseCreationService exerciseCreationService) {
 		this.workoutService = workoutService;
+		this.exerciseCreationService = exerciseCreationService;
 	}
 
 	@PostMapping
@@ -69,5 +73,12 @@ public class WorkoutController {
 		return ResponseEntity
 				.created(URI.create("/api/workout-exercises/" + response.id()))
 				.body(response);
+	}
+
+	@PostMapping("/{id}/exercises/new")
+	public ResponseEntity<WorkoutExerciseResponse> createAndAddExercise(
+			@PathVariable Long id, @Valid @RequestBody ExerciseRequest request) {
+		WorkoutExerciseResponse response = exerciseCreationService.createAndAdd(id, request);
+		return ResponseEntity.created(URI.create("/api/workout-exercises/" + response.id())).body(response);
 	}
 }

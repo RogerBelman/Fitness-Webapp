@@ -11,6 +11,8 @@ import com.example.workouttracker.entity.SetEntry;
 
 public interface SetEntryRepository extends JpaRepository<SetEntry, Long> {
 
+	boolean existsByWorkoutExercise_Exercise_Id(Long exerciseId);
+
 	Optional<SetEntry> findFirstByWorkoutExerciseIdOrderBySetNumberDesc(Long workoutExerciseId);
 
 	Optional<SetEntry> findFirstByWorkoutExercise_Exercise_IdOrderByWeightDescRepsDescIdDesc(Long exerciseId);

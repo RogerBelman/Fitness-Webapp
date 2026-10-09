@@ -7,6 +7,7 @@ export type Workout = {
   notes: string | null
   totalSets: number
   totalVolume: number
+  totalCardioMinutes: number
   createdAt: string
   updatedAt: string
 }
@@ -21,6 +22,7 @@ export type WorkoutExercise = {
   exercise: Exercise
   notes: string | null
   sets: SetEntry[]
+  cardioEntries: CardioEntry[]
   createdAt: string
   updatedAt: string
 }
@@ -30,6 +32,18 @@ export type SetEntry = {
   setNumber: number
   reps: number
   weight: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type CardioEntryRequest = {
+  durationMinutes: number
+  level?: number | null
+  notes?: string | null
+}
+
+export type CardioEntry = CardioEntryRequest & {
+  id: number
   createdAt: string
   updatedAt: string
 }

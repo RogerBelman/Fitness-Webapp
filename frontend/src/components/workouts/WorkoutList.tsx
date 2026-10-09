@@ -10,7 +10,7 @@ export function WorkoutList({ workouts, isLoading }: WorkoutListProps) {
   return (
     <section className="ContentBand">
       <div className="SectionHeader">
-        <h2>Workouts</h2>
+        <h2>Workout History</h2>
         <span className="RecordCount">{workouts.length}</span>
       </div>
 
@@ -23,7 +23,11 @@ export function WorkoutList({ workouts, isLoading }: WorkoutListProps) {
       {!isLoading && workouts.length > 0 ? (
         <div className="WorkoutList">
           {workouts.map((workout) => (
-            <Link className="WorkoutRow" key={workout.id} to={`/workouts/${workout.id}`}>
+            <Link
+              className="WorkoutRow"
+              key={workout.id}
+              to={`/workouts/${workout.id}`}
+            >
               <div className="WorkoutIdentity">
                 <time dateTime={workout.workoutDate}>
                   {formatWorkoutDate(workout.workoutDate)}
@@ -34,12 +38,16 @@ export function WorkoutList({ workouts, isLoading }: WorkoutListProps) {
 
               <dl className="WorkoutMetrics">
                 <div>
-                  <dt>Sets</dt>
+                  <dt>Strength Sets</dt>
                   <dd>{workout.totalSets}</dd>
                 </div>
                 <div>
-                  <dt>Volume</dt>
+                  <dt>Strength Volume</dt>
                   <dd>{formatVolume(workout.totalVolume)} lb</dd>
+                </div>
+                <div>
+                  <dt>Cardio</dt>
+                  <dd>{formatVolume(workout.totalCardioMinutes)} min</dd>
                 </div>
               </dl>
             </Link>
@@ -60,5 +68,7 @@ function formatWorkoutDate(workoutDate: string) {
 }
 
 function formatVolume(totalVolume: number) {
-  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(totalVolume)
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(
+    totalVolume,
+  )
 }

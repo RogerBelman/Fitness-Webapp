@@ -19,6 +19,8 @@ import com.example.workouttracker.entity.Exercise;
 import com.example.workouttracker.exception.DuplicateResourceException;
 import com.example.workouttracker.repository.ExerciseRepository;
 import com.example.workouttracker.repository.WorkoutExerciseRepository;
+import com.example.workouttracker.repository.SetEntryRepository;
+import com.example.workouttracker.repository.CardioEntryRepository;
 import com.example.workouttracker.service.ExerciseService;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,12 +32,15 @@ class ExerciseServiceTests {
 	@Mock
 	private WorkoutExerciseRepository workoutExerciseRepository;
 
+	@Mock private SetEntryRepository setEntryRepository;
+	@Mock private CardioEntryRepository cardioEntryRepository;
+
 	@InjectMocks
 	private ExerciseService exerciseService;
 
 	@Test
 	void createsExercise() {
-		ExerciseRequest request = new ExerciseRequest(" Bench Press ", " Chest ", " Barbell ");
+		ExerciseRequest request = new ExerciseRequest(" Bench Press ", " Chest ", " Barbell ", " Keep shoulders down. ", null);
 		when(exerciseRepository.existsByNameIgnoreCase("Bench Press")).thenReturn(false);
 		when(exerciseRepository.save(any(Exercise.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -44,6 +49,7 @@ class ExerciseServiceTests {
 		assertThat(response.name()).isEqualTo("Bench Press");
 		assertThat(response.muscleGroup()).isEqualTo("Chest");
 		assertThat(response.category()).isEqualTo("Barbell");
+		assertThat(response.instructions()).isEqualTo("Keep shoulders down.");
 		verify(exerciseRepository).save(argThat(exercise ->
 				exercise.getName().equals("Bench Press")
 						&& exercise.getMuscleGroup().equals("Chest")
@@ -52,7 +58,7 @@ class ExerciseServiceTests {
 
 	@Test
 	void rejectsDuplicateExerciseName() {
-		ExerciseRequest request = new ExerciseRequest("Bench Press", "Chest", "Barbell");
+		ExerciseRequest request = new ExerciseRequest("Bench Press", "Chest", "Barbell", null, null);
 		when(exerciseRepository.existsByNameIgnoreCase("Bench Press")).thenReturn(true);
 
 		assertThatThrownBy(() -> exerciseService.create(request))

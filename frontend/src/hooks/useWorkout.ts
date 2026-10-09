@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { ApiError } from '../api/client'
 import * as api from '../api/workouts'
+import type { ExerciseRequest } from '../types/exercise'
 import type {
   AddWorkoutExerciseRequest,
+  CardioEntryRequest,
   SetEntryRequest,
   UpdateWorkoutExerciseRequest,
   WorkoutDetail,
@@ -83,6 +85,11 @@ export function useWorkout(workoutId: string | undefined) {
     isSaving,
     errorMessage,
     successMessage,
+    createAndAddExercise: (request: ExerciseRequest) =>
+      mutate(
+        () => api.createAndAddWorkoutExercise(id!, request),
+        'Exercise created and added to the workout.',
+      ),
     addExercise: (request: AddWorkoutExerciseRequest) =>
       mutate(
         () => api.addWorkoutExercise(id!, request),
@@ -102,12 +109,24 @@ export function useWorkout(workoutId: string | undefined) {
     removeExercise: (exerciseId: number) =>
       mutate(
         () => api.deleteWorkoutExercise(exerciseId),
-        'Exercise and its sets removed from the workout.',
+        'Exercise and its logged entries removed from the workout.',
       ),
     saveSet: (setId: number, request: SetEntryRequest) =>
       mutate(() => api.updateSet(setId, request), 'Set updated.'),
     removeSet: (setId: number) =>
       mutate(() => api.deleteSet(setId), 'Set deleted.'),
+    addCardio: (exerciseId: number, request: CardioEntryRequest) =>
+      mutate(
+        () => api.addCardioEntry(exerciseId, request),
+        'Cardio entry added.',
+      ),
+    saveCardio: (entryId: number, request: CardioEntryRequest) =>
+      mutate(
+        () => api.updateCardioEntry(entryId, request),
+        'Cardio entry updated.',
+      ),
+    removeCardio: (entryId: number) =>
+      mutate(() => api.deleteCardioEntry(entryId), 'Cardio entry deleted.'),
   }
 }
 

@@ -5,8 +5,11 @@ This repository contains a full-stack workout tracking application built with a 
 ## Features
 
 - Create, list, filter, update, and delete exercises through the REST API.
+- Save permanent exercise instructions for setup and technique, visible in the library, workout details, and Dashboard exercise summaries.
 - Create workouts and add ordered exercises and sets.
-- Review workout history with set counts and total volume.
+- Choose Strength or Cardio for each exercise. Log cardio duration, optional machine level, and session notes, with edit/delete support.
+- Review workout history with strength set counts, strength volume, and separate cardio minutes.
+- Browse workouts in a weekly Dashboard calendar with day selection, workout counts, and exercise summaries.
 - View complete workout details, including exercise notes and individual sets.
 - Edit workout dates, titles, and notes; edit exercise order and notes within a workout; correct set numbers, reps, and weights.
 - Delete workouts, remove exercises from a workout, and delete individual sets with confirmation prompts.
@@ -49,10 +52,15 @@ Routes:
 | Path | Page |
 | --- | --- |
 | `/` | Dashboard |
+| `/progress` | Exercise Progress |
 | `/exercises` | Exercise Library |
-| `/workouts/new` | New Workout |
-| `/workouts` | Workout History |
+| `/workouts` | Workouts: history and inline creation |
+| `/workouts?new=1` | Workouts with the new-workout form open |
 | `/workouts/{id}` | Workout Detail |
+
+The Dashboard shows a Monday–Sunday calendar with previous/next week controls and a Today shortcut. Select a day to see its workouts, exercises, strength sets and volume, and cardio minutes. Add Workout opens the creation form on the combined Workouts page and preselects the chosen date for today or a past day. New Workout opens the same form above workout history without leaving the Workouts page; Cancel returns to browsing. Creating a workout opens it immediately for exercise entry. Each exercise shows either sets/reps/weight or cardio duration/level according to its training type. Existing `/workouts/new` links redirect to this form and preserve the selected date. Strength charts, personal records, and exercise history live on the separate Progress page.
+
+On a workout, **Add From Your Library** lets you select a saved exercise and choose **Add to Workout**. A separate **Not in your library?** section explains **Create New Exercise**, which opens an inline form. **Create & Add to Workout** saves the reusable exercise and adds it to the current workout in one transaction. The form supports Strength and Cardio, instructions, and Cancel. Duplicate names keep the form open so you can correct the name or cancel and select the existing exercise.
 
 Frontend API files:
 
@@ -78,13 +86,13 @@ The Exercise Library page uses the API helper functions in `src/api/exercises.ts
 
 For the page flow, read `src/pages/ExerciseLibrary.tsx` first. It coordinates the parts. `src/hooks/useExercises.ts` calls the API and owns loading, saving, and message state. The files in `src/components/exercises/` render the form, filters, and list.
 
-Connected behavior:
+Available API operations:
 
 | UI action | Frontend function | Backend endpoint |
 | --- | --- | --- |
 | Load exercises | `listExercises` | `GET /api/exercises` |
 | Filter by muscle group | `listExercises` | `GET /api/exercises?muscleGroup=...` |
-| Filter by category | `listExercises` | `GET /api/exercises?category=...` |
+| Filter by training type | `listExercises` | `GET /api/exercises?trainingType=...` |
 | Create exercise | `createExercise` | `POST /api/exercises` |
 
 The workout pages use `src/api/workouts.ts` to create workouts, load history and details, add exercises, and record sets.
@@ -95,6 +103,7 @@ The workout pages use `src/api/workouts.ts` to create workouts, load history and
 | Load workout history | `listWorkouts` | `GET /api/workouts` |
 | Load workout details | `getWorkout` | `GET /api/workouts/{id}` |
 | Add exercise to workout | `addWorkoutExercise` | `POST /api/workouts/{id}/exercises` |
+| Create exercise and add it to workout | `createAndAddWorkoutExercise` | `POST /api/workouts/{id}/exercises/new` |
 | Add set to workout exercise | `addSet` | `POST /api/workout-exercises/{id}/sets` |
 | Edit workout | `updateWorkout` | `PUT /api/workouts/{id}` |
 | Delete workout | `deleteWorkout` | `DELETE /api/workouts/{id}` |
@@ -233,7 +242,8 @@ Exercise request body:
 {
   "name": "Bench Press",
   "muscleGroup": "Chest",
-  "category": "Strength"
+  "trainingType": "STRENGTH",
+  "instructions": "Use your preferred grip and record technique cues here."
 }
 ```
 
@@ -244,7 +254,9 @@ Exercise response body:
   "id": 1,
   "name": "Bench Press",
   "muscleGroup": "Chest",
-  "category": "Strength",
+  "category": "None",
+  "trainingType": "STRENGTH",
+  "instructions": "Use your preferred grip and record technique cues here.",
   "createdAt": "2026-08-18T00:00:00Z",
   "updatedAt": "2026-08-18T00:00:00Z"
 }
@@ -256,11 +268,18 @@ Endpoints:
 | --- | --- | --- | --- |
 | `GET` | `/api/exercises` | List exercises | `200 OK` |
 | `GET` | `/api/exercises?muscleGroup=Chest` | Filter by muscle group | `200 OK` |
-| `GET` | `/api/exercises?category=Strength` | Filter by category | `200 OK` |
+| `GET` | `/api/exercises?category=Barbell` | Filter by legacy category | `200 OK` |
+| `GET` | `/api/exercises?trainingType=CARDIO` | Filter by training type | `200 OK` |
 | `GET` | `/api/exercises/{id}` | Get one exercise | `200 OK` |
 | `POST` | `/api/exercises` | Create an exercise | `201 Created` |
 | `PUT` | `/api/exercises/{id}` | Replace an exercise's editable fields | `200 OK` |
 | `DELETE` | `/api/exercises/{id}` | Delete an exercise | `204 No Content` |
+
+`instructions` is optional and supports up to 500 characters. The Exercise Library create/edit form lets you save it, and clearing the text removes it. Blank, null, or omitted instructions are stored as null. These instructions belong to the reusable exercise; workout exercise `notes` remain specific to a session. Existing exercises start without instructions after the `V2__add_exercise_instructions.sql` migration runs.
+
+`trainingType` is `STRENGTH` or `CARDIO`. Omitted types default to Strength on creation and preserve the current type on update. Muscle group is required for Strength and optional for Cardio. Equipment details belong in the exercise name or instructions; there is no separate equipment field or filter in the UI. The API still accepts the optional legacy `category` field, defaulting to `None` when omitted. The frontend preserves existing category values during edits. Changing training type returns `409 Conflict` while that exercise has any logged sets or cardio entries, so existing history keeps its meaning.
+
+The forward-only `V3__add_cardio_tracking.sql` migration adds the training type and cardio table. Existing exercises default to Strength. Legacy exercises whose category is Cardio are classified as Cardio only when they have no logged sets. Exercises with existing sets keep their Strength type and all their history; category text and permanent instructions are preserved. Restart the backend to apply pending migrations.
 
 Layer flow:
 
@@ -273,6 +292,8 @@ HTTP request
 ```
 
 DTOs define the API contract. The `Exercise` entity represents the database row, while `ExerciseRequest` and `ExerciseResponse` represent what the API accepts and returns.
+
+Exercise names and workout titles are formatted before saving on both creation and editing: each word starts with a capital letter and the remaining letters are lowercase (`dUMBBELL bench PRESS` becomes `Dumbbell Bench Press`). Leading/trailing whitespace is removed and repeated whitespace in names and titles becomes a single space. Comments, notes, and instructions keep their entered capitalization and internal line breaks. Existing names are formatted when edited and saved.
 
 ## Workout API
 
@@ -318,6 +339,7 @@ Endpoints:
 | `GET` | `/api/workouts` | List workout summaries | `200 OK` |
 | `GET` | `/api/workouts/{id}` | Get workout details with exercises and sets | `200 OK` |
 | `POST` | `/api/workouts/{id}/exercises` | Add an exercise to a workout | `201 Created` |
+| `POST` | `/api/workouts/{id}/exercises/new` | Create a library exercise and add it to this workout atomically | `201 Created` |
 | `POST` | `/api/workout-exercises/{id}/sets` | Add a set to a workout exercise | `201 Created` |
 | `PUT` | `/api/workouts/{id}` | Update workout date, title, and notes | `200 OK` |
 | `DELETE` | `/api/workouts/{id}` | Delete workout with its exercises and sets | `204 No Content` |
@@ -325,12 +347,27 @@ Endpoints:
 | `DELETE` | `/api/workout-exercises/{id}` | Remove exercise from workout with its sets | `204 No Content` |
 | `PUT` | `/api/sets/{id}` | Update set number, reps, and weight | `200 OK` |
 | `DELETE` | `/api/sets/{id}` | Delete a logged set | `204 No Content` |
+| `POST` | `/api/workout-exercises/{id}/cardio-entries` | Log cardio duration and level | `201 Created` |
+| `PUT` | `/api/cardio-entries/{id}` | Edit a cardio entry | `200 OK` |
+| `DELETE` | `/api/cardio-entries/{id}` | Delete a cardio entry | `204 No Content` |
 
 Updates use the same workout and set request bodies shown above. Omit `workoutDate` or `setNumber` on an update to keep its existing value. An omitted or blank title or notes clears that text. For workout exercises, send `exerciseOrder` and `notes`; omitting `exerciseOrder` keeps the existing order. The library exercise associated with logged sets stays the same.
 
 Duplicate set numbers within an exercise and duplicate exercise orders within a workout return `409 Conflict`. Weight supports values from `0` to `99999.99`, with up to two decimal places. Deletion leaves gaps in set numbers and exercise order; new entries use the highest remaining number plus one.
 
 Deleting a workout removes its workout exercises and sets. Removing a workout exercise removes its sets while keeping the reusable exercise in the library. Library deletion returns `409 Conflict` when an exercise is still referenced by a workout. Totals, progress history, and personal records are calculated from the remaining sets, so edits and deletions affect the next read automatically.
+
+Cardio create/update request:
+
+```json
+{
+  "durationMinutes": 20.5,
+  "level": 6,
+  "notes": "Steady pace"
+}
+```
+
+Duration is required, from `0.01` to `99999.99` minutes. Level is optional, from `0` to `999.99`; both support up to two decimal places. Notes are optional with a 500-character limit. Omitting level or notes on an update clears them. Multiple entries can represent intervals at different levels. Cardio entries are accepted only for Cardio exercises, and sets only for Strength exercises. Workouts can contain both kinds. Summaries return `totalCardioMinutes` separately from `totalSets` and `totalVolume`; details include `cardioEntries` on each workout exercise. Deleting a workout or workout exercise also removes its cardio entries.
 
 ## Progress API
 
@@ -354,6 +391,7 @@ exercises
 
 workout_exercises
   one-to-many set_entries
+  one-to-many cardio_entries
 ```
 
 `workout_exercises` is the join table with extra data. It connects one workout to one exercise, but also stores workout-specific fields like `exercise_order` and notes. `set_entries` belongs to a workout exercise because sets are performed for a specific exercise inside a specific workout.
@@ -408,6 +446,8 @@ Current test focus:
 | Test file | Purpose |
 | --- | --- |
 | `ExerciseControllerTests` | Exercise API endpoint behavior |
+| `ExerciseInstructionsTests` | Permanent instructions, session-note independence, clearing, and length validation |
+| `CardioTrackingTests` | Mixed totals, duration/level validation, entry updates/deletes, training-type protection, and deletion cascades |
 | `WorkoutControllerTests` | Workout API endpoint behavior |
 | `ExerciseServiceTests` | Exercise creation business rules |
 | `WorkoutServiceTests` | Workout creation and set validation business rules |
@@ -420,6 +460,7 @@ Frontend checks:
 
 ```powershell
 cd frontend
+npm run test
 npm run lint
 npm run build
 ```
