@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.workouttracker.dto.AddWorkoutExerciseRequest;
 import com.example.workouttracker.dto.SetEntryRequest;
 import com.example.workouttracker.dto.SetEntryResponse;
+import com.example.workouttracker.dto.UpdateWorkoutExerciseRequest;
 import com.example.workouttracker.dto.WorkoutDetailResponse;
 import com.example.workouttracker.dto.WorkoutExerciseResponse;
 import com.example.workouttracker.dto.WorkoutRequest;
@@ -63,6 +64,70 @@ public class WorkoutService {
 		WorkoutValues values = normalizeWorkout(request);
 		Workout workout = new Workout(values.workoutDate(), values.title(), values.notes());
 		return WorkoutMapper.toResponse(workoutRepository.save(workout));
+	}
+
+	public WorkoutResponse update(Long id, WorkoutRequest request) {
+		Workout workout = getWorkout(id);
+		WorkoutValues values = normalizeWorkout(request);
+		workout.updateDetails(request.workoutDate() == null ? workout.getWorkoutDate() : values.workoutDate(),
+				values.title(), values.notes());
+		workoutRepository.flush();
+		return WorkoutMapper.toResponse(workout);
+	}
+
+	public void delete(Long id) {
+		workoutRepository.delete(getWorkout(id));
+	}
+
+	public WorkoutExerciseResponse updateExercise(Long id, UpdateWorkoutExerciseRequest request) {
+		WorkoutExercise workoutExercise = getWorkoutExercise(id);
+		if (request == null) {
+			throw new BadRequestException("Request body is required.");
+		}
+		Integer order = request.exerciseOrder() == null ? workoutExercise.getExerciseOrder()
+				: requiredPositive(request.exerciseOrder(), "exerciseOrder");
+		if (workoutExerciseRepository.existsByWorkoutIdAndExerciseOrderAndIdNot(
+				workoutExercise.getWorkout().getId(), order, id)) {
+			throw new DuplicateResourceException("Workout exercise order already exists.");
+		}
+		workoutExercise.updateDetails(order, optionalText(request.notes()));
+		workoutExerciseRepository.flush();
+		return WorkoutMapper.toWorkoutExerciseResponse(workoutExercise);
+	}
+
+	public void deleteExercise(Long id) {
+		WorkoutExercise workoutExercise = getWorkoutExercise(id);
+		workoutExercise.getWorkout().removeWorkoutExercise(workoutExercise);
+		workoutExerciseRepository.delete(workoutExercise);
+	}
+
+	public SetEntryResponse updateSet(Long id, SetEntryRequest request) {
+		SetEntry setEntry = getSetEntry(id);
+		if (request == null) {
+			throw new BadRequestException("Request body is required.");
+		}
+		Long workoutExerciseId = setEntry.getWorkoutExercise().getId();
+		SetValues values = normalizeSet(workoutExerciseId,
+				new SetEntryRequest(request.setNumber() == null ? setEntry.getSetNumber() : request.setNumber(),
+						request.reps(), request.weight()));
+		if (setEntryRepository.existsByWorkoutExerciseIdAndSetNumberAndIdNot(
+				workoutExerciseId, values.setNumber(), id)) {
+			throw new DuplicateResourceException("Set number already exists for this workout exercise.");
+		}
+		setEntry.updateDetails(values.setNumber(), values.reps(), values.weight());
+		setEntryRepository.flush();
+		return WorkoutMapper.toSetEntryResponse(setEntry);
+	}
+
+	public void deleteSet(Long id) {
+		SetEntry setEntry = getSetEntry(id);
+		setEntry.getWorkoutExercise().removeSetEntry(setEntry);
+		setEntryRepository.delete(setEntry);
+	}
+
+	private SetEntry getSetEntry(Long id) {
+		return setEntryRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Set not found."));
 	}
 
 	public WorkoutExerciseResponse addExercise(Long workoutId, AddWorkoutExerciseRequest request) {
@@ -185,6 +250,9 @@ public class WorkoutService {
 		}
 		if (weight.compareTo(BigDecimal.ZERO) < 0) {
 			throw new BadRequestException("weight must be greater than or equal to 0.");
+		}
+		if (weight.compareTo(new BigDecimal("99999.99")) > 0 || weight.stripTrailingZeros().scale() > 2) {
+			throw new BadRequestException("weight must have at most 5 integer digits and 2 decimal places.");
 		}
 
 		return weight;

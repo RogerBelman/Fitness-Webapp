@@ -57,6 +57,12 @@ public class SetEntry {
 		return id;
 	}
 
+	public void updateDetails(Integer setNumber, Integer reps, BigDecimal weight) {
+		this.setNumber = setNumber;
+		this.reps = reps;
+		this.weight = weight;
+	}
+
 	public WorkoutExercise getWorkoutExercise() {
 		return workoutExercise;
 	}

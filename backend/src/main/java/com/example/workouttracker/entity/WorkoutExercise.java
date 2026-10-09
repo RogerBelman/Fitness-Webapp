@@ -66,6 +66,15 @@ public class WorkoutExercise {
 		return id;
 	}
 
+	public void updateDetails(Integer exerciseOrder, String notes) {
+		this.exerciseOrder = exerciseOrder;
+		this.notes = notes;
+	}
+
+	public void removeSetEntry(SetEntry setEntry) {
+		setEntries.remove(setEntry);
+	}
+
 	public Workout getWorkout() {
 		return workout;
 	}

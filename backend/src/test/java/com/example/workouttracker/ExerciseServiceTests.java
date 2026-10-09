@@ -18,6 +18,7 @@ import com.example.workouttracker.dto.ExerciseResponse;
 import com.example.workouttracker.entity.Exercise;
 import com.example.workouttracker.exception.DuplicateResourceException;
 import com.example.workouttracker.repository.ExerciseRepository;
+import com.example.workouttracker.repository.WorkoutExerciseRepository;
 import com.example.workouttracker.service.ExerciseService;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,6 +26,9 @@ class ExerciseServiceTests {
 
 	@Mock
 	private ExerciseRepository exerciseRepository;
+
+	@Mock
+	private WorkoutExerciseRepository workoutExerciseRepository;
 
 	@InjectMocks
 	private ExerciseService exerciseService;

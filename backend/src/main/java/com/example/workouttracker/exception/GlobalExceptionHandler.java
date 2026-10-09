@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -62,6 +63,12 @@ public class GlobalExceptionHandler {
 			Exception exception,
 			HttpServletRequest request) {
 		return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error.", request);
+	}
+
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	public ResponseEntity<ApiErrorResponse> handleDataConflict(
+			DataIntegrityViolationException exception, HttpServletRequest request) {
+		return buildResponse(HttpStatus.CONFLICT, "The change conflicts with existing data.", request);
 	}
 
 	private ResponseEntity<ApiErrorResponse> buildResponse(

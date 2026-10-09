@@ -1,66 +1,33 @@
 # Full-Stack Workout Tracker
 
-This project is a step-by-step workout tracking web app built to practice full-stack development with a production-style structure.
+This repository contains a full-stack workout tracking application built with a React frontend, a Spring Boot REST API, and PostgreSQL. It supports exercise management, workout logging, workout history, and progress analytics while demonstrating a layered backend architecture and explicit API contracts.
 
-## Goal
+## Features
 
-Build a resume-worthy workout tracker while learning how a React frontend talks to a Java Spring Boot REST API backed by PostgreSQL.
+- Create, list, filter, update, and delete exercises through the REST API.
+- Create workouts and add ordered exercises and sets.
+- Review workout history with set counts and total volume.
+- View complete workout details, including exercise notes and individual sets.
+- Edit workout dates, titles, and notes; edit exercise order and notes within a workout; correct set numbers, reps, and weights.
+- Delete workouts, remove exercises from a workout, and delete individual sets with confirmation prompts.
+- Edit and delete library exercises, with deletion blocked while an exercise is used in workout history.
+- Track exercise personal records and workout-by-workout progress.
+- Visualize maximum-weight trends with a responsive chart.
+- Validate API requests and return consistent error responses.
+- Run PostgreSQL locally with Docker or connect Spring Boot to Neon.
+- Apply versioned schema changes automatically with Flyway.
+- Test controller, service, mapper, database connection, and migration behavior with JUnit.
 
-## Stack
+## Technology Stack
 
-- Frontend: React, TypeScript, Vite
-- Backend: Java, Spring Boot
-- Database: PostgreSQL
-- Cloud database: Neon
-- Migrations: Flyway
-- Local development: Docker Compose
-- Testing: JUnit
-
-## Current Phase
-
-Phase 11 connects the Spring Boot backend to Neon PostgreSQL.
-
-Completed so far:
-
-- Created one parent repository with separate `backend` and `frontend` apps.
-- Scaffolded the Spring Boot backend.
-- Scaffolded the React + TypeScript frontend.
-- Added root project documentation.
-- Initialized Git for source control.
-- Added Docker Compose for local PostgreSQL.
-- Configured Spring Boot to connect to PostgreSQL.
-- Added Flyway migrations.
-- Created the initial workout tracker tables.
-- Added the Exercise entity, repository, service, controller, DTOs, and mapper.
-- Added CRUD endpoints for the exercise library.
-- Added Workout, WorkoutExercise, and SetEntry entities.
-- Added endpoints to create workouts, add exercises to workouts, add sets, and view workout details.
-- Added request validation for exercise, workout, workout exercise, and set request bodies.
-- Added a global exception handler for consistent API error responses.
-- Added service-level JUnit tests for exercise creation, workout creation, invalid set data, and total workout volume.
-- Added React Router and the first frontend page structure.
-- Added frontend API helper functions for the current exercise and workout endpoints.
-- Added TypeScript types matching the backend request and response DTOs.
-- Added backend CORS configuration for local React development.
-- Connected the Exercise Library page to list, filter, and create exercises through the backend API.
-- Split Exercise Library API state, form, filters, and list rendering into focused files.
-- Connected the New Workout form to create workouts through the backend API.
-- Connected Workout History to list saved workouts with set and volume totals.
-- Connected Workout Detail to display its exercises, sets, notes, and totals.
-- Connected Workout Detail to add an exercise from the exercise library.
-- Connected each workout exercise to add sets and refresh workout totals.
-- Added a personal-record endpoint that returns the heaviest logged set for an exercise.
-- Added unit and integration tests for personal-record behavior.
-- Added exercise progress history with set count, maximum weight, and volume per workout.
-- Connected the dashboard to select an exercise and display its live personal record and history.
-- Added a responsive maximum-weight chart for the selected exercise.
-- Added a Neon Spring profile with required cloud credentials and a small connection pool.
-- Verified Flyway migrations and an API write/read cycle against Neon PostgreSQL.
-
-Not added yet:
-
-- Live dashboard analytics
-- Authentication
+| Area | Technologies |
+| --- | --- |
+| Frontend | React, TypeScript, Vite, React Router, Recharts |
+| Backend | Java 21, Spring Boot, Spring Web MVC, Spring Data JPA |
+| Database | PostgreSQL, Neon |
+| Migrations | Flyway |
+| Local development | Docker Compose |
+| Testing | JUnit, MockMvc, Mockito, AssertJ |
 
 ## Project Structure
 
@@ -75,9 +42,7 @@ The backend and frontend are separate because they have different jobs:
 - The backend owns business rules, database access, and API responses.
 - The frontend owns browser UI, user interactions, and calls to the backend API.
 
-## Frontend Foundation
-
-Phase 8 creates the browser app structure without wiring every screen to live data yet.
+## Frontend
 
 Routes:
 
@@ -107,13 +72,13 @@ The frontend reads `VITE_API_BASE_URL` when provided. Without that environment v
 http://localhost:8080
 ```
 
-## Frontend to Backend Connection
+## Frontend Data Flow
 
-The Exercise Library page now uses the API helper functions in `src/api/exercises.ts`.
+The Exercise Library page uses the API helper functions in `src/api/exercises.ts`.
 
 For the page flow, read `src/pages/ExerciseLibrary.tsx` first. It coordinates the parts. `src/hooks/useExercises.ts` calls the API and owns loading, saving, and message state. The files in `src/components/exercises/` render the form, filters, and list.
 
-Current connected behavior:
+Connected behavior:
 
 | UI action | Frontend function | Backend endpoint |
 | --- | --- | --- |
@@ -122,7 +87,7 @@ Current connected behavior:
 | Filter by category | `listExercises` | `GET /api/exercises?category=...` |
 | Create exercise | `createExercise` | `POST /api/exercises` |
 
-The New Workout page uses `src/api/workouts.ts` to create the initial workout record. Exercise and set entry will be connected in later Phase 9 steps.
+The workout pages use `src/api/workouts.ts` to create workouts, load history and details, add exercises, and record sets.
 
 | UI action | Frontend function | Backend endpoint |
 | --- | --- | --- |
@@ -131,6 +96,12 @@ The New Workout page uses `src/api/workouts.ts` to create the initial workout re
 | Load workout details | `getWorkout` | `GET /api/workouts/{id}` |
 | Add exercise to workout | `addWorkoutExercise` | `POST /api/workouts/{id}/exercises` |
 | Add set to workout exercise | `addSet` | `POST /api/workout-exercises/{id}/sets` |
+| Edit workout | `updateWorkout` | `PUT /api/workouts/{id}` |
+| Delete workout | `deleteWorkout` | `DELETE /api/workouts/{id}` |
+| Edit exercise order and notes | `updateWorkoutExercise` | `PUT /api/workout-exercises/{id}` |
+| Remove exercise and its sets | `deleteWorkoutExercise` | `DELETE /api/workout-exercises/{id}` |
+| Edit logged set | `updateSet` | `PUT /api/sets/{id}` |
+| Delete logged set | `deleteSet` | `DELETE /api/sets/{id}` |
 
 The backend allows local React requests through CORS. By default, these origins are allowed:
 
@@ -138,16 +109,29 @@ The backend allows local React requests through CORS. By default, these origins 
 http://localhost:5173
 http://127.0.0.1:5173
 ```
+
+## Prerequisites
+
+- Java 21 or newer
+- Node.js 20 or newer
+- Docker Desktop with Docker Compose
+
 ## Run Locally
 
-Backend:
+From the repository root, start PostgreSQL first:
+
+```powershell
+docker compose up -d
+```
+
+Start the backend in a second terminal:
 
 ```powershell
 cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
-Frontend:
+Install frontend dependencies and start Vite in a third terminal:
 
 ```powershell
 cd frontend
@@ -155,15 +139,11 @@ npm install
 npm run dev
 ```
 
-Database:
+Open `http://localhost:5173`. The backend API runs at `http://localhost:8080`.
 
-```powershell
-docker compose up -d
-```
+The checked-in defaults work without creating a local `.env` file. Docker Compose automatically reads a root `.env` file, so copy `.env.example` to `.env` when you need to customize the container settings. Spring Boot does not load that file automatically; provide custom `SPRING_DATASOURCE_*` values through the terminal or deployment environment.
 
-The checked-in defaults work without creating a local `.env` file. If you want to customize them, copy `.env.example` to `.env` and edit the values.
-
-Docker Compose and Spring Boot both use these defaults:
+Docker Compose and Spring Boot use matching defaults:
 
 ```text
 Database: workout_tracker
@@ -339,6 +319,18 @@ Endpoints:
 | `GET` | `/api/workouts/{id}` | Get workout details with exercises and sets | `200 OK` |
 | `POST` | `/api/workouts/{id}/exercises` | Add an exercise to a workout | `201 Created` |
 | `POST` | `/api/workout-exercises/{id}/sets` | Add a set to a workout exercise | `201 Created` |
+| `PUT` | `/api/workouts/{id}` | Update workout date, title, and notes | `200 OK` |
+| `DELETE` | `/api/workouts/{id}` | Delete workout with its exercises and sets | `204 No Content` |
+| `PUT` | `/api/workout-exercises/{id}` | Update exercise order and notes | `200 OK` |
+| `DELETE` | `/api/workout-exercises/{id}` | Remove exercise from workout with its sets | `204 No Content` |
+| `PUT` | `/api/sets/{id}` | Update set number, reps, and weight | `200 OK` |
+| `DELETE` | `/api/sets/{id}` | Delete a logged set | `204 No Content` |
+
+Updates use the same workout and set request bodies shown above. Omit `workoutDate` or `setNumber` on an update to keep its existing value. An omitted or blank title or notes clears that text. For workout exercises, send `exerciseOrder` and `notes`; omitting `exerciseOrder` keeps the existing order. The library exercise associated with logged sets stays the same.
+
+Duplicate set numbers within an exercise and duplicate exercise orders within a workout return `409 Conflict`. Weight supports values from `0` to `99999.99`, with up to two decimal places. Deletion leaves gaps in set numbers and exercise order; new entries use the highest remaining number plus one.
+
+Deleting a workout removes its workout exercises and sets. Removing a workout exercise removes its sets while keeping the reusable exercise in the library. Library deletion returns `409 Conflict` when an exercise is still referenced by a workout. Totals, progress history, and personal records are calculated from the remaining sets, so edits and deletions affect the next read automatically.
 
 ## Progress API
 
@@ -400,6 +392,13 @@ Common status codes:
 
 ## Backend Tests
 
+Run the backend test suite while local PostgreSQL is available:
+
+```powershell
+cd backend
+.\mvnw.cmd test
+```
+
 Controller tests call the REST API layer through `MockMvc`. They are useful when we want to verify endpoint paths, status codes, headers, and JSON response bodies.
 
 Service tests call service classes directly with mocked repositories. They are useful when we want to verify business rules without making an HTTP request or touching the database.
@@ -413,19 +412,22 @@ Current test focus:
 | `ExerciseServiceTests` | Exercise creation business rules |
 | `WorkoutServiceTests` | Workout creation and set validation business rules |
 | `WorkoutMapperTests` | Total sets and total volume calculation |
+| `WorkoutEditingTests` | Updates, validation, duplicate positions, deletion cascades, library protection, and recalculated progress |
 | `FlywayMigrationTests` | Database schema created by migrations |
 | `DatabaseConnectionTests` | Backend can connect to PostgreSQL |
-## Phase Roadmap
 
-1. Project setup
-2. Local PostgreSQL with Docker
-3. Flyway migrations
-4. Basic exercise REST API
-5. Workout REST API
-6. Validation and error handling
-7. JUnit tests
-8. React frontend foundation
-9. Connect frontend to backend
-10. Progress tracking
-11. Neon cloud database
-12. Polish and resume readiness
+Frontend checks:
+
+```powershell
+cd frontend
+npm run lint
+npm run build
+```
+
+## Future Plans
+
+- Add user accounts, authentication, and authorization so each user owns their workout data.
+- Add reusable workout templates and planned routines.
+- Expand progress analytics with additional trends, goals, and personal-record history.
+- Refine the responsive UI, accessibility, and overall interaction design.
+- Deploy the frontend and backend with Neon as the production database and add automated deployment checks.

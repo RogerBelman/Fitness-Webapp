@@ -57,6 +57,16 @@ public class Workout {
 		return id;
 	}
 
+	public void updateDetails(LocalDate workoutDate, String title, String notes) {
+		this.workoutDate = workoutDate;
+		this.title = title;
+		this.notes = notes;
+	}
+
+	public void removeWorkoutExercise(WorkoutExercise workoutExercise) {
+		workoutExercises.remove(workoutExercise);
+	}
+
 	public LocalDate getWorkoutDate() {
 		return workoutDate;
 	}

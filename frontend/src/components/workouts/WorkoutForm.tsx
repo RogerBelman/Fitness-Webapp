@@ -11,10 +11,19 @@ type WorkoutFormValues = {
 type WorkoutFormProps = {
   isSaving: boolean
   onCreate: (request: WorkoutRequest) => Promise<boolean>
+  initialValues?: WorkoutFormValues
+  onCancel?: () => void
 }
 
-export function WorkoutForm({ isSaving, onCreate }: WorkoutFormProps) {
-  const [form, setForm] = useState<WorkoutFormValues>(createEmptyForm)
+export function WorkoutForm({
+  isSaving,
+  onCreate,
+  initialValues,
+  onCancel,
+}: WorkoutFormProps) {
+  const [form, setForm] = useState<WorkoutFormValues>(
+    () => initialValues ?? createEmptyForm(),
+  )
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -25,60 +34,82 @@ export function WorkoutForm({ isSaving, onCreate }: WorkoutFormProps) {
       notes: form.notes || undefined,
     })
 
-    if (wasCreated) {
+    if (wasCreated && !initialValues) {
       setForm(createEmptyForm())
     }
   }
 
   return (
     <form className="FormSurface" onSubmit={handleSubmit}>
-      <label>
-        Workout Date
-        <input
-          max={getTodayDate()}
-          name="workoutDate"
-          onChange={(event) =>
-            setForm((current) => ({ ...current, workoutDate: event.target.value }))
-          }
-          required
-          type="date"
-          value={form.workoutDate}
-        />
-      </label>
+      <fieldset className="FormFieldset" disabled={isSaving}>
+        <label>
+          Workout Date
+          <input
+            max={getTodayDate()}
+            name="workoutDate"
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                workoutDate: event.target.value,
+              }))
+            }
+            required
+            type="date"
+            value={form.workoutDate}
+          />
+        </label>
 
-      <label>
-        Title
-        <input
-          maxLength={120}
-          name="title"
-          onChange={(event) =>
-            setForm((current) => ({ ...current, title: event.target.value }))
-          }
-          placeholder="Push Day"
-          type="text"
-          value={form.title}
-        />
-      </label>
+        <label>
+          Title
+          <input
+            maxLength={120}
+            name="title"
+            onChange={(event) =>
+              setForm((current) => ({ ...current, title: event.target.value }))
+            }
+            placeholder="Push Day"
+            type="text"
+            value={form.title}
+          />
+        </label>
 
-      <label>
-        Notes
-        <textarea
-          maxLength={500}
-          name="notes"
-          onChange={(event) =>
-            setForm((current) => ({ ...current, notes: event.target.value }))
-          }
-          placeholder="Optional workout notes"
-          rows={4}
-          value={form.notes}
-        />
-      </label>
+        <label>
+          Notes
+          <textarea
+            maxLength={500}
+            name="notes"
+            onChange={(event) =>
+              setForm((current) => ({ ...current, notes: event.target.value }))
+            }
+            placeholder="Optional workout notes"
+            rows={4}
+            value={form.notes}
+          />
+        </label>
 
-      <div className="FormActions">
-        <button className="Button ButtonPrimary" disabled={isSaving} type="submit">
-          {isSaving ? 'Creating...' : 'Create Workout'}
-        </button>
-      </div>
+        <div className="FormActions">
+          <button
+            className="Button ButtonPrimary"
+            disabled={isSaving}
+            type="submit"
+          >
+            {isSaving
+              ? 'Saving...'
+              : initialValues
+                ? 'Save Workout'
+                : 'Create Workout'}
+          </button>
+          {onCancel ? (
+            <button
+              className="Button ButtonSecondary"
+              type="button"
+              onClick={onCancel}
+            >
+              Cancel
+            </button>
+          ) : null}
+        </div>
+      </fieldset>
     </form>
   )
 }

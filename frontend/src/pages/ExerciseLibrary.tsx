@@ -16,6 +16,8 @@ export function ExerciseLibrary() {
     errorMessage,
     successMessage,
     addExercise,
+    saveExercise,
+    removeExercise,
   } = useExercises(muscleGroupFilter, categoryFilter)
 
   const visibleExercises = useMemo(() => {
@@ -48,10 +50,24 @@ export function ExerciseLibrary() {
         onCategoryChange={setCategoryFilter}
       />
 
-      {errorMessage ? <p className="Alert AlertError">{errorMessage}</p> : null}
-      {successMessage ? <p className="Alert AlertSuccess">{successMessage}</p> : null}
+      {errorMessage ? (
+        <p className="Alert AlertError" role="alert">
+          {errorMessage}
+        </p>
+      ) : null}
+      {successMessage ? (
+        <p className="Alert AlertSuccess" role="status">
+          {successMessage}
+        </p>
+      ) : null}
 
-      <ExerciseList exercises={visibleExercises} isLoading={isLoading} />
+      <ExerciseList
+        exercises={visibleExercises}
+        isLoading={isLoading}
+        isSaving={isSaving}
+        onSave={saveExercise}
+        onDelete={removeExercise}
+      />
     </section>
   )
 }

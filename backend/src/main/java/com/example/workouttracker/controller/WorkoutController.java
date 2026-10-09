@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -46,6 +48,17 @@ public class WorkoutController {
 	@GetMapping("/{id}")
 	public WorkoutDetailResponse findById(@PathVariable Long id) {
 		return workoutService.findById(id);
+	}
+
+	@PutMapping("/{id}")
+	public WorkoutResponse update(@PathVariable Long id, @Valid @RequestBody WorkoutRequest request) {
+		return workoutService.update(id, request);
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> delete(@PathVariable Long id) {
+		workoutService.delete(id);
+		return ResponseEntity.noContent().build();
 	}
 
 	@PostMapping("/{id}/exercises")

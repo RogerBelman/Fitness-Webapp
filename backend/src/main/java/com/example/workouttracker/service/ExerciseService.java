@@ -14,15 +14,18 @@ import com.example.workouttracker.exception.DuplicateResourceException;
 import com.example.workouttracker.exception.ResourceNotFoundException;
 import com.example.workouttracker.mapper.ExerciseMapper;
 import com.example.workouttracker.repository.ExerciseRepository;
+import com.example.workouttracker.repository.WorkoutExerciseRepository;
 
 @Service
 @Transactional
 public class ExerciseService {
 
 	private final ExerciseRepository exerciseRepository;
+	private final WorkoutExerciseRepository workoutExerciseRepository;
 
-	public ExerciseService(ExerciseRepository exerciseRepository) {
+	public ExerciseService(ExerciseRepository exerciseRepository, WorkoutExerciseRepository workoutExerciseRepository) {
 		this.exerciseRepository = exerciseRepository;
+		this.workoutExerciseRepository = workoutExerciseRepository;
 	}
 
 	@Transactional(readOnly = true)
@@ -72,6 +75,7 @@ public class ExerciseService {
 		}
 
 		exercise.updateDetails(values.name(), values.muscleGroup(), values.category());
+		exerciseRepository.flush();
 		return ExerciseMapper.toResponse(exercise);
 	}
 
@@ -80,7 +84,12 @@ public class ExerciseService {
 			throw new ResourceNotFoundException("Exercise not found.");
 		}
 
+		if (workoutExerciseRepository.existsByExerciseId(id)) {
+			throw new DuplicateResourceException(
+					"Exercise is used in workout history. Remove it from those workouts before deleting it from the library.");
+		}
 		exerciseRepository.deleteById(id);
+		exerciseRepository.flush();
 	}
 
 	private Exercise getExercise(Long id) {

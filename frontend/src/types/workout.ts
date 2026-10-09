@@ -51,3 +51,8 @@ export type SetEntryRequest = {
   reps: number
   weight: number
 }
+
+export type UpdateWorkoutExerciseRequest = {
+  exerciseOrder?: number
+  notes?: string
+}

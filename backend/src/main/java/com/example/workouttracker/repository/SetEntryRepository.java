@@ -26,4 +26,6 @@ public interface SetEntryRepository extends JpaRepository<SetEntry, Long> {
 	List<SetEntry> findAllForExerciseHistory(@Param("exerciseId") Long exerciseId);
 
 	boolean existsByWorkoutExerciseIdAndSetNumber(Long workoutExerciseId, Integer setNumber);
+
+	boolean existsByWorkoutExerciseIdAndSetNumberAndIdNot(Long workoutExerciseId, Integer setNumber, Long id);
 }

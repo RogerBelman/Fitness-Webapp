@@ -1,104 +1,113 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ApiError } from '../api/client'
-import { addSet, addWorkoutExercise, getWorkout } from '../api/workouts'
+import * as api from '../api/workouts'
 import type {
   AddWorkoutExerciseRequest,
   SetEntryRequest,
+  UpdateWorkoutExerciseRequest,
   WorkoutDetail,
+  WorkoutRequest,
 } from '../types/workout'
 
 export function useWorkout(workoutId: string | undefined) {
   const [workout, setWorkout] = useState<WorkoutDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [isAddingExercise, setIsAddingExercise] = useState(false)
-  const [addingSetToExerciseId, setAddingSetToExerciseId] = useState<number | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const saving = useRef(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const id = parseWorkoutId(workoutId)
 
-  const loadWorkout = useCallback(async () => {
+  useEffect(() => {
+    let active = true
+    setWorkout(null)
+    setIsLoading(true)
+    setErrorMessage(null)
+    setSuccessMessage(null)
     if (id === null) {
-      setWorkout(null)
       setErrorMessage('Workout ID is invalid.')
       setIsLoading(false)
       return
     }
-
-    setWorkout(null)
-    setIsLoading(true)
-    setErrorMessage(null)
-
-    try {
-      const data = await getWorkout(id)
-      setWorkout(data)
-    } catch (error) {
-      setErrorMessage(getErrorMessage(error))
-    } finally {
-      setIsLoading(false)
+    api
+      .getWorkout(id)
+      .then((data) => {
+        if (active) setWorkout(data)
+      })
+      .catch((error: unknown) => {
+        if (active) setErrorMessage(getErrorMessage(error))
+      })
+      .finally(() => {
+        if (active) setIsLoading(false)
+      })
+    return () => {
+      active = false
     }
   }, [id])
 
-  useEffect(() => {
-    void loadWorkout()
-  }, [loadWorkout])
-
-  async function addExercise(request: AddWorkoutExerciseRequest): Promise<boolean> {
-    if (id === null) {
-      setErrorMessage('Workout ID is invalid.')
-      return false
-    }
-
-    setIsAddingExercise(true)
-    setErrorMessage(null)
-    setSuccessMessage(null)
-
-    try {
-      const workoutExercise = await addWorkoutExercise(id, request)
-      setSuccessMessage(`${workoutExercise.exercise.name} was added to the workout.`)
-      await loadWorkout()
-      return true
-    } catch (error) {
-      setErrorMessage(getErrorMessage(error))
-      return false
-    } finally {
-      setIsAddingExercise(false)
-    }
-  }
-
-  async function addSetEntry(
-    workoutExerciseId: number,
-    request: SetEntryRequest,
+  async function mutate(
+    action: () => Promise<unknown>,
+    message: string,
+    refresh = true,
   ): Promise<boolean> {
-    setAddingSetToExerciseId(workoutExerciseId)
+    if (id === null || saving.current) return false
+    saving.current = true
+    setIsSaving(true)
     setErrorMessage(null)
     setSuccessMessage(null)
-
     try {
-      const exerciseName =
-        workout?.exercises.find((item) => item.id === workoutExerciseId)?.exercise.name ??
-        'Exercise'
-      const createdSet = await addSet(workoutExerciseId, request)
-
-      setSuccessMessage(`Set ${createdSet.setNumber} was added to ${exerciseName}.`)
-      await loadWorkout()
+      await action()
+      setSuccessMessage(message)
+      if (refresh) {
+        try {
+          setWorkout(await api.getWorkout(id))
+        } catch (error) {
+          setErrorMessage(
+            `Change saved, but the workout could not be refreshed: ${getErrorMessage(error)}`,
+          )
+        }
+      }
       return true
     } catch (error) {
       setErrorMessage(getErrorMessage(error))
       return false
     } finally {
-      setAddingSetToExerciseId(null)
+      saving.current = false
+      setIsSaving(false)
     }
   }
 
   return {
     workout,
     isLoading,
-    isAddingExercise,
-    addingSetToExerciseId,
+    isSaving,
     errorMessage,
     successMessage,
-    addExercise,
-    addSetEntry,
+    addExercise: (request: AddWorkoutExerciseRequest) =>
+      mutate(
+        () => api.addWorkoutExercise(id!, request),
+        'Exercise added to the workout.',
+      ),
+    addSetEntry: (exerciseId: number, request: SetEntryRequest) =>
+      mutate(() => api.addSet(exerciseId, request), 'Set added.'),
+    saveWorkout: (request: WorkoutRequest) =>
+      mutate(() => api.updateWorkout(id!, request), 'Workout updated.'),
+    removeWorkout: () =>
+      mutate(() => api.deleteWorkout(id!), 'Workout deleted.', false),
+    saveExercise: (exerciseId: number, request: UpdateWorkoutExerciseRequest) =>
+      mutate(
+        () => api.updateWorkoutExercise(exerciseId, request),
+        'Workout exercise updated.',
+      ),
+    removeExercise: (exerciseId: number) =>
+      mutate(
+        () => api.deleteWorkoutExercise(exerciseId),
+        'Exercise and its sets removed from the workout.',
+      ),
+    saveSet: (setId: number, request: SetEntryRequest) =>
+      mutate(() => api.updateSet(setId, request), 'Set updated.'),
+    removeSet: (setId: number) =>
+      mutate(() => api.deleteSet(setId), 'Set deleted.'),
   }
 }
 
@@ -108,22 +117,26 @@ function parseWorkoutId(workoutId: string | undefined) {
 }
 
 function getErrorMessage(error: unknown) {
-  if (error instanceof ApiError && isApiErrorDetails(error.details)) {
+  if (
+    error instanceof ApiError &&
+    typeof error.details === 'object' &&
+    error.details !== null &&
+    'message' in error.details &&
+    typeof error.details.message === 'string'
+  ) {
+    if (
+      'fieldErrors' in error.details &&
+      typeof error.details.fieldErrors === 'object' &&
+      error.details.fieldErrors !== null
+    ) {
+      const messages = Object.values(error.details.fieldErrors).filter(
+        (value): value is string => typeof value === 'string',
+      )
+      if (messages.length > 0) return messages.join(' ')
+    }
     return error.details.message
   }
-
-  if (error instanceof Error) {
-    return error.message
-  }
-
-  return 'Could not load workout details.'
-}
-
-function isApiErrorDetails(details: unknown): details is { message: string } {
-  return (
-    typeof details === 'object' &&
-    details !== null &&
-    'message' in details &&
-    typeof details.message === 'string'
-  )
+  return error instanceof Error
+    ? error.message
+    : 'Could not update the workout.'
 }

@@ -7,6 +7,7 @@ import type {
   WorkoutDetail,
   WorkoutExercise,
   WorkoutRequest,
+  UpdateWorkoutExerciseRequest,
 } from '../types/workout'
 
 export function listWorkouts() {
@@ -35,8 +36,47 @@ export function addWorkoutExercise(
 }
 
 export function addSet(workoutExerciseId: number, request: SetEntryRequest) {
-  return apiRequest<SetEntry>(`/api/workout-exercises/${workoutExerciseId}/sets`, {
-    method: 'POST',
+  return apiRequest<SetEntry>(
+    `/api/workout-exercises/${workoutExerciseId}/sets`,
+    {
+      method: 'POST',
+      body: request,
+    },
+  )
+}
+
+export function updateWorkout(id: number, request: WorkoutRequest) {
+  return apiRequest<Workout>(`/api/workouts/${id}`, {
+    method: 'PUT',
     body: request,
   })
+}
+
+export function deleteWorkout(id: number) {
+  return apiRequest<void>(`/api/workouts/${id}`, { method: 'DELETE' })
+}
+
+export function updateWorkoutExercise(
+  id: number,
+  request: UpdateWorkoutExerciseRequest,
+) {
+  return apiRequest<WorkoutExercise>(`/api/workout-exercises/${id}`, {
+    method: 'PUT',
+    body: request,
+  })
+}
+
+export function deleteWorkoutExercise(id: number) {
+  return apiRequest<void>(`/api/workout-exercises/${id}`, { method: 'DELETE' })
+}
+
+export function updateSet(id: number, request: SetEntryRequest) {
+  return apiRequest<SetEntry>(`/api/sets/${id}`, {
+    method: 'PUT',
+    body: request,
+  })
+}
+
+export function deleteSet(id: number) {
+  return apiRequest<void>(`/api/sets/${id}`, { method: 'DELETE' })
 }
