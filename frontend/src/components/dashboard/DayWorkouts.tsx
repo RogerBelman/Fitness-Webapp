@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { Workout, WorkoutDetail } from '../../types/workout'
 import { formatCalendarDate } from '../../utils/workoutCalendar'
+import { TrainingTypeBadge } from '../TrainingTypeBadge'
 
 type DayWorkoutsProps = {
   date: string
@@ -113,14 +114,14 @@ export function DayWorkouts({
                       <li key={item.id}>
                         <div>
                           <strong>{item.exercise.name}</strong>
-                          <span>
-                            {item.exercise.trainingType === 'CARDIO'
-                              ? 'Cardio'
-                              : 'Strength'}
-                            {item.exercise.muscleGroup
-                              ? ` · ${item.exercise.muscleGroup}`
-                              : ''}
-                          </span>
+                          <div className="ExerciseTypeLine">
+                            <TrainingTypeBadge
+                              trainingType={item.exercise.trainingType}
+                            />
+                            {item.exercise.muscleGroup ? (
+                              <span>{item.exercise.muscleGroup}</span>
+                            ) : null}
+                          </div>
                           {item.exercise.instructions ? (
                             <details className="DayExerciseInstructions">
                               <summary>Instructions</summary>

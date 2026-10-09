@@ -30,15 +30,17 @@ export function ExerciseFilters({
           onChange={(event) => onTrainingTypeChange(event.target.value)}
         >
           <option value="">All</option>
-          <option value="STRENGTH">Strength</option>
-          <option value="CARDIO">Cardio</option>
+          <option value="STRENGTH">💪 Strength</option>
+          <option value="CARDIO">❤️ Cardio</option>
         </select>
       </label>
       <label>
         Search
         <input
           onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Bench press"
+          placeholder={
+            isCardio ? 'Search cardio exercises' : 'Search by exercise name'
+          }
           type="search"
           value={searchTerm}
         />

@@ -123,26 +123,25 @@ class WorkoutEditingTests {
 	}
 
 	@Test
-	void editsWorkoutExerciseNotesAndOrderAndRejectsDuplicateOrder() throws Exception {
+	void swapsWorkoutExerciseOrderWithoutLosingEntries() throws Exception {
 		Fixture fixture = fixture();
 		Workout workout = workouts.findById(fixture.workoutId()).orElseThrow();
 		Exercise exercise = exercises.findById(fixture.exerciseId()).orElseThrow();
-		workoutExercises.save(new WorkoutExercise(workout, exercise, 2, null));
+		WorkoutExercise otherExercise = workoutExercises.save(new WorkoutExercise(workout, exercise, 2));
+		Long otherExerciseId = otherExercise.getId();
 		flushAndClear();
 		mockMvc.perform(put("/api/workout-exercises/{id}", fixture.workoutExerciseId())
-				.contentType(MediaType.APPLICATION_JSON).content("{\"exerciseOrder\":2,\"notes\":\"Changed\"}"))
-				.andExpect(status().isConflict());
-		mockMvc.perform(put("/api/workout-exercises/{id}", fixture.workoutExerciseId())
-				.contentType(MediaType.APPLICATION_JSON).content("{\"exerciseOrder\":3,\"notes\":\" Paused reps \"}"))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.notes").value("Paused reps"));
+				.contentType(MediaType.APPLICATION_JSON).content("{\"exerciseOrder\":2}"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.exerciseOrder").value(2))
+				.andExpect(jsonPath("$.notes").doesNotExist());
 		flushAndClear();
 		mockMvc.perform(get("/api/workouts/{id}", fixture.workoutId()))
-				.andExpect(jsonPath("$.exercises[1].exerciseOrder").value(3))
+				.andExpect(jsonPath("$.exercises[0].id").value(otherExerciseId))
+				.andExpect(jsonPath("$.exercises[0].exerciseOrder").value(1))
+				.andExpect(jsonPath("$.exercises[1].id").value(fixture.workoutExerciseId()))
+				.andExpect(jsonPath("$.exercises[1].exerciseOrder").value(2))
 				.andExpect(jsonPath("$.exercises[1].sets", hasSize(2)));
-		mockMvc.perform(put("/api/workout-exercises/{id}", fixture.workoutExerciseId())
-				.contentType(MediaType.APPLICATION_JSON).content("{\"notes\":\"\"}"))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.exerciseOrder").value(3))
-				.andExpect(jsonPath("$.notes").isEmpty());
 	}
 
 	@Test
@@ -203,7 +202,7 @@ class WorkoutEditingTests {
 	private Fixture fixture() {
 		Exercise exercise = exercises.save(new Exercise("Edit test " + UUID.randomUUID(), "Chest", "Barbell"));
 		Workout workout = workouts.save(new Workout(LocalDate.of(2026, 8, 20), "Push Day", "Original notes"));
-		WorkoutExercise workoutExercise = workoutExercises.save(new WorkoutExercise(workout, exercise, 1, "Original notes"));
+		WorkoutExercise workoutExercise = workoutExercises.save(new WorkoutExercise(workout, exercise, 1));
 		SetEntry first = sets.save(new SetEntry(workoutExercise, 1, 10, new BigDecimal("100.00")));
 		SetEntry second = sets.save(new SetEntry(workoutExercise, 2, 5, new BigDecimal("150.00")));
 		Fixture result = new Fixture(exercise.getId(), workout.getId(), workoutExercise.getId(), first.getId(), second.getId());

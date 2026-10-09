@@ -1,6 +1,10 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import type { FormEvent } from 'react'
-import type { ExerciseRequest, TrainingType } from '../../types/exercise'
+import type { ExerciseRequest } from '../../types/exercise'
+import {
+  getTrainingTypeIcon,
+  getTrainingTypeLabel,
+} from '../../utils/trainingTypeDisplay'
 
 const emptyForm: ExerciseRequest = {
   trainingType: 'STRENGTH',
@@ -24,6 +28,7 @@ export function ExerciseForm({
   onCancel,
   createInWorkout = false,
 }: ExerciseFormProps) {
+  const formId = useId()
   const [form, setForm] = useState<ExerciseRequest>(() =>
     initialValues
       ? {
@@ -46,35 +51,60 @@ export function ExerciseForm({
   }
 
   return (
-    <form className="FormSurface" onSubmit={handleSubmit}>
+    <form
+      className="FormSurface ExerciseEditor"
+      onSubmit={handleSubmit}
+      aria-labelledby={`${formId}-title`}
+    >
       <fieldset className="FormFieldset" disabled={isSaving}>
-        <div className="SectionHeader">
-          <h2>
-            {initialValues ? 'Edit' : 'New'} {isCardio ? 'Cardio' : 'Strength'}{' '}
-            Exercise
+        <header className="ExerciseEditorHeader">
+          <h2 id={`${formId}-title`}>
+            {initialValues ? 'Edit Exercise' : 'New Exercise'}
           </h2>
-        </div>
+          <p>
+            {createInWorkout
+              ? 'Save to your library and add to this workout.'
+              : 'Set up the exercise once. Log your performance in a workout.'}
+          </p>
+        </header>
 
-        <div className="FormGrid">
+        <fieldset className="ExerciseTypePicker">
+          <legend>Training Type</legend>
+          <div className="ExerciseTypeOptions">
+            {(['STRENGTH', 'CARDIO'] as const).map((type) => (
+              <label className="ExerciseTypeOption" key={type}>
+                <input
+                  type="radio"
+                  name={`${formId}-trainingType`}
+                  value={type}
+                  checked={form.trainingType === type}
+                  onChange={() =>
+                    setForm((current) => ({ ...current, trainingType: type }))
+                  }
+                />
+                <span className="ExerciseTypeOptionIcon" aria-hidden="true">
+                  {getTrainingTypeIcon(type)}
+                </span>
+                <span>
+                  <strong>{getTrainingTypeLabel(type)}</strong>
+                  <small>
+                    {type === 'STRENGTH'
+                      ? 'Sets, reps & weight'
+                      : 'Duration & machine level'}
+                  </small>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <div
+          className={`ExerciseDetailsGrid${isCardio ? ' ExerciseDetailsGridSingle' : ''}`}
+        >
           <label>
-            Training Type
-            <select
-              autoFocus={createInWorkout}
-              value={form.trainingType}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  trainingType: event.target.value as TrainingType,
-                }))
-              }
-            >
-              <option value="STRENGTH">Strength — sets, reps, weight</option>
-              <option value="CARDIO">Cardio — duration, level</option>
-            </select>
-          </label>
-          <label>
-            Name
+            Exercise Name
             <input
+              autoFocus
               name="name"
               maxLength={120}
               onChange={(event) =>
@@ -108,27 +138,15 @@ export function ExerciseForm({
           ) : null}
         </div>
 
-        <div className="ExerciseTrackingInfo" role="status">
-          <strong>{isCardio ? 'Cardio tracking' : 'Strength tracking'}</strong>
-          <p>
-            {isCardio
-              ? 'Duration (minutes) and optional machine level are recorded each time you perform this exercise.'
-              : 'Sets, reps, and weight are recorded each time you perform this exercise.'}
-          </p>
-          <p>
-            {createInWorkout
-              ? 'Create this exercise to save it in your library and start logging it in this workout.'
-              : 'Save this exercise, then add it to a workout to enter those values.'}
-          </p>
-        </div>
-
         <label>
-          Instructions
+          <span>
+            Instructions <span className="OptionalLabel">(optional)</span>
+          </span>
           <textarea
             name="instructions"
             maxLength={500}
-            rows={4}
-            placeholder="Equipment details, setup, grip, technique, or cues to remember."
+            rows={3}
+            placeholder="Reusable setup and technique cues, shown each time you use this exercise."
             value={form.instructions ?? ''}
             onChange={(event) =>
               setForm((current) => ({
@@ -139,7 +157,28 @@ export function ExerciseForm({
           />
         </label>
 
-        <div className="FormActions">
+        <p className="ExerciseTrackingHint" role="status">
+          {isCardio
+            ? 'In a workout, log duration in minutes and an optional machine level.'
+            : 'In a workout, log sets, reps, and weight.'}
+        </p>
+        {initialValues ? (
+          <p className="ExerciseTrackingHint">
+            Library changes appear in past workouts too. Training type can only
+            change before any sets or cardio entries are logged.
+          </p>
+        ) : null}
+
+        <div className="FormActions ExerciseEditorActions">
+          {onCancel ? (
+            <button
+              className="Button ButtonSecondary"
+              type="button"
+              onClick={onCancel}
+            >
+              Cancel
+            </button>
+          ) : null}
           <button
             className="Button ButtonPrimary"
             disabled={isSaving}
@@ -153,15 +192,6 @@ export function ExerciseForm({
                   ? 'Create & Add to Workout'
                   : 'Create Exercise'}
           </button>
-          {onCancel ? (
-            <button
-              className="Button ButtonSecondary"
-              type="button"
-              onClick={onCancel}
-            >
-              Cancel
-            </button>
-          ) : null}
         </div>
       </fieldset>
     </form>

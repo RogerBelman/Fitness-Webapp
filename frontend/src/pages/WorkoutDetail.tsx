@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { DeleteButton } from '../components/DeleteButton'
+import { ActionFeedback } from '../components/ActionFeedback'
 import { PageHeader } from '../components/PageHeader'
 import { ExerciseForm } from '../components/exercises/ExerciseForm'
 import { AddWorkoutExerciseForm } from '../components/workouts/AddWorkoutExerciseForm'
@@ -13,7 +14,9 @@ export function WorkoutDetail() {
   const { workoutId } = useParams()
   const navigate = useNavigate()
   const [isEditing, setIsEditing] = useState(false)
+  const [isAddingExercise, setIsAddingExercise] = useState(false)
   const [isCreatingExercise, setIsCreatingExercise] = useState(false)
+  const [isReorderingExercises, setIsReorderingExercises] = useState(false)
   const {
     workout,
     isLoading,
@@ -56,7 +59,7 @@ export function WorkoutDetail() {
                 <button
                   className="Button ButtonSecondary"
                   type="button"
-                  disabled={isSaving || isEditing}
+                  disabled={isSaving || isEditing || isReorderingExercises}
                   onClick={() => setIsEditing(true)}
                 >
                   Edit Workout
@@ -65,7 +68,7 @@ export function WorkoutDetail() {
                   label="Delete Workout"
                   title="Delete this workout?"
                   description="This permanently deletes the workout, all its exercises, and all logged entries. This cannot be undone."
-                  disabled={isSaving || isEditing}
+                  disabled={isSaving || isEditing || isReorderingExercises}
                   onDelete={async () => {
                     const deleted = await removeWorkout()
                     if (deleted) navigate('/workouts', { replace: true })
@@ -81,19 +84,12 @@ export function WorkoutDetail() {
         }
       />
 
-      {errorMessage && !isCreatingExercise ? (
-        <p className="Alert AlertError" role="alert">
-          {errorMessage}
-        </p>
-      ) : null}
-      {exerciseLibraryError ? (
-        <p className="Alert AlertError">{exerciseLibraryError}</p>
-      ) : null}
-      {successMessage ? (
-        <p className="Alert AlertSuccess" role="status">
-          {successMessage}
-        </p>
-      ) : null}
+      <ActionFeedback
+        errorMessage={
+          (isCreatingExercise ? null : errorMessage) ?? exerciseLibraryError
+        }
+        successMessage={successMessage}
+      />
 
       {isLoading ? (
         <section className="ContentBand">
@@ -120,36 +116,6 @@ export function WorkoutDetail() {
               }}
             />
           ) : null}
-          <AddWorkoutExerciseForm
-            exercises={exercises}
-            isLoadingExercises={isLoadingExercises}
-            isSaving={isSaving}
-            onAdd={addExercise}
-            onCreateNew={() => setIsCreatingExercise(true)}
-            isCreatingExercise={isCreatingExercise}
-          />
-          {isCreatingExercise ? (
-            <div id="create-workout-exercise">
-              {errorMessage ? (
-                <p className="Alert AlertError" role="alert">
-                  {errorMessage}
-                </p>
-              ) : null}
-              <ExerciseForm
-                createInWorkout
-                isSaving={isSaving}
-                onCancel={() => setIsCreatingExercise(false)}
-                onCreate={async (request) => {
-                  const saved = await createAndAddExercise(request)
-                  if (saved) {
-                    setIsCreatingExercise(false)
-                    await refreshExercises()
-                  }
-                  return saved
-                }}
-              />
-            </div>
-          ) : null}
           <WorkoutDetails
             onAddCardio={addCardio}
             onSaveCardio={saveCardio}
@@ -161,6 +127,84 @@ export function WorkoutDetail() {
             onRemoveExercise={removeExercise}
             onSaveSet={saveSet}
             onRemoveSet={removeSet}
+            isReordering={isReorderingExercises}
+            exerciseActions={
+              <>
+                {!isReorderingExercises ? (
+                  <button
+                    className={`Button ${isAddingExercise ? 'ButtonSecondary' : 'ButtonPrimary'}`}
+                    type="button"
+                    aria-expanded={isAddingExercise}
+                    aria-controls="add-workout-exercise-panel"
+                    disabled={isSaving}
+                    onClick={() => {
+                      setIsAddingExercise((current) => !current)
+                      if (isAddingExercise) setIsCreatingExercise(false)
+                    }}
+                  >
+                    {isAddingExercise ? 'Close' : 'Add Exercise'}
+                  </button>
+                ) : null}
+                {workout.exercises.length > 1 ? (
+                  <button
+                    className={`Button ${isReorderingExercises ? 'ButtonPrimary' : 'ButtonSecondary'}`}
+                    type="button"
+                    disabled={isSaving || isEditing}
+                    aria-pressed={isReorderingExercises}
+                    onClick={() => {
+                      if (!isReorderingExercises) {
+                        setIsAddingExercise(false)
+                        setIsCreatingExercise(false)
+                      }
+                      setIsReorderingExercises((current) => !current)
+                    }}
+                  >
+                    {isReorderingExercises
+                      ? 'Done Reordering'
+                      : 'Reorder Exercises'}
+                  </button>
+                ) : null}
+              </>
+            }
+            addExercisePanel={
+              isAddingExercise && !isReorderingExercises ? (
+                <div
+                  className="AddExercisePanel"
+                  id="add-workout-exercise-panel"
+                >
+                  <AddWorkoutExerciseForm
+                    exercises={exercises}
+                    isLoadingExercises={isLoadingExercises}
+                    isSaving={isSaving}
+                    onAdd={addExercise}
+                    onCreateNew={() => setIsCreatingExercise(true)}
+                    isCreatingExercise={isCreatingExercise}
+                  />
+                  {isCreatingExercise ? (
+                    <div id="create-workout-exercise">
+                      {errorMessage ? (
+                        <p className="Alert AlertError" role="alert">
+                          {errorMessage}
+                        </p>
+                      ) : null}
+                      <ExerciseForm
+                        createInWorkout
+                        isSaving={isSaving}
+                        onCancel={() => setIsCreatingExercise(false)}
+                        onCreate={async (request) => {
+                          const saved = await createAndAddExercise(request)
+                          if (saved) {
+                            setIsCreatingExercise(false)
+                            await refreshExercises()
+                          }
+                          return saved
+                        }}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              ) : null
+            }
           />
         </>
       ) : null}

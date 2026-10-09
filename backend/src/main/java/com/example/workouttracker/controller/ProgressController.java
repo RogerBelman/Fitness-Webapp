@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.workouttracker.dto.ExercisePersonalRecordResponse;
 import com.example.workouttracker.dto.ExerciseProgressResponse;
+import com.example.workouttracker.dto.CardioProgressResponse;
 import com.example.workouttracker.service.ProgressService;
 
 @RestController
@@ -27,5 +28,10 @@ public class ProgressController {
 	@GetMapping("/exercises/{exerciseId}/history")
 	public ExerciseProgressResponse findHistory(@PathVariable Long exerciseId) {
 		return progressService.findHistory(exerciseId);
+	}
+
+	@GetMapping("/exercises/{exerciseId}/cardio-history")
+	public CardioProgressResponse findCardioHistory(@PathVariable Long exerciseId) {
+		return progressService.findCardioHistory(exerciseId);
 	}
 }

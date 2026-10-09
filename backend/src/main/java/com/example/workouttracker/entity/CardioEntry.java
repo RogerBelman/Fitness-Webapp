@@ -32,9 +32,6 @@ public class CardioEntry {
 	@Column(precision = 5, scale = 2)
 	private BigDecimal level;
 
-	@Column(length = 500)
-	private String notes;
-
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
@@ -44,16 +41,15 @@ public class CardioEntry {
 	protected CardioEntry() {
 	}
 
-	public CardioEntry(WorkoutExercise workoutExercise, BigDecimal durationMinutes, BigDecimal level, String notes) {
+	public CardioEntry(WorkoutExercise workoutExercise, BigDecimal durationMinutes, BigDecimal level) {
 		this.workoutExercise = workoutExercise;
-		updateDetails(durationMinutes, level, notes);
+		updateDetails(durationMinutes, level);
 		workoutExercise.addCardioEntry(this);
 	}
 
-	public void updateDetails(BigDecimal durationMinutes, BigDecimal level, String notes) {
+	public void updateDetails(BigDecimal durationMinutes, BigDecimal level) {
 		this.durationMinutes = durationMinutes;
 		this.level = level;
-		this.notes = notes;
 	}
 
 	public Long getId() {
@@ -70,10 +66,6 @@ public class CardioEntry {
 
 	public BigDecimal getLevel() {
 		return level;
-	}
-
-	public String getNotes() {
-		return notes;
 	}
 
 	public Instant getCreatedAt() {

@@ -7,25 +7,41 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import type { ExerciseProgressPoint } from '../../types/progress'
+import type {
+  CardioProgressPoint,
+  ExerciseProgressPoint,
+} from '../../types/progress'
 
 type ProgressChartProps = {
   exerciseName: string
-  history: ExerciseProgressPoint[]
+  history: (ExerciseProgressPoint | CardioProgressPoint)[]
+  metric?: 'maxWeight' | 'totalDurationMinutes' | 'maxLevel'
 }
 
-export function ProgressChart({ exerciseName, history }: ProgressChartProps) {
+export function ProgressChart({
+  exerciseName,
+  history,
+  metric = 'maxWeight',
+}: ProgressChartProps) {
+  const label =
+    metric === 'maxWeight'
+      ? 'Max Weight'
+      : metric === 'maxLevel'
+        ? 'Highest Level'
+        : 'Duration'
+  const unit =
+    metric === 'maxWeight' ? 'lb' : metric === 'maxLevel' ? 'level' : 'min'
   return (
     <section className="ContentBand" aria-labelledby="progress-chart-heading">
       <div className="SectionHeader">
-        <h2 id="progress-chart-heading">Max Weight Trend</h2>
-        <span className="ChartUnit">lb</span>
+        <h2 id="progress-chart-heading">{label} Trend</h2>
+        <span className="ChartUnit">{unit}</span>
       </div>
 
       <div
         className="ProgressChartViewport"
         role="img"
-        aria-label={`${exerciseName} maximum weight by workout`}
+        aria-label={`${exerciseName} ${label.toLowerCase()} by workout`}
       >
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
@@ -33,7 +49,11 @@ export function ProgressChart({ exerciseName, history }: ProgressChartProps) {
             data={history}
             margin={{ top: 12, right: 12, bottom: 4, left: 0 }}
           >
-            <CartesianGrid stroke="#d9e1dc" strokeDasharray="4 4" vertical={false} />
+            <CartesianGrid
+              stroke="var(--border)"
+              strokeDasharray="4 4"
+              vertical={false}
+            />
             <XAxis
               axisLine={false}
               dataKey="workoutDate"
@@ -42,7 +62,7 @@ export function ProgressChart({ exerciseName, history }: ProgressChartProps) {
               tickMargin={10}
             />
             <YAxis
-              allowDecimals={false}
+              allowDecimals={metric !== 'maxWeight'}
               axisLine={false}
               domain={['auto', 'auto']}
               tickFormatter={(value: number) => formatWeight(value)}
@@ -51,19 +71,37 @@ export function ProgressChart({ exerciseName, history }: ProgressChartProps) {
               width={52}
             />
             <Tooltip
-              contentStyle={{ borderColor: '#cdd8d1', borderRadius: 8 }}
-              formatter={(value) => [`${formatWeight(Number(value))} lb`, 'Max weight']}
+              contentStyle={{
+                backgroundColor: 'var(--surface-raised)',
+                color: 'var(--text)',
+                border: '1px solid var(--dialog-border)',
+                borderRadius: 12,
+                boxShadow: 'var(--popup-shadow)',
+                padding: '12px 16px',
+              }}
+              labelStyle={{ color: 'var(--text)', fontWeight: 700 }}
+              itemStyle={{ color: 'var(--text)' }}
+              cursor={{ stroke: 'var(--control-border)' }}
+              formatter={(value) => [
+                `${formatWeight(Number(value))} ${unit}`,
+                label,
+              ]}
               labelFormatter={(label) => formatWorkoutDate(String(label))}
             />
             <Line
-              activeDot={{ r: 6 }}
-              dataKey="maxWeight"
-              dot={{ fill: '#166534', r: 4, strokeWidth: 0 }}
+              activeDot={{
+                r: 6,
+                fill: 'var(--accent)',
+                stroke: 'var(--on-accent)',
+                strokeWidth: 2,
+              }}
+              dataKey={metric}
+              dot={{ fill: 'var(--accent)', r: 4, strokeWidth: 0 }}
               isAnimationActive={false}
-              name="Max weight"
-              stroke="#166534"
+              name={label}
+              stroke="var(--accent)"
               strokeWidth={3}
-              type="monotone"
+              type="linear"
             />
           </LineChart>
         </ResponsiveContainer>
@@ -73,7 +111,9 @@ export function ProgressChart({ exerciseName, history }: ProgressChartProps) {
 }
 
 function formatWeight(weight: number) {
-  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(weight)
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(
+    weight,
+  )
 }
 
 function formatAxisDate(workoutDate: string) {

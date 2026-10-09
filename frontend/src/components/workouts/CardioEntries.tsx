@@ -32,7 +32,6 @@ export function CardioEntries({
               <tr>
                 <th scope="col">Duration</th>
                 <th scope="col">Level</th>
-                <th scope="col">Notes</th>
                 <th scope="col">Actions</th>
               </tr>
             </thead>
@@ -42,7 +41,6 @@ export function CardioEntries({
                   <tr>
                     <td>{entry.durationMinutes} min</td>
                     <td>{entry.level ?? '—'}</td>
-                    <td className="CardioNotes">{entry.notes || '—'}</td>
                     <td>
                       <div className="RowActions">
                         <button
@@ -56,7 +54,7 @@ export function CardioEntries({
                         </button>
                         <DeleteButton
                           title={`Delete cardio entry ${index + 1} of ${exerciseName}?`}
-                          description="This removes the cardio entry and updates your duration totals. This cannot be undone."
+                          description="This removes the cardio entry and updates your duration totals and cardio progress. This cannot be undone."
                           disabled={isSaving || editingId !== null}
                           onDelete={() => onDelete(entry.id)}
                         />
@@ -65,7 +63,7 @@ export function CardioEntries({
                   </tr>
                   {editingId === entry.id ? (
                     <tr>
-                      <td colSpan={4}>
+                      <td colSpan={3}>
                         <CardioEntryForm
                           initialValues={entry}
                           isSaving={isSaving}

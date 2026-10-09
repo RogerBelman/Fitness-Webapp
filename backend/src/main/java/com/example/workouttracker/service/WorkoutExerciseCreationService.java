@@ -22,6 +22,6 @@ public class WorkoutExerciseCreationService {
 	public WorkoutExerciseResponse createAndAdd(Long workoutId, ExerciseRequest request) {
 		workoutService.findById(workoutId);
 		ExerciseResponse exercise = exerciseService.create(request);
-		return workoutService.addExercise(workoutId, new AddWorkoutExerciseRequest(exercise.id(), null, null));
+		return workoutService.addExercise(workoutId, new AddWorkoutExerciseRequest(exercise.id(), null));
 	}
 }

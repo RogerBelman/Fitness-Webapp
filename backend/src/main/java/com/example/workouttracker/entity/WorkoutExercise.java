@@ -38,9 +38,6 @@ public class WorkoutExercise {
 	@Column(name = "exercise_order", nullable = false)
 	private Integer exerciseOrder;
 
-	@Column
-	private String notes;
-
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
@@ -58,11 +55,10 @@ public class WorkoutExercise {
 	protected WorkoutExercise() {
 	}
 
-	public WorkoutExercise(Workout workout, Exercise exercise, Integer exerciseOrder, String notes) {
+	public WorkoutExercise(Workout workout, Exercise exercise, Integer exerciseOrder) {
 		this.workout = workout;
 		this.exercise = exercise;
 		this.exerciseOrder = exerciseOrder;
-		this.notes = notes;
 		workout.addWorkoutExercise(this);
 	}
 
@@ -70,9 +66,8 @@ public class WorkoutExercise {
 		return id;
 	}
 
-	public void updateDetails(Integer exerciseOrder, String notes) {
+	public void updateDetails(Integer exerciseOrder) {
 		this.exerciseOrder = exerciseOrder;
-		this.notes = notes;
 	}
 
 	public void removeSetEntry(SetEntry setEntry) {
@@ -103,10 +98,6 @@ public class WorkoutExercise {
 
 	public Integer getExerciseOrder() {
 		return exerciseOrder;
-	}
-
-	public String getNotes() {
-		return notes;
 	}
 
 	public Instant getCreatedAt() {

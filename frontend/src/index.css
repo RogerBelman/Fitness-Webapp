@@ -1,10 +1,39 @@
 :root {
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --text: #17211b;
-  --muted: #66736b;
-  --border: #d9e2dc;
-  --accent: #2563eb;
-  --background: #f7faf6;
+  color-scheme: dark;
+  --text: #edf3fc;
+  --muted: #b0bfd3;
+  --border: #34445d;
+  --control-border: #7186a5;
+  --accent: #86b7ff;
+  --accent-hover: #a9cdff;
+  --accent-soft: #213d63;
+  --on-accent: #0a1629;
+  --background: #0b1120;
+  --surface: #141e30;
+  --surface-raised: #202e44;
+  --surface-hover: #293a52;
+  --input-background: #0d1626;
+  --placeholder: #94a6be;
+  --header-background: #0e1728f5;
+  --danger: #ffb4b4;
+  --danger-background: #391e2b;
+  --danger-hover: #4c2938;
+  --danger-border: #e38190;
+  --danger-action: #ff9caa;
+  --on-danger: #351018;
+  --success: #9ae6bb;
+  --success-background: #17382f;
+  --success-border: #559f7d;
+  --strength-text: #d9c8ff;
+  --strength-background: #35275a;
+  --strength-border: #725bab;
+  --cardio-text: #ffd39b;
+  --cardio-background: #442b14;
+  --cardio-border: #bd7831;
+  --dialog-border: #7d94b5;
+  --backdrop: #020617cc;
+  --popup-shadow: 0 24px 80px #00000080;
 
   font: 16px/1.5 var(--sans);
   color: var(--text);
@@ -33,4 +62,14 @@ textarea {
 
 p {
   margin: 0;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  color: var(--on-accent);
+  background: var(--accent);
 }

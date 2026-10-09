@@ -20,7 +20,7 @@ class WorkoutMapperTests {
 	void calculatesTotalWorkoutVolume() {
 		Workout workout = new Workout(LocalDate.of(2026, 8, 25), "Pull Day", null);
 		Exercise exercise = new Exercise("Deadlift", "Back", "Barbell");
-		WorkoutExercise workoutExercise = new WorkoutExercise(workout, exercise, 1, null);
+		WorkoutExercise workoutExercise = new WorkoutExercise(workout, exercise, 1);
 		new SetEntry(workoutExercise, 1, 5, new BigDecimal("225.00"));
 		new SetEntry(workoutExercise, 2, 3, new BigDecimal("245.00"));
 

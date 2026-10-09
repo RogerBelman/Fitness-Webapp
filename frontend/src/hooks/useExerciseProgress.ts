@@ -1,10 +1,26 @@
 import { useEffect, useState } from 'react'
 import { ApiError } from '../api/client'
-import { getExercisePersonalRecord, getExerciseProgress } from '../api/progress'
-import type { ExercisePersonalRecord, ExerciseProgress } from '../types/progress'
+import {
+  getCardioProgress,
+  getExercisePersonalRecord,
+  getExerciseProgress,
+} from '../api/progress'
+import type {
+  CardioProgress,
+  ExercisePersonalRecord,
+  ExerciseProgress,
+} from '../types/progress'
+import type { TrainingType } from '../types/exercise'
 
-export function useExerciseProgress(exerciseId: number | null) {
-  const [personalRecord, setPersonalRecord] = useState<ExercisePersonalRecord | null>(null)
+export function useExerciseProgress(
+  exerciseId: number | null,
+  trainingType?: TrainingType,
+) {
+  const [cardioProgress, setCardioProgress] = useState<CardioProgress | null>(
+    null,
+  )
+  const [personalRecord, setPersonalRecord] =
+    useState<ExercisePersonalRecord | null>(null)
   const [progress, setProgress] = useState<ExerciseProgress | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -13,6 +29,7 @@ export function useExerciseProgress(exerciseId: number | null) {
     let ignoreResponse = false
 
     if (exerciseId === null) {
+      setCardioProgress(null)
       setPersonalRecord(null)
       setProgress(null)
       setErrorMessage(null)
@@ -25,8 +42,16 @@ export function useExerciseProgress(exerciseId: number | null) {
     async function loadProgress() {
       setIsLoading(true)
       setErrorMessage(null)
+      setPersonalRecord(null)
+      setProgress(null)
+      setCardioProgress(null)
 
       try {
+        if (trainingType === 'CARDIO') {
+          const data = await getCardioProgress(selectedExerciseId)
+          if (!ignoreResponse) setCardioProgress(data)
+          return
+        }
         const [personalRecordData, progressData] = await Promise.all([
           getExercisePersonalRecord(selectedExerciseId),
           getExerciseProgress(selectedExerciseId),
@@ -54,9 +79,9 @@ export function useExerciseProgress(exerciseId: number | null) {
     return () => {
       ignoreResponse = true
     }
-  }, [exerciseId])
+  }, [exerciseId, trainingType])
 
-  return { personalRecord, progress, isLoading, errorMessage }
+  return { personalRecord, progress, cardioProgress, isLoading, errorMessage }
 }
 
 function getErrorMessage(error: unknown) {

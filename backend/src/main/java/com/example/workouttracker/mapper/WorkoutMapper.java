@@ -58,7 +58,6 @@ public final class WorkoutMapper {
 				workoutExercise.getId(),
 				workoutExercise.getExerciseOrder(),
 				ExerciseMapper.toResponse(workoutExercise.getExercise()),
-				workoutExercise.getNotes(),
 				sets,
 				workoutExercise.getCardioEntries().stream().map(WorkoutMapper::toCardioEntryResponse).toList(),
 				workoutExercise.getCreatedAt(),
@@ -76,7 +75,7 @@ public final class WorkoutMapper {
 	}
 
 	public static CardioEntryResponse toCardioEntryResponse(CardioEntry entry) {
-		return new CardioEntryResponse(entry.getId(), entry.getDurationMinutes(), entry.getLevel(), entry.getNotes(),
+		return new CardioEntryResponse(entry.getId(), entry.getDurationMinutes(), entry.getLevel(),
 				entry.getCreatedAt(), entry.getUpdatedAt());
 	}
 

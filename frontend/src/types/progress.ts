@@ -24,3 +24,17 @@ export type ExerciseProgress = {
   exerciseName: string
   history: ExerciseProgressPoint[]
 }
+
+export type CardioProgressPoint = {
+  workoutId: number
+  workoutDate: string
+  totalEntries: number
+  totalDurationMinutes: number
+  maxLevel: number | null
+}
+
+export type CardioProgress = {
+  exerciseId: number
+  exerciseName: string
+  history: CardioProgressPoint[]
+}

@@ -5,11 +5,18 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.workouttracker.dto.ExercisePersonalRecordResponse;
+import com.example.workouttracker.dto.CardioProgressResponse;
+import com.example.workouttracker.dto.CardioProgressPointResponse;
+import com.example.workouttracker.entity.CardioEntry;
+import com.example.workouttracker.entity.TrainingType;
+import com.example.workouttracker.exception.BadRequestException;
+import com.example.workouttracker.repository.CardioEntryRepository;
 import com.example.workouttracker.dto.ExerciseProgressPointResponse;
 import com.example.workouttracker.dto.ExerciseProgressResponse;
 import com.example.workouttracker.entity.Exercise;
@@ -26,12 +33,15 @@ public class ProgressService {
 
 	private final ExerciseRepository exerciseRepository;
 	private final SetEntryRepository setEntryRepository;
+	private final CardioEntryRepository cardioEntryRepository;
 
 	public ProgressService(
 			ExerciseRepository exerciseRepository,
-			SetEntryRepository setEntryRepository) {
+			SetEntryRepository setEntryRepository,
+			CardioEntryRepository cardioEntryRepository) {
 		this.exerciseRepository = exerciseRepository;
 		this.setEntryRepository = setEntryRepository;
+		this.cardioEntryRepository = cardioEntryRepository;
 	}
 
 	public ExercisePersonalRecordResponse findPersonalRecord(Long exerciseId) {
@@ -58,6 +68,27 @@ public class ProgressService {
 				.toList();
 
 		return new ExerciseProgressResponse(exercise.getId(), exercise.getName(), history);
+	}
+
+	public CardioProgressResponse findCardioHistory(Long exerciseId) {
+		Exercise exercise = getExercise(exerciseId);
+		if (exercise.getTrainingType() != TrainingType.CARDIO) {
+			throw new BadRequestException("Cardio progress is available only for cardio exercises.");
+		}
+		Map<Workout, List<CardioEntry>> entriesByWorkout = new LinkedHashMap<>();
+		for (CardioEntry entry : cardioEntryRepository.findAllForExerciseHistory(exerciseId)) {
+			Workout workout = entry.getWorkoutExercise().getWorkout();
+			entriesByWorkout.computeIfAbsent(workout, key -> new ArrayList<>()).add(entry);
+		}
+		List<CardioProgressPointResponse> history = entriesByWorkout.entrySet().stream()
+				.map(group -> new CardioProgressPointResponse(
+						group.getKey().getId(), group.getKey().getWorkoutDate(), group.getValue().size(),
+						group.getValue().stream().map(CardioEntry::getDurationMinutes)
+								.reduce(BigDecimal.ZERO, BigDecimal::add),
+						group.getValue().stream().map(CardioEntry::getLevel).filter(Objects::nonNull)
+								.max(BigDecimal::compareTo).orElse(null)))
+				.toList();
+		return new CardioProgressResponse(exercise.getId(), exercise.getName(), history);
 	}
 
 	private ExerciseProgressPointResponse toProgressPoint(

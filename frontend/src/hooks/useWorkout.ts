@@ -104,7 +104,7 @@ export function useWorkout(workoutId: string | undefined) {
     saveExercise: (exerciseId: number, request: UpdateWorkoutExerciseRequest) =>
       mutate(
         () => api.updateWorkoutExercise(exerciseId, request),
-        'Workout exercise updated.',
+        'Exercise order updated.',
       ),
     removeExercise: (exerciseId: number) =>
       mutate(

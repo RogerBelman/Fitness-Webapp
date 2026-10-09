@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react'
+import type { ReactNode } from 'react'
 import type {
   SetEntry,
   CardioEntryRequest,
@@ -7,9 +8,9 @@ import type {
   WorkoutDetail,
 } from '../../types/workout'
 import { DeleteButton } from '../DeleteButton'
+import { TrainingTypeBadge } from '../TrainingTypeBadge'
 import { AddSetForm } from './AddSetForm'
 import { CardioEntries } from './CardioEntries'
-import { EditWorkoutExerciseForm } from './EditWorkoutExerciseForm'
 
 type WorkoutDetailsProps = {
   onAddCardio: (id: number, request: CardioEntryRequest) => Promise<boolean>
@@ -28,6 +29,9 @@ type WorkoutDetailsProps = {
   onRemoveExercise: (id: number) => Promise<boolean>
   onSaveSet: (id: number, request: SetEntryRequest) => Promise<boolean>
   onRemoveSet: (id: number) => Promise<boolean>
+  isReordering: boolean
+  exerciseActions?: ReactNode
+  addExercisePanel?: ReactNode
 }
 
 export function WorkoutDetails({
@@ -41,10 +45,23 @@ export function WorkoutDetails({
   onRemoveExercise,
   onSaveSet,
   onRemoveSet,
+  isReordering,
+  exerciseActions,
+  addExercisePanel,
 }: WorkoutDetailsProps) {
-  const [editingExerciseId, setEditingExerciseId] = useState<number | null>(
-    null,
+  const [expandedExerciseIds, setExpandedExerciseIds] = useState<Set<number>>(
+    () => new Set(),
   )
+
+  function toggleExerciseDetails(id: number) {
+    setExpandedExerciseIds((currentIds) => {
+      const nextIds = new Set(currentIds)
+      if (nextIds.has(id)) nextIds.delete(id)
+      else nextIds.add(id)
+      return nextIds
+    })
+  }
+
   return (
     <>
       <section
@@ -78,11 +95,23 @@ export function WorkoutDetails({
         </section>
       ) : null}
 
-      <section className="ContentBand">
+      <section className="ContentBand WorkoutExercisesSection">
         <div className="SectionHeader">
           <h2>Exercises</h2>
-          <span className="RecordCount">{workout.exercises.length}</span>
+          <div className="RowActions">
+            <span className="RecordCount">{workout.exercises.length}</span>
+            {exerciseActions}
+          </div>
         </div>
+
+        {addExercisePanel}
+
+        {isReordering ? (
+          <p className="ReorderHint" role="status">
+            Use Move Up and Move Down to arrange the exercises. Each move saves
+            automatically.
+          </p>
+        ) : null}
 
         {workout.exercises.length === 0 ? (
           <p className="EmptyState">
@@ -90,109 +119,158 @@ export function WorkoutDetails({
           </p>
         ) : (
           <div className="WorkoutExerciseList">
-            {workout.exercises.map((workoutExercise) => (
-              <article className="WorkoutExerciseRow" key={workoutExercise.id}>
+            {workout.exercises.map((workoutExercise, index) => {
+              const isExpanded =
+                !isReordering && expandedExerciseIds.has(workoutExercise.id)
+              const detailsId = `workout-exercise-details-${workoutExercise.id}`
+              return (
+              <article
+                className={`WorkoutExerciseRow${isExpanded ? ' WorkoutExerciseRowExpanded' : ''}`}
+                key={workoutExercise.id}
+              >
                 <div className="WorkoutExerciseHeader">
-                  <div>
+                  <div className="WorkoutExerciseIdentity">
+                    <span className="WorkoutExerciseNumber">
+                      Exercise {index + 1}
+                    </span>
                     <h3>{workoutExercise.exercise.name}</h3>
-                    <p>
-                      {workoutExercise.exercise.trainingType === 'CARDIO'
-                        ? 'Cardio'
-                        : 'Strength'}
-                      {workoutExercise.exercise.muscleGroup
-                        ? ` · ${workoutExercise.exercise.muscleGroup}`
-                        : ''}
-                    </p>
+                    <div className="ExerciseTypeLine">
+                      <TrainingTypeBadge
+                        trainingType={workoutExercise.exercise.trainingType}
+                      />
+                      {workoutExercise.exercise.muscleGroup ? (
+                        <span>{workoutExercise.exercise.muscleGroup}</span>
+                      ) : null}
+                    </div>
                   </div>
                   <div className="RowActions">
-                    <button
-                      className="Button ButtonSecondary"
-                      type="button"
-                      disabled={
-                        isSaving || editingExerciseId === workoutExercise.id
-                      }
-                      aria-label={`Edit ${workoutExercise.exercise.name} in this workout`}
-                      onClick={() => setEditingExerciseId(workoutExercise.id)}
-                    >
-                      Edit
-                    </button>
-                    <DeleteButton
-                      label="Remove"
-                      title={`Remove ${workoutExercise.exercise.name}?`}
-                      description="This removes the exercise and all its logged entries from this workout. The exercise stays in your library. This cannot be undone."
-                      disabled={isSaving || editingExerciseId !== null}
-                      onDelete={() => onRemoveExercise(workoutExercise.id)}
-                    />
+                    {isReordering ? (
+                      <div
+                        className="ExerciseOrderControls"
+                        role="group"
+                        aria-label={`Reorder ${workoutExercise.exercise.name}`}
+                      >
+                      <button
+                        className="Button ButtonSecondary OrderButton"
+                        type="button"
+                        disabled={isSaving || index === 0}
+                        aria-label={`Move ${workoutExercise.exercise.name} up`}
+                        title="Move up"
+                        onClick={() => {
+                          const previousExercise = workout.exercises[index - 1]
+                          if (previousExercise) {
+                            void onSaveExercise(workoutExercise.id, {
+                              exerciseOrder: previousExercise.exerciseOrder,
+                            })
+                          }
+                        }}
+                      >
+                        ↑ Move Up
+                      </button>
+                      <button
+                        className="Button ButtonSecondary OrderButton"
+                        type="button"
+                        disabled={
+                          isSaving || index === workout.exercises.length - 1
+                        }
+                        aria-label={`Move ${workoutExercise.exercise.name} down`}
+                        title="Move down"
+                        onClick={() => {
+                          const nextExercise = workout.exercises[index + 1]
+                          if (nextExercise) {
+                            void onSaveExercise(workoutExercise.id, {
+                              exerciseOrder: nextExercise.exerciseOrder,
+                            })
+                          }
+                        }}
+                      >
+                        ↓ Move Down
+                      </button>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          className="Button ButtonSecondary ExerciseDetailsToggle"
+                          type="button"
+                          aria-expanded={isExpanded}
+                          aria-controls={detailsId}
+                          onClick={() =>
+                            toggleExerciseDetails(workoutExercise.id)
+                          }
+                        >
+                          {isExpanded ? 'Hide Details' : 'Show Details'}
+                          <span
+                            className={`DisclosureIcon${isExpanded ? ' DisclosureIconExpanded' : ''}`}
+                            aria-hidden="true"
+                          >
+                            ▾
+                          </span>
+                        </button>
+                        <DeleteButton
+                          label="Remove"
+                          title={`Remove ${workoutExercise.exercise.name}?`}
+                          description="This removes the exercise and all its logged entries from this workout. The exercise stays in your library. This cannot be undone."
+                          disabled={isSaving}
+                          onDelete={() =>
+                            onRemoveExercise(workoutExercise.id)
+                          }
+                        />
+                      </>
+                    )}
                   </div>
-                  <span>
+                  <span className="WorkoutExerciseTotal">
                     {workoutExercise.exercise.trainingType === 'CARDIO'
                       ? `${formatWeight(workoutExercise.cardioEntries.reduce((total, entry) => total + entry.durationMinutes, 0))} min`
                       : `${workoutExercise.sets.length} sets`}
                   </span>
                 </div>
+                {isExpanded ? (
+                  <div className="WorkoutExerciseDetails" id={detailsId}>
+                    {workoutExercise.exercise.instructions ? (
+                      <div className="ExerciseInstructions">
+                        <strong>Instructions</strong>
+                        <p>{workoutExercise.exercise.instructions}</p>
+                      </div>
+                    ) : null}
 
-                {editingExerciseId === workoutExercise.id ? (
-                  <EditWorkoutExerciseForm
-                    exercise={workoutExercise}
-                    isSaving={isSaving}
-                    onCancel={() => setEditingExerciseId(null)}
-                    onSave={async (request) => {
-                      const saved = await onSaveExercise(
-                        workoutExercise.id,
-                        request,
-                      )
-                      if (saved) setEditingExerciseId(null)
-                      return saved
-                    }}
-                  />
-                ) : null}
-
-                {workoutExercise.exercise.instructions ? (
-                  <details className="ExerciseInstructions">
-                    <summary>Exercise Instructions</summary>
-                    <p>{workoutExercise.exercise.instructions}</p>
-                  </details>
-                ) : null}
-
-                {workoutExercise.notes ? (
-                  <p className="WorkoutExerciseNotes">
-                    {workoutExercise.notes}
-                  </p>
-                ) : null}
-
-                {workoutExercise.exercise.trainingType === 'CARDIO' ? (
-                  <CardioEntries
-                    entries={workoutExercise.cardioEntries}
-                    exerciseName={workoutExercise.exercise.name}
-                    isSaving={isSaving}
-                    onAdd={(request) =>
-                      onAddCardio(workoutExercise.id, request)
-                    }
-                    onSave={onSaveCardio}
-                    onDelete={onRemoveCardio}
-                  />
-                ) : (
-                  <>
-                    {workoutExercise.sets.length === 0 ? (
-                      <p className="EmptyState">No sets logged.</p>
-                    ) : (
-                      <SetTable
-                        sets={workoutExercise.sets}
+                    {workoutExercise.exercise.trainingType === 'CARDIO' ? (
+                      <CardioEntries
+                        entries={workoutExercise.cardioEntries}
                         exerciseName={workoutExercise.exercise.name}
                         isSaving={isSaving}
-                        onSave={onSaveSet}
-                        onDelete={onRemoveSet}
+                        onAdd={(request) =>
+                          onAddCardio(workoutExercise.id, request)
+                        }
+                        onSave={onSaveCardio}
+                        onDelete={onRemoveCardio}
                       />
-                    )}
+                    ) : (
+                      <>
+                        {workoutExercise.sets.length === 0 ? (
+                          <p className="EmptyState">No sets logged.</p>
+                        ) : (
+                          <SetTable
+                            sets={workoutExercise.sets}
+                            exerciseName={workoutExercise.exercise.name}
+                            isSaving={isSaving}
+                            onSave={onSaveSet}
+                            onDelete={onRemoveSet}
+                          />
+                        )}
 
-                    <AddSetForm
-                      isSaving={isSaving}
-                      onAdd={(request) => onAddSet(workoutExercise.id, request)}
-                    />
-                  </>
-                )}
+                        <AddSetForm
+                          isSaving={isSaving}
+                          onAdd={(request) =>
+                            onAddSet(workoutExercise.id, request)
+                          }
+                        />
+                      </>
+                    )}
+                  </div>
+                ) : null}
               </article>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>

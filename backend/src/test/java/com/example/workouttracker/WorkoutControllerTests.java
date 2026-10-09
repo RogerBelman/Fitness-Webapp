@@ -75,7 +75,7 @@ class WorkoutControllerTests {
 	void listsWorkoutsWithTotals() throws Exception {
 		Exercise exercise = exerciseRepository.save(new Exercise(unique("Deadlift"), "Back", "Strength"));
 		Workout workout = workoutRepository.save(new Workout(LocalDate.of(2026, 8, 20), "Pull Day", null));
-		WorkoutExercise workoutExercise = workoutExerciseRepository.save(new WorkoutExercise(workout, exercise, 1, null));
+		WorkoutExercise workoutExercise = workoutExerciseRepository.save(new WorkoutExercise(workout, exercise, 1));
 		setEntryRepository.save(new SetEntry(workoutExercise, 1, 5, new BigDecimal("225.00")));
 		setEntryRepository.save(new SetEntry(workoutExercise, 2, 5, new BigDecimal("225.00")));
 
@@ -91,7 +91,7 @@ class WorkoutControllerTests {
 		Exercise exercise = exerciseRepository.save(new Exercise(unique("Bench Press"), "Chest", "Strength"));
 		Workout workout = workoutRepository.save(new Workout(LocalDate.of(2026, 8, 20), "Push Day", "Paused reps"));
 		WorkoutExercise workoutExercise = workoutExerciseRepository.save(
-				new WorkoutExercise(workout, exercise, 1, "Top sets"));
+				new WorkoutExercise(workout, exercise, 1));
 		setEntryRepository.save(new SetEntry(workoutExercise, 1, 8, new BigDecimal("135.00")));
 
 		mockMvc.perform(get("/api/workouts/{id}", workout.getId()))
@@ -115,8 +115,7 @@ class WorkoutControllerTests {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{
-						  "exerciseId": %d,
-						  "notes": "Controlled tempo"
+						  "exerciseId": %d
 						}
 						""".formatted(exercise.getId())))
 				.andExpect(status().isCreated())
@@ -124,7 +123,7 @@ class WorkoutControllerTests {
 				.andExpect(jsonPath("$.id").isNumber())
 				.andExpect(jsonPath("$.exerciseOrder").value(1))
 				.andExpect(jsonPath("$.exercise.id").value(exercise.getId()))
-				.andExpect(jsonPath("$.notes").value("Controlled tempo"))
+				.andExpect(jsonPath("$.notes").doesNotExist())
 				.andExpect(jsonPath("$.sets", hasSize(0)));
 	}
 
@@ -132,7 +131,7 @@ class WorkoutControllerTests {
 	void addsSetToWorkoutExercise() throws Exception {
 		Exercise exercise = exerciseRepository.save(new Exercise(unique("Goblet Squat"), "Legs", "Dumbbell"));
 		Workout workout = workoutRepository.save(new Workout(LocalDate.of(2026, 8, 20), "Leg Day", null));
-		WorkoutExercise workoutExercise = workoutExerciseRepository.save(new WorkoutExercise(workout, exercise, 1, null));
+		WorkoutExercise workoutExercise = workoutExerciseRepository.save(new WorkoutExercise(workout, exercise, 1));
 
 		mockMvc.perform(post("/api/workout-exercises/{id}/sets", workoutExercise.getId())
 				.contentType(MediaType.APPLICATION_JSON)
@@ -156,7 +155,7 @@ class WorkoutControllerTests {
 	void rejectsInvalidSetRequest() throws Exception {
 		Exercise exercise = exerciseRepository.save(new Exercise(unique("Front Squat"), "Legs", "Barbell"));
 		Workout workout = workoutRepository.save(new Workout(LocalDate.of(2026, 8, 20), "Leg Day", null));
-		WorkoutExercise workoutExercise = workoutExerciseRepository.save(new WorkoutExercise(workout, exercise, 1, null));
+		WorkoutExercise workoutExercise = workoutExerciseRepository.save(new WorkoutExercise(workout, exercise, 1));
 
 		mockMvc.perform(post("/api/workout-exercises/{id}/sets", workoutExercise.getId())
 				.contentType(MediaType.APPLICATION_JSON)

@@ -20,7 +20,6 @@ export type WorkoutExercise = {
   id: number
   exerciseOrder: number
   exercise: Exercise
-  notes: string | null
   sets: SetEntry[]
   cardioEntries: CardioEntry[]
   createdAt: string
@@ -39,7 +38,6 @@ export type SetEntry = {
 export type CardioEntryRequest = {
   durationMinutes: number
   level?: number | null
-  notes?: string | null
 }
 
 export type CardioEntry = CardioEntryRequest & {
@@ -57,7 +55,6 @@ export type WorkoutRequest = {
 export type AddWorkoutExerciseRequest = {
   exerciseId: number
   exerciseOrder?: number
-  notes?: string
 }
 
 export type SetEntryRequest = {
@@ -68,5 +65,4 @@ export type SetEntryRequest = {
 
 export type UpdateWorkoutExerciseRequest = {
   exerciseOrder?: number
-  notes?: string
 }

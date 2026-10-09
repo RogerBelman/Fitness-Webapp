@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom'
-import type { ExercisePersonalRecord, ExerciseProgress } from '../../types/progress'
+import type {
+  ExercisePersonalRecord,
+  ExerciseProgress,
+} from '../../types/progress'
 import { ProgressChart } from './ProgressChart'
 
 type ProgressSummaryProps = {
@@ -7,14 +10,20 @@ type ProgressSummaryProps = {
   progress: ExerciseProgress
 }
 
-export function ProgressSummary({ personalRecord, progress }: ProgressSummaryProps) {
+export function ProgressSummary({
+  personalRecord,
+  progress,
+}: ProgressSummaryProps) {
   const latestPoint = progress.history.at(-1)
 
   return (
     <>
-      <section className="MetricGrid" aria-label={`${progress.exerciseName} summary`}>
+      <section
+        className="MetricGrid"
+        aria-label={`${progress.exerciseName} summary`}
+      >
         <article className="MetricCard">
-          <span>Personal Record</span>
+          <span>Heaviest Set</span>
           <strong>
             {personalRecord.personalRecord
               ? `${formatWeight(personalRecord.personalRecord.weight)} lb`
@@ -33,13 +42,28 @@ export function ProgressSummary({ personalRecord, progress }: ProgressSummaryPro
         </article>
         <article className="MetricCard">
           <span>Latest Volume</span>
-          <strong>{latestPoint ? `${formatWeight(latestPoint.totalVolume)} lb` : '--'}</strong>
-          <small>{latestPoint ? formatWorkoutDate(latestPoint.workoutDate) : 'No history'}</small>
+          <strong>
+            {latestPoint ? `${formatWeight(latestPoint.totalVolume)} lb` : '--'}
+          </strong>
+          <small>
+            {latestPoint
+              ? formatWorkoutDate(latestPoint.workoutDate)
+              : 'No history'}
+          </small>
         </article>
       </section>
 
+      <p className="ExerciseTrackingHint">
+        Your strength record is the heaviest logged set, with more reps breaking
+        a tie. Volume is the sum of weight × reps across this exercise’s sets in
+        a workout.
+      </p>
+
       {progress.history.length > 0 ? (
-        <ProgressChart exerciseName={progress.exerciseName} history={progress.history} />
+        <ProgressChart
+          exerciseName={progress.exerciseName}
+          history={progress.history}
+        />
       ) : null}
 
       <section className="ContentBand">
@@ -49,7 +73,10 @@ export function ProgressSummary({ personalRecord, progress }: ProgressSummaryPro
         </div>
 
         {progress.history.length === 0 ? (
-          <p className="EmptyState">No sets have been logged for this exercise.</p>
+          <p className="EmptyState">
+            No sets yet. Add this exercise to a workout and log a set to start
+            tracking progress.
+          </p>
         ) : (
           <div className="TableScroll">
             <table className="ProgressTable">
@@ -59,7 +86,9 @@ export function ProgressSummary({ personalRecord, progress }: ProgressSummaryPro
                   <th scope="col">Sets</th>
                   <th scope="col">Max Weight</th>
                   <th scope="col">Volume</th>
-                  <th scope="col"><span className="VisuallyHidden">Workout</span></th>
+                  <th scope="col">
+                    <span className="VisuallyHidden">Workout</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -84,7 +113,9 @@ export function ProgressSummary({ personalRecord, progress }: ProgressSummaryPro
 }
 
 function formatWeight(weight: number) {
-  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(weight)
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(
+    weight,
+  )
 }
 
 function formatWorkoutDate(workoutDate: string) {

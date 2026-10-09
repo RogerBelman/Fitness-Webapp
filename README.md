@@ -7,15 +7,16 @@ This repository contains a full-stack workout tracking application built with a 
 - Create, list, filter, update, and delete exercises through the REST API.
 - Save permanent exercise instructions for setup and technique, visible in the library, workout details, and Dashboard exercise summaries.
 - Create workouts and add ordered exercises and sets.
-- Choose Strength or Cardio for each exercise. Log cardio duration, optional machine level, and session notes, with edit/delete support.
+- Choose Strength or Cardio for each exercise. Log cardio duration and optional machine level, with edit/delete support.
 - Review workout history with strength set counts, strength volume, and separate cardio minutes.
 - Browse workouts in a weekly Dashboard calendar with day selection, workout counts, and exercise summaries.
-- View complete workout details, including exercise notes and individual sets.
-- Edit workout dates, titles, and notes; edit exercise order and notes within a workout; correct set numbers, reps, and weights.
+- View complete workout details, including permanent exercise instructions and individual sets.
+- Edit workout dates, titles, and notes; edit exercise order within a workout; correct set numbers, reps, and weights.
 - Delete workouts, remove exercises from a workout, and delete individual sets with confirmation prompts.
 - Edit and delete library exercises, with deletion blocked while an exercise is used in workout history.
 - Track exercise personal records and workout-by-workout progress.
 - Visualize maximum-weight trends with a responsive chart.
+- Track cardio minutes, workout duration trends, and recorded machine levels with separate charts and history.
 - Validate API requests and return consistent error responses.
 - Run PostgreSQL locally with Docker or connect Spring Boot to Neon.
 - Apply versioned schema changes automatically with Flyway.
@@ -82,6 +83,8 @@ http://localhost:8080
 
 ## Frontend Data Flow
 
+The Progress page accepts both Strength and Cardio exercises. Cardio shows workout count, total minutes, longest combined duration in one workout, and highest recorded level. Switch the chart between duration and level, and open a workout from the history table. Levels are compared within the same exercise and machine; missing levels remain blank rather than becoming zero.
+
 The Exercise Library page uses the API helper functions in `src/api/exercises.ts`.
 
 For the page flow, read `src/pages/ExerciseLibrary.tsx` first. It coordinates the parts. `src/hooks/useExercises.ts` calls the API and owns loading, saving, and message state. The files in `src/components/exercises/` render the form, filters, and list.
@@ -107,7 +110,7 @@ The workout pages use `src/api/workouts.ts` to create workouts, load history and
 | Add set to workout exercise | `addSet` | `POST /api/workout-exercises/{id}/sets` |
 | Edit workout | `updateWorkout` | `PUT /api/workouts/{id}` |
 | Delete workout | `deleteWorkout` | `DELETE /api/workouts/{id}` |
-| Edit exercise order and notes | `updateWorkoutExercise` | `PUT /api/workout-exercises/{id}` |
+| Edit exercise order | `updateWorkoutExercise` | `PUT /api/workout-exercises/{id}` |
 | Remove exercise and its sets | `deleteWorkoutExercise` | `DELETE /api/workout-exercises/{id}` |
 | Edit logged set | `updateSet` | `PUT /api/sets/{id}` |
 | Delete logged set | `deleteSet` | `DELETE /api/sets/{id}` |
@@ -275,7 +278,7 @@ Endpoints:
 | `PUT` | `/api/exercises/{id}` | Replace an exercise's editable fields | `200 OK` |
 | `DELETE` | `/api/exercises/{id}` | Delete an exercise | `204 No Content` |
 
-`instructions` is optional and supports up to 500 characters. The Exercise Library create/edit form lets you save it, and clearing the text removes it. Blank, null, or omitted instructions are stored as null. These instructions belong to the reusable exercise; workout exercise `notes` remain specific to a session. Existing exercises start without instructions after the `V2__add_exercise_instructions.sql` migration runs.
+`instructions` is optional and supports up to 500 characters. The Exercise Library create/edit form lets you save it, and clearing the text removes it. Blank, null, or omitted instructions are stored as null. Instructions belong to the reusable exercise and appear everywhere that exercise is used. Session-wide comments belong in the workout's `notes` field. Existing exercises start without instructions after the `V2__add_exercise_instructions.sql` migration runs.
 
 `trainingType` is `STRENGTH` or `CARDIO`. Omitted types default to Strength on creation and preserve the current type on update. Muscle group is required for Strength and optional for Cardio. Equipment details belong in the exercise name or instructions; there is no separate equipment field or filter in the UI. The API still accepts the optional legacy `category` field, defaulting to `None` when omitted. The frontend preserves existing category values during edits. Changing training type returns `409 Conflict` while that exercise has any logged sets or cardio entries, so existing history keeps its meaning.
 
@@ -293,7 +296,7 @@ HTTP request
 
 DTOs define the API contract. The `Exercise` entity represents the database row, while `ExerciseRequest` and `ExerciseResponse` represent what the API accepts and returns.
 
-Exercise names and workout titles are formatted before saving on both creation and editing: each word starts with a capital letter and the remaining letters are lowercase (`dUMBBELL bench PRESS` becomes `Dumbbell Bench Press`). Leading/trailing whitespace is removed and repeated whitespace in names and titles becomes a single space. Comments, notes, and instructions keep their entered capitalization and internal line breaks. Existing names are formatted when edited and saved.
+Exercise names and workout titles are formatted before saving on both creation and editing: each word starts with a capital letter and the remaining letters are lowercase (`dUMBBELL bench PRESS` becomes `Dumbbell Bench Press`). Leading/trailing whitespace is removed and repeated whitespace in names and titles becomes a single space. Workout notes and exercise instructions keep their entered capitalization and internal line breaks. Existing names are formatted when edited and saved.
 
 ## Workout API
 
@@ -312,8 +315,7 @@ Add exercise request body:
 ```json
 {
   "exerciseId": 1,
-  "exerciseOrder": 1,
-  "notes": "Controlled tempo"
+  "exerciseOrder": 1
 }
 ```
 
@@ -343,7 +345,7 @@ Endpoints:
 | `POST` | `/api/workout-exercises/{id}/sets` | Add a set to a workout exercise | `201 Created` |
 | `PUT` | `/api/workouts/{id}` | Update workout date, title, and notes | `200 OK` |
 | `DELETE` | `/api/workouts/{id}` | Delete workout with its exercises and sets | `204 No Content` |
-| `PUT` | `/api/workout-exercises/{id}` | Update exercise order and notes | `200 OK` |
+| `PUT` | `/api/workout-exercises/{id}` | Update exercise order | `200 OK` |
 | `DELETE` | `/api/workout-exercises/{id}` | Remove exercise from workout with its sets | `204 No Content` |
 | `PUT` | `/api/sets/{id}` | Update set number, reps, and weight | `200 OK` |
 | `DELETE` | `/api/sets/{id}` | Delete a logged set | `204 No Content` |
@@ -351,7 +353,7 @@ Endpoints:
 | `PUT` | `/api/cardio-entries/{id}` | Edit a cardio entry | `200 OK` |
 | `DELETE` | `/api/cardio-entries/{id}` | Delete a cardio entry | `204 No Content` |
 
-Updates use the same workout and set request bodies shown above. Omit `workoutDate` or `setNumber` on an update to keep its existing value. An omitted or blank title or notes clears that text. For workout exercises, send `exerciseOrder` and `notes`; omitting `exerciseOrder` keeps the existing order. The library exercise associated with logged sets stays the same.
+Updates use the same workout and set request bodies shown above. Omit `workoutDate` or `setNumber` on an update to keep its existing value. An omitted or blank workout title or workout notes clears that text. For workout exercises, send `exerciseOrder`; omitting it keeps the existing order. The library exercise associated with logged sets stays the same.
 
 Duplicate set numbers within an exercise and duplicate exercise orders within a workout return `409 Conflict`. Weight supports values from `0` to `99999.99`, with up to two decimal places. Deletion leaves gaps in set numbers and exercise order; new entries use the highest remaining number plus one.
 
@@ -362,12 +364,11 @@ Cardio create/update request:
 ```json
 {
   "durationMinutes": 20.5,
-  "level": 6,
-  "notes": "Steady pace"
+  "level": 6
 }
 ```
 
-Duration is required, from `0.01` to `99999.99` minutes. Level is optional, from `0` to `999.99`; both support up to two decimal places. Notes are optional with a 500-character limit. Omitting level or notes on an update clears them. Multiple entries can represent intervals at different levels. Cardio entries are accepted only for Cardio exercises, and sets only for Strength exercises. Workouts can contain both kinds. Summaries return `totalCardioMinutes` separately from `totalSets` and `totalVolume`; details include `cardioEntries` on each workout exercise. Deleting a workout or workout exercise also removes its cardio entries.
+Duration is required, from `0.01` to `99999.99` minutes. Level is optional, from `0` to `999.99`; both support up to two decimal places. Omitting level on an update clears it. Multiple entries can represent intervals at different levels. Cardio entries are accepted only for Cardio exercises, and sets only for Strength exercises. Workouts can contain both kinds. Summaries return `totalCardioMinutes` separately from `totalSets` and `totalVolume`; details include `cardioEntries` on each workout exercise. Deleting a workout or workout exercise also removes its cardio entries.
 
 ## Progress API
 
@@ -379,6 +380,9 @@ same weight, the set with more reps wins. An existing exercise with no logged se
 | --- | --- | --- | --- |
 | `GET` | `/api/progress/exercises/{exerciseId}/personal-record` | Get an exercise's personal record | `200 OK` |
 | `GET` | `/api/progress/exercises/{exerciseId}/history` | Get progress points grouped by workout | `200 OK` |
+| `GET` | `/api/progress/exercises/{exerciseId}/cardio-history` | Get cardio duration and level history grouped by workout | `200 OK` |
+
+Cardio history returns `exerciseId`, `exerciseName`, and `history`, ordered by date then workout ID. Each point includes `workoutId`, `workoutDate`, `totalEntries`, `totalDurationMinutes`, and `maxLevel` (null when no level was recorded). Repeated appearances of the same exercise in a workout are combined. Workouts without logged cardio entries are omitted. Missing exercises return `404`; requesting cardio history for a Strength exercise returns `400`. Edits and deletions are reflected on the next read.
 
 Workout relationship model:
 
@@ -394,7 +398,7 @@ workout_exercises
   one-to-many cardio_entries
 ```
 
-`workout_exercises` is the join table with extra data. It connects one workout to one exercise, but also stores workout-specific fields like `exercise_order` and notes. `set_entries` belongs to a workout exercise because sets are performed for a specific exercise inside a specific workout.
+`workout_exercises` is the join table with extra data. It connects one workout to one exercise and stores its `exercise_order`. `set_entries` belongs to a workout exercise because sets are performed for a specific exercise inside a specific workout. `V4__remove_session_exercise_notes.sql` removes per-workout exercise and cardio-entry comments; reusable guidance lives in exercise instructions and session comments live in workout notes.
 
 ## API Errors
 
@@ -464,6 +468,18 @@ npm run test
 npm run lint
 npm run build
 ```
+
+## Local Sample Data
+
+With Docker PostgreSQL running and the backend migrations applied, run from the repository root:
+
+```powershell
+.\scripts\refresh-sample-data.ps1
+```
+
+This replaces only data marked `[Sample data]`, creates 9 clearly named sample exercises and 12 workouts over the last four weeks, and includes 72 strength sets and 16 cardio entries. Permanent exercise instructions and workout notes demonstrate the current forms. Samples include multiple cardio intervals and outdoor walks without machine levels. Dates use America/Chicago; pass `-SampleDate yyyy-MM-dd` for a fixed end date.
+
+The script backs up the local Compose database to ignored `backend/target/sample-data-backups/` before making changes and applies the refresh in one transaction. A name collision with an exercise retained in another workout stops the refresh rather than overwriting it. To explicitly replace **all** existing workouts and exercises, including unmarked older samples and personal entries, run `.\scripts\refresh-sample-data.ps1 -ReplaceAll`. This script does not connect to Neon or other remote databases.
 
 ## Future Plans
 

@@ -10,7 +10,7 @@
   flex-direction: column;
   gap: 14px;
   padding: 16px;
-  background: rgba(250, 251, 249, 0.96);
+  background: var(--header-background);
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(16px);
 }
@@ -30,8 +30,8 @@
   place-items: center;
   width: 36px;
   height: 36px;
-  color: #ffffff;
-  background: var(--text);
+  color: var(--on-accent);
+  background: var(--accent);
   border-radius: 8px;
   font-size: 12px;
   letter-spacing: 0;
@@ -57,9 +57,14 @@
 }
 
 .NavLinkActive {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.NavLink:hover:not(.NavLinkActive) {
   color: var(--text);
-  background: #ffffff;
-  border-color: var(--border);
+  background: var(--surface-raised);
 }
 
 .PageShell {
@@ -119,19 +124,27 @@
 }
 
 .ButtonPrimary {
-  color: #ffffff;
-  background: var(--text);
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+.ButtonPrimary:hover:not(:disabled) {
+  background: var(--accent-hover);
 }
 
 .Button:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
 }
 
 .ButtonSecondary {
   color: var(--text);
-  background: #ffffff;
-  border-color: var(--border);
+  background: var(--surface-raised);
+  border-color: var(--control-border);
+}
+
+.ButtonSecondary:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: var(--accent);
 }
 
 .MetricGrid {
@@ -145,7 +158,7 @@
   gap: 8px;
   min-height: 112px;
   padding: 20px;
-  background: #ffffff;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
 }
@@ -172,7 +185,7 @@
 .ContentBand,
 .FormSurface,
 .Toolbar {
-  background: #ffffff;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
 }
@@ -235,14 +248,35 @@ textarea {
   min-height: 42px;
   padding: 9px 11px;
   color: var(--text);
-  background: #ffffff;
-  border: 1px solid var(--border);
+  background: var(--input-background);
+  border: 1px solid var(--control-border);
   border-radius: 8px;
   font: inherit;
 }
 
 textarea {
   resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--placeholder);
+  opacity: 1;
+}
+
+select option {
+  color: var(--text);
+  background: var(--surface-raised);
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  color: var(--muted);
+  background: var(--surface-raised);
+  border-color: var(--border);
+  cursor: not-allowed;
+  opacity: 1;
 }
 
 @media (min-width: 720px) {
@@ -295,15 +329,71 @@ textarea {
 }
 
 .AlertError {
-  color: #991b1b;
-  background: #fef2f2;
-  border-color: #fecaca;
+  color: var(--danger);
+  background: var(--danger-background);
+  border-color: var(--danger-border);
 }
 
 .AlertSuccess {
-  color: #166534;
-  background: #f0fdf4;
-  border-color: #bbf7d0;
+  color: var(--success);
+  background: var(--success-background);
+  border-color: var(--success-border);
+}
+
+.ActionFeedback {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 40;
+  width: min(420px, calc(100% - 32px));
+  pointer-events: none;
+}
+
+.ActionFeedbackCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  box-shadow: var(--popup-shadow);
+  pointer-events: auto;
+}
+
+.ActionFeedbackIcon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: currentColor;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.ActionFeedbackCard p {
+  overflow-wrap: anywhere;
+}
+
+.ActionFeedbackClose {
+  align-self: start;
+  padding: 0 2px;
+  color: currentColor;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+@media (max-width: 479px) {
+  .ActionFeedback {
+    right: 16px;
+    bottom: 16px;
+  }
 }
 
 .RecordCount {
@@ -314,7 +404,7 @@ textarea {
   min-height: 28px;
   padding: 4px 10px;
   color: var(--text);
-  background: #eef4f0;
+  background: var(--surface-raised);
   border-radius: 999px;
   font-size: 13px;
   font-weight: 800;
@@ -324,7 +414,7 @@ textarea {
   display: grid;
   gap: 16px;
   padding: 18px;
-  background: #ffffff;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
 }
@@ -473,6 +563,7 @@ textarea {
 
 .WorkoutRow:hover {
   border-color: var(--accent);
+  background: var(--surface-raised);
 }
 
 .WorkoutIdentity {
@@ -562,22 +653,50 @@ textarea {
 
 .WorkoutExerciseList {
   display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+
+.AddExercisePanel {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  background: var(--surface-raised);
+  border: 1px solid var(--control-border);
+  border-radius: 12px;
+}
+
+.AddExercisePanel .FormSurface {
+  max-width: none;
+}
+
+.WorkoutExercisesSection {
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.ReorderHint {
+  padding: 14px 16px;
+  color: var(--text);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
 }
 
 .WorkoutExerciseRow {
   display: grid;
-  gap: 14px;
-  padding: 18px 0;
-  border-top: 1px solid var(--border);
+  min-width: 0;
+  padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  border-top: 3px solid var(--accent);
+  border-radius: 12px;
 }
 
-.WorkoutExerciseRow:first-child {
-  padding-top: 0;
-  border-top: 0;
-}
-
-.WorkoutExerciseRow:last-child {
-  padding-bottom: 0;
+.WorkoutExerciseRowExpanded {
+  gap: 18px;
+  padding-block: 20px;
 }
 
 .WorkoutExerciseHeader {
@@ -587,14 +706,41 @@ textarea {
   gap: 16px;
 }
 
+.WorkoutExerciseRowExpanded .WorkoutExerciseHeader {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.WorkoutExerciseDetails {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.WorkoutExerciseIdentity {
+  flex: 1 1 220px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.WorkoutExerciseNumber {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.WorkoutExerciseTotal {
+  padding: 6px 10px;
+  background: var(--accent-soft);
+  border-radius: 6px;
+}
+
 .WorkoutExerciseHeader h3 {
   margin: 0;
   color: var(--text);
   font-size: 18px;
 }
 
-.WorkoutExerciseHeader p,
-.WorkoutExerciseNotes {
+.WorkoutExerciseHeader p {
   margin-top: 5px;
   color: var(--muted);
 }
@@ -626,37 +772,93 @@ textarea {
   gap: 8px;
 }
 
+.ExerciseOrderControls {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.ExerciseDetailsToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.DisclosureIcon {
+  display: inline-block;
+  font-size: 14px;
+  line-height: 1;
+  transition: transform 160ms ease;
+}
+
+.DisclosureIconExpanded {
+  transform: rotate(180deg);
+}
+
+.OrderButton {
+  min-width: 112px;
+  padding-inline: 12px;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
 .ButtonDanger {
-  color: #b42318;
-  background: #fff1f0;
-  border-color: #e7a6a0;
+  color: var(--danger);
+  background: var(--danger-background);
+  border-color: var(--danger-border);
 }
 
 .ButtonDanger:hover:not(:disabled) {
-  color: #8f1c13;
-  background: #ffe0dd;
+  background: var(--danger-hover);
 }
 
 .ConfirmDialog {
   width: min(440px, calc(100% - 32px));
+  max-height: calc(100dvh - 48px);
+  overflow: auto;
   padding: 24px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--dialog-border);
   border-radius: 12px;
   color: var(--text);
-  background: white;
-  box-shadow: 0 20px 60px #17211b33;
+  background: var(--surface-raised);
+  box-shadow: var(--popup-shadow);
+  overflow-wrap: anywhere;
 }
 
 .ConfirmDialog::backdrop {
-  background: #17211b80;
+  background: var(--backdrop);
+  backdrop-filter: blur(4px);
 }
 
 .ConfirmDialog h2 {
   margin-top: 0;
 }
 
+.ConfirmDialog p {
+  color: var(--muted);
+  line-height: 1.65;
+}
+
 .ConfirmDialog .FormActions {
   margin-top: 20px;
+  justify-content: flex-end;
+}
+
+.ConfirmDialog .ButtonDanger {
+  color: var(--on-danger);
+  background: var(--danger-action);
+  border-color: var(--danger-action);
+}
+
+.ConfirmDialog .ButtonDanger:hover:not(:disabled) {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+.Button:disabled,
+.ConfirmDialog .Button:disabled {
+  color: var(--muted);
+  background: var(--surface-raised);
+  border-color: var(--border);
 }
 
 .ExerciseCard,
@@ -746,13 +948,13 @@ textarea {
   padding: 12px 2px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--surface);
   color: var(--text);
   cursor: pointer;
 }
 
 .CalendarDay:hover {
-  background: #eef4f0;
+  background: var(--surface-hover);
 }
 
 .CalendarDay:focus-visible {
@@ -761,9 +963,9 @@ textarea {
 }
 
 .CalendarDay[aria-pressed='true'] {
-  color: #ffffff;
-  background: var(--text);
-  border-color: var(--text);
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 .CalendarDayToday .CalendarDate {
@@ -986,21 +1188,192 @@ textarea {
   }
 }
 
-.CardioNotes {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  max-width: 300px;
+.ExerciseLibraryItem {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
 }
 
-.ExerciseTrackingInfo {
-  padding: 14px;
-  background: var(--background);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+.ExerciseEditor {
+  width: 100%;
+  max-width: none;
+  padding: 24px;
+  border-color: var(--control-border);
+  border-radius: 12px;
 }
 
-.ExerciseTrackingInfo p {
-  margin-top: 6px;
+.ExerciseEditor .FormFieldset {
+  gap: 24px;
+}
+
+.ExerciseEditorHeader h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+
+.ExerciseEditorHeader p,
+.ExerciseTrackingHint,
+.OptionalLabel {
   color: var(--muted);
   font-size: 14px;
+  font-weight: 400;
+}
+
+.ExerciseTypePicker {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ExerciseTypePicker legend {
+  margin-bottom: 10px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.ExerciseTypeOptions,
+.ExerciseDetailsGrid {
+  display: grid;
+  gap: 14px;
+}
+
+.ExerciseTypeOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  background: var(--input-background);
+  cursor: pointer;
+}
+
+.ExerciseTypeOption:has(input:checked) {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.ExerciseTypeOption input {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  flex: 0 0 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.ExerciseTypeOption span {
+  display: grid;
+  gap: 4px;
+}
+
+.ExerciseTypeOption small {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.ExerciseEditorActions {
+  justify-content: flex-end;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.ExerciseTypeLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.FormGridSingle,
+.CardioEntryFields {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.TrainingTypeBadge,
+.WorkoutExerciseHeader .TrainingTypeBadge,
+.DayExerciseList .TrainingTypeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 4px 9px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.TrainingTypeBadgeStrength,
+.WorkoutExerciseHeader .TrainingTypeBadgeStrength,
+.DayExerciseList .TrainingTypeBadgeStrength {
+  color: var(--strength-text);
+  background: var(--strength-background);
+  border-color: var(--strength-border);
+}
+
+.TrainingTypeBadgeCardio,
+.WorkoutExerciseHeader .TrainingTypeBadgeCardio,
+.DayExerciseList .TrainingTypeBadgeCardio {
+  color: var(--cardio-text);
+  background: var(--cardio-background);
+  border-color: var(--cardio-border);
+}
+
+.TrainingTypeIcon,
+.WorkoutExerciseHeader .TrainingTypeIcon,
+.DayExerciseList .TrainingTypeIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  color: inherit;
+  font-family: 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.ExerciseTypeOptionIcon,
+.ExerciseTypeOption .ExerciseTypeOptionIcon {
+  display: block;
+  flex: 0 0 auto;
+  width: 36px;
+  font-family: 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif;
+  font-size: 30px;
+  text-align: center;
+  line-height: 1;
+}
+
+@media (min-width: 720px) {
+  .ExerciseTypeOptions,
+  .ExerciseDetailsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ExerciseDetailsGridSingle {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .FormGridSingle,
+  .WorkoutExerciseForm .FormGridSingle {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .CardioEntryFields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 479px) {
+  .ExerciseEditor,
+  .WorkoutExerciseRow {
+    padding: 16px;
+  }
 }

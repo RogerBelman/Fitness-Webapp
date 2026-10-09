@@ -81,8 +81,8 @@ export function Workouts() {
             <h2 id="new-workout-heading">New Workout</h2>
           </div>
           <p className="EmptyState">
-            Choose a date and title, then open your workout to log strength and
-            cardio exercises.
+            Choose a date and an optional title. Creating the workout opens it
+            so you can add exercises and log your performance.
           </p>
           {createError ? (
             <p className="Alert AlertError" role="alert">

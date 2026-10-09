@@ -54,10 +54,10 @@ class ExerciseInstructionsTests {
 	}
 
 	@Test
-	void updatedInstructionsAppearInWorkoutsWithoutReplacingSessionNotes() throws Exception {
+	void updatedInstructionsAppearInWorkoutsAlongsideWorkoutNotes() throws Exception {
 		Exercise exercise = exercises.save(new Exercise("Technique " + UUID.randomUUID(), "Chest", "Barbell"));
 		Workout workout = workouts.save(new Workout(LocalDate.of(2026, 8, 20), "Push day", "Session notes"));
-		workoutExercises.save(new WorkoutExercise(workout, exercise, 1, "Felt heavy today"));
+		workoutExercises.save(new WorkoutExercise(workout, exercise, 1));
 		Long workoutId = workout.getId();
 		Long exerciseId = exercise.getId();
 		String name = exercise.getName();
@@ -70,7 +70,7 @@ class ExerciseInstructionsTests {
 		mockMvc.perform(get("/api/workouts/{id}", workoutId))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.notes").value("Session notes"))
-				.andExpect(jsonPath("$.exercises[0].notes").value("Felt heavy today"))
+				.andExpect(jsonPath("$.exercises[0].notes").doesNotExist())
 				.andExpect(jsonPath("$.exercises[0].exercise.instructions").value("Keep your shoulders down."));
 	}
 

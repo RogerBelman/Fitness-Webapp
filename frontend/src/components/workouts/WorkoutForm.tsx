@@ -67,7 +67,7 @@ export function WorkoutForm({
         </label>
 
         <label>
-          Title
+          Title (optional)
           <input
             maxLength={120}
             name="title"
@@ -81,14 +81,14 @@ export function WorkoutForm({
         </label>
 
         <label>
-          Notes
+          Workout Notes (optional)
           <textarea
             maxLength={500}
             name="notes"
             onChange={(event) =>
               setForm((current) => ({ ...current, notes: event.target.value }))
             }
-            placeholder="Optional workout notes"
+            placeholder="How the workout felt, goals, or anything to remember"
             rows={4}
             value={form.notes}
           />

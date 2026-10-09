@@ -52,7 +52,7 @@ class ProgressControllerTests {
 		Workout workout = workoutRepository.save(
 				new Workout(LocalDate.of(2026, 9, 25), "Push Day", null));
 		WorkoutExercise workoutExercise = workoutExerciseRepository.save(
-				new WorkoutExercise(workout, exercise, 1, null));
+				new WorkoutExercise(workout, exercise, 1));
 		setEntryRepository.save(new SetEntry(workoutExercise, 1, 10, new BigDecimal("135.00")));
 		setEntryRepository.save(new SetEntry(workoutExercise, 2, 5, new BigDecimal("185.00")));
 
@@ -86,9 +86,9 @@ class ProgressControllerTests {
 		Workout secondWorkout = workoutRepository.save(
 				new Workout(LocalDate.of(2026, 9, 20), "Second Leg Day", null));
 		WorkoutExercise firstWorkoutExercise = workoutExerciseRepository.save(
-				new WorkoutExercise(firstWorkout, exercise, 1, null));
+				new WorkoutExercise(firstWorkout, exercise, 1));
 		WorkoutExercise secondWorkoutExercise = workoutExerciseRepository.save(
-				new WorkoutExercise(secondWorkout, exercise, 1, null));
+				new WorkoutExercise(secondWorkout, exercise, 1));
 		setEntryRepository.save(new SetEntry(firstWorkoutExercise, 1, 10, new BigDecimal("100.00")));
 		setEntryRepository.save(new SetEntry(firstWorkoutExercise, 2, 5, new BigDecimal("150.00")));
 		setEntryRepository.save(new SetEntry(secondWorkoutExercise, 1, 3, new BigDecimal("175.00")));

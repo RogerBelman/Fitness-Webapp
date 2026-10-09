@@ -69,22 +69,23 @@ class CardioTrackingTests {
 		flush();
 		mvc.perform(post("/api/workout-exercises/{id}/sets", strengthId).contentType(MediaType.APPLICATION_JSON)
 				.content("{\"reps\":8,\"weight\":100}" )).andExpect(status().isCreated());
-		addEntry(cardioId, "{\"durationMinutes\":20,\"level\":6,\"notes\":\" Steady pace \"}");
+		addEntry(cardioId, "{\"durationMinutes\":20,\"level\":6}");
 		long secondId = addEntry(cardioId, "{\"durationMinutes\":5.25}");
 		mvc.perform(get("/api/workouts/{id}", workoutId))
 				.andExpect(jsonPath("$.totalSets").value(1)).andExpect(jsonPath("$.totalVolume").value(800))
 				.andExpect(jsonPath("$.totalCardioMinutes").value(25.25))
-				.andExpect(jsonPath("$.exercises[0].cardioEntries[0].notes").value("Steady pace"))
+				.andExpect(jsonPath("$.exercises[0].cardioEntries[0].notes").doesNotExist())
 				.andExpect(jsonPath("$.exercises[0].sets").isEmpty());
 		mvc.perform(get("/api/workouts")).andExpect(jsonPath("$[?(@.id == " + workoutId + ")].totalCardioMinutes", contains(25.25)));
 		mvc.perform(put("/api/cardio-entries/{id}", secondId).contentType(MediaType.APPLICATION_JSON)
-				.content("{\"durationMinutes\":10.5,\"level\":0,\"notes\":\"Intervals\"}"))
+				.content("{\"durationMinutes\":10.5,\"level\":0}"))
 				.andExpect(status().isOk()).andExpect(jsonPath("$.level").value(0));
 		flush();
 		mvc.perform(get("/api/workouts/{id}", workoutId)).andExpect(jsonPath("$.totalCardioMinutes").value(30.5));
 		mvc.perform(put("/api/cardio-entries/{id}", secondId).contentType(MediaType.APPLICATION_JSON)
 				.content("{\"durationMinutes\":10.5}"))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.level").isEmpty()).andExpect(jsonPath("$.notes").isEmpty());
+				.andExpect(status().isOk()).andExpect(jsonPath("$.level").isEmpty())
+				.andExpect(jsonPath("$.notes").doesNotExist());
 		flush();
 		assertThat(entries.findById(secondId).orElseThrow().getLevel()).isNull();
 		mvc.perform(delete("/api/cardio-entries/{id}", secondId)).andExpect(status().isNoContent());
@@ -107,7 +108,7 @@ class CardioTrackingTests {
 	}
 
 	@Test
-	void validatesCardioDurationLevelAndNotesOnCreateAndUpdate() throws Exception {
+	void validatesCardioDurationAndLevelOnCreateAndUpdate() throws Exception {
 		long cardio = addExercise(newWorkout(), TrainingType.CARDIO, 1).getId();
 		flush();
 		long entry = addEntry(cardio, "{\"durationMinutes\":20}");
@@ -115,7 +116,7 @@ class CardioTrackingTests {
 				"{}", "{\"durationMinutes\":null}", "{\"durationMinutes\":0}", "{\"durationMinutes\":-1}",
 				"{\"durationMinutes\":100000}", "{\"durationMinutes\":1.001}",
 				"{\"durationMinutes\":20,\"level\":-1}", "{\"durationMinutes\":20,\"level\":1000}",
-				"{\"durationMinutes\":20,\"level\":1.001}", "{\"durationMinutes\":20,\"notes\":\"" + "x".repeat(501) + "\"}" }) {
+				"{\"durationMinutes\":20,\"level\":1.001}" }) {
 			mvc.perform(post("/api/workout-exercises/{id}/cardio-entries", cardio).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isBadRequest());
 			mvc.perform(put("/api/cardio-entries/{id}", entry).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isBadRequest());
 		}
@@ -192,7 +193,7 @@ class CardioTrackingTests {
 	}
 	private WorkoutExercise addExercise(Workout workout, TrainingType type, int order) {
 		Exercise exercise = exercises.save(new Exercise("Test " + UUID.randomUUID(), type == TrainingType.STRENGTH ? "Chest" : null, "None", null, type));
-		return workoutExercises.save(new WorkoutExercise(workout, exercise, order, null));
+		return workoutExercises.save(new WorkoutExercise(workout, exercise, order));
 	}
 	private long addEntry(long id, String body) throws Exception {
 		mvc.perform(post("/api/workout-exercises/{id}/cardio-entries", id).contentType(MediaType.APPLICATION_JSON).content(body))

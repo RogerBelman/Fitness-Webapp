@@ -1,11 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { ExerciseFilters } from '../components/exercises/ExerciseFilters'
 import { ExerciseForm } from '../components/exercises/ExerciseForm'
 import { ExerciseList } from '../components/exercises/ExerciseList'
 import { PageHeader } from '../components/PageHeader'
+import { ActionFeedback } from '../components/ActionFeedback'
 import { useExercises } from '../hooks/useExercises'
 
 export function ExerciseLibrary() {
+  const [isCreating, setIsCreating] = useState(false)
+  const createButtonRef = useRef<HTMLButtonElement>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [muscleGroupFilter, setMuscleGroupFilter] = useState('')
   const [trainingTypeFilter, setTrainingTypeFilter] = useState('')
@@ -39,14 +42,44 @@ export function ExerciseLibrary() {
     }
   }
 
+  function closeCreateForm() {
+    setIsCreating(false)
+    createButtonRef.current?.focus()
+  }
+
   return (
     <section className="PageStack">
       <PageHeader
         title="Exercise Library"
         description="Manage strength and cardio exercises and their instructions."
+        actions={
+          <button
+            ref={createButtonRef}
+            className="Button ButtonPrimary"
+            type="button"
+            aria-expanded={isCreating}
+            aria-controls="new-library-exercise"
+            disabled={isSaving}
+            onClick={() => setIsCreating((current) => !current)}
+          >
+            {isCreating ? 'Close New Exercise' : 'New Exercise'}
+          </button>
+        }
       />
 
-      <ExerciseForm isSaving={isSaving} onCreate={addExercise} />
+      {isCreating ? (
+        <div id="new-library-exercise">
+          <ExerciseForm
+            isSaving={isSaving}
+            onCancel={closeCreateForm}
+            onCreate={async (request) => {
+              const saved = await addExercise(request)
+              if (saved) closeCreateForm()
+              return saved
+            }}
+          />
+        </div>
+      ) : null}
 
       <ExerciseFilters
         trainingType={trainingTypeFilter}
@@ -57,16 +90,10 @@ export function ExerciseLibrary() {
         onMuscleGroupChange={setMuscleGroupFilter}
       />
 
-      {errorMessage ? (
-        <p className="Alert AlertError" role="alert">
-          {errorMessage}
-        </p>
-      ) : null}
-      {successMessage ? (
-        <p className="Alert AlertSuccess" role="status">
-          {successMessage}
-        </p>
-      ) : null}
+      <ActionFeedback
+        errorMessage={errorMessage}
+        successMessage={successMessage}
+      />
 
       <ExerciseList
         exercises={visibleExercises}

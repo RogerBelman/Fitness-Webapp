@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Exercise, ExerciseRequest } from '../../types/exercise'
 import { DeleteButton } from '../DeleteButton'
+import { TrainingTypeBadge } from '../TrainingTypeBadge'
 import { ExerciseForm } from './ExerciseForm'
 
 type ExerciseListProps = {
@@ -35,14 +36,16 @@ export function ExerciseList({
       {!isLoading && exercises.length > 0 ? (
         <div className="ExerciseList">
           {exercises.map((exercise) => (
-            <div key={exercise.id}>
+            <div className="ExerciseLibraryItem" key={exercise.id}>
               <article className="ExerciseCard">
                 <div>
                   <h3>{exercise.name}</h3>
-                  <p>
-                    {exercise.trainingType === 'CARDIO' ? 'Cardio' : 'Strength'}
-                    {exercise.muscleGroup ? ` · ${exercise.muscleGroup}` : ''}
-                  </p>
+                  <div className="ExerciseTypeLine">
+                    <TrainingTypeBadge trainingType={exercise.trainingType} />
+                    {exercise.muscleGroup ? (
+                      <span>{exercise.muscleGroup}</span>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="RowActions">
                   <button

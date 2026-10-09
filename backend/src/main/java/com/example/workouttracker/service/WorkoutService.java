@@ -87,13 +87,40 @@ public class WorkoutService {
 		}
 		Integer order = request.exerciseOrder() == null ? workoutExercise.getExerciseOrder()
 				: requiredPositive(request.exerciseOrder(), "exerciseOrder");
-		if (workoutExerciseRepository.existsByWorkoutIdAndExerciseOrderAndIdNot(
-				workoutExercise.getWorkout().getId(), order, id)) {
-			throw new DuplicateResourceException("Workout exercise order already exists.");
+		Integer currentOrder = workoutExercise.getExerciseOrder();
+		if (order.equals(currentOrder)) {
+			return WorkoutMapper.toWorkoutExerciseResponse(workoutExercise);
 		}
-		workoutExercise.updateDetails(order, optionalText(request.notes()));
+
+		Long workoutId = workoutExercise.getWorkout().getId();
+		workoutExerciseRepository.findByWorkoutIdAndExerciseOrder(workoutId, order)
+				.filter(existing -> !existing.getId().equals(id))
+				.ifPresent(existing -> swapExerciseOrder(workoutId, workoutExercise, existing,
+						currentOrder, order));
+		if (workoutExercise.getExerciseOrder().equals(order)) {
+			return WorkoutMapper.toWorkoutExerciseResponse(workoutExercise);
+		}
+
+		workoutExercise.updateDetails(order);
 		workoutExerciseRepository.flush();
 		return WorkoutMapper.toWorkoutExerciseResponse(workoutExercise);
+	}
+
+	private void swapExerciseOrder(Long workoutId, WorkoutExercise movingExercise,
+			WorkoutExercise displacedExercise, Integer movingExerciseOrder, Integer requestedOrder) {
+		Integer highestOrder = workoutExerciseRepository.findFirstByWorkoutIdOrderByExerciseOrderDesc(workoutId)
+				.map(WorkoutExercise::getExerciseOrder)
+				.orElse(0);
+		if (highestOrder.equals(Integer.MAX_VALUE)) {
+			throw new BadRequestException("Exercise order cannot be changed because the maximum order was reached.");
+		}
+
+		movingExercise.updateDetails(highestOrder + 1);
+		workoutExerciseRepository.flush();
+		displacedExercise.updateDetails(movingExerciseOrder);
+		workoutExerciseRepository.flush();
+		movingExercise.updateDetails(requestedOrder);
+		workoutExerciseRepository.flush();
 	}
 
 	public void deleteExercise(Long id) {
@@ -140,13 +167,11 @@ public class WorkoutService {
 		Workout workout = getWorkout(workoutId);
 		Exercise exercise = getExercise(requiredPositiveLong(request.exerciseId(), "exerciseId"));
 		Integer exerciseOrder = resolveExerciseOrder(workoutId, request.exerciseOrder());
-		String notes = optionalText(request.notes());
-
 		if (workoutExerciseRepository.existsByWorkoutIdAndExerciseOrder(workoutId, exerciseOrder)) {
 			throw new DuplicateResourceException("Workout exercise order already exists.");
 		}
 
-		WorkoutExercise workoutExercise = new WorkoutExercise(workout, exercise, exerciseOrder, notes);
+		WorkoutExercise workoutExercise = new WorkoutExercise(workout, exercise, exerciseOrder);
 		return WorkoutMapper.toWorkoutExerciseResponse(workoutExerciseRepository.save(workoutExercise));
 	}
 

@@ -26,6 +26,7 @@ import com.example.workouttracker.entity.WorkoutExercise;
 import com.example.workouttracker.exception.ResourceNotFoundException;
 import com.example.workouttracker.repository.ExerciseRepository;
 import com.example.workouttracker.repository.SetEntryRepository;
+import com.example.workouttracker.repository.CardioEntryRepository;
 import com.example.workouttracker.service.ProgressService;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,11 +38,14 @@ class ProgressServiceTests {
 	@Mock
 	private SetEntryRepository setEntryRepository;
 
+	@Mock
+	private CardioEntryRepository cardioEntryRepository;
+
 	private ProgressService progressService;
 
 	@BeforeEach
 	void setUp() {
-		progressService = new ProgressService(exerciseRepository, setEntryRepository);
+		progressService = new ProgressService(exerciseRepository, setEntryRepository, cardioEntryRepository);
 	}
 
 	@Test
@@ -49,7 +53,7 @@ class ProgressServiceTests {
 		Long exerciseId = 12L;
 		Exercise exercise = new Exercise("Bench Press", "Chest", "Strength");
 		Workout workout = new Workout(LocalDate.of(2026, 9, 25), "Push Day", null);
-		WorkoutExercise workoutExercise = new WorkoutExercise(workout, exercise, 1, null);
+		WorkoutExercise workoutExercise = new WorkoutExercise(workout, exercise, 1);
 		SetEntry setEntry = new SetEntry(workoutExercise, 1, 5, new BigDecimal("185.00"));
 		when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.of(exercise));
 		when(setEntryRepository
@@ -84,7 +88,7 @@ class ProgressServiceTests {
 		Long exerciseId = 12L;
 		Exercise exercise = new Exercise("Bench Press", "Chest", "Strength");
 		Workout workout = new Workout(LocalDate.of(2026, 9, 25), "Push Day", null);
-		WorkoutExercise workoutExercise = new WorkoutExercise(workout, exercise, 1, null);
+		WorkoutExercise workoutExercise = new WorkoutExercise(workout, exercise, 1);
 		SetEntry firstSet = new SetEntry(workoutExercise, 1, 10, new BigDecimal("135.00"));
 		SetEntry secondSet = new SetEntry(workoutExercise, 2, 5, new BigDecimal("185.00"));
 		when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.of(exercise));

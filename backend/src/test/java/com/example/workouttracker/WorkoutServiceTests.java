@@ -108,6 +108,6 @@ class WorkoutServiceTests {
 	private WorkoutExercise workoutExercise() {
 		Workout workout = new Workout(LocalDate.of(2026, 8, 25), "Pull Day", null);
 		Exercise exercise = new Exercise("Lat Pulldown", "Back", "Machine");
-		return new WorkoutExercise(workout, exercise, 1, null);
+		return new WorkoutExercise(workout, exercise, 1);
 	}
 }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Exercise } from '../../types/exercise'
 import type { AddWorkoutExerciseRequest } from '../../types/workout'
+import { getTrainingTypeOptionLabel } from '../../utils/trainingTypeDisplay'
 
 type AddWorkoutExerciseFormProps = {
   exercises: Exercise[]
@@ -21,7 +22,6 @@ export function AddWorkoutExerciseForm({
   isCreatingExercise,
 }: AddWorkoutExerciseFormProps) {
   const [exerciseId, setExerciseId] = useState('')
-  const [notes, setNotes] = useState('')
   const hasExercises = exercises.length > 0
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -29,12 +29,10 @@ export function AddWorkoutExerciseForm({
 
     const wasAdded = await onAdd({
       exerciseId: Number(exerciseId),
-      notes: notes || undefined,
     })
 
     if (wasAdded) {
       setExerciseId('')
-      setNotes('')
     }
   }
 
@@ -45,7 +43,7 @@ export function AddWorkoutExerciseForm({
           <h2>Add From Your Library</h2>
         </div>
 
-        <div className="FormGrid">
+        <div className="FormGrid FormGridSingle">
           <label>
             Saved Exercise
             <select
@@ -63,25 +61,12 @@ export function AddWorkoutExerciseForm({
               </option>
               {exercises.map((exercise) => (
                 <option key={exercise.id} value={exercise.id}>
-                  {exercise.name} (
-                  {exercise.trainingType === 'CARDIO'
-                    ? 'Cardio'
-                    : exercise.muscleGroup || 'Strength'}
-                  )
+                  {getTrainingTypeOptionLabel(exercise.trainingType)} —{' '}
+                  {exercise.name}
+                  {exercise.muscleGroup ? ` (${exercise.muscleGroup})` : ''}
                 </option>
               ))}
             </select>
-          </label>
-
-          <label>
-            Notes
-            <input
-              maxLength={500}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder="Optional exercise notes"
-              type="text"
-              value={notes}
-            />
           </label>
         </div>
 

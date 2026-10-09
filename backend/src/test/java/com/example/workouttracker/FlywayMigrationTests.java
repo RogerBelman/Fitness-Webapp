@@ -42,4 +42,19 @@ class FlywayMigrationTests {
 
 		assertThat(successfulMigrations).isGreaterThanOrEqualTo(1);
 	}
+
+	@Test
+	void removesSessionExerciseNoteColumns() {
+		List<String> columns = jdbcTemplate.queryForList(
+				"""
+				select table_name || '.' || column_name
+				from information_schema.columns
+				where table_schema = 'public'
+				  and table_name in ('workout_exercises', 'cardio_entries')
+				  and column_name = 'notes'
+				""",
+				String.class);
+
+		assertThat(columns).isEmpty();
+	}
 }

@@ -10,9 +10,9 @@ public interface WorkoutExerciseRepository extends JpaRepository<WorkoutExercise
 
 	Optional<WorkoutExercise> findFirstByWorkoutIdOrderByExerciseOrderDesc(Long workoutId);
 
-	boolean existsByWorkoutIdAndExerciseOrder(Long workoutId, Integer exerciseOrder);
+	Optional<WorkoutExercise> findByWorkoutIdAndExerciseOrder(Long workoutId, Integer exerciseOrder);
 
-	boolean existsByWorkoutIdAndExerciseOrderAndIdNot(Long workoutId, Integer exerciseOrder, Long id);
+	boolean existsByWorkoutIdAndExerciseOrder(Long workoutId, Integer exerciseOrder);
 
 	boolean existsByExerciseId(Long exerciseId);
 }

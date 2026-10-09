@@ -21,26 +21,23 @@ export function CardioEntryForm({
   const [level, setLevel] = useState(
     initialValues?.level != null ? String(initialValues.level) : '',
   )
-  const [notes, setNotes] = useState(initialValues?.notes ?? '')
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const saved = await onSave({
       durationMinutes: Number(duration),
       level: level === '' ? null : Number(level),
-      notes: notes.trim() || null,
     })
     if (saved && !initialValues) {
       setDuration('')
       setLevel('')
-      setNotes('')
     }
   }
 
   return (
     <form className="SetEntryForm" onSubmit={handleSubmit}>
       <fieldset className="FormFieldset" disabled={isSaving}>
-        <div className="FormGrid">
+        <div className="FormGrid CardioEntryFields">
           <label>
             Duration (minutes)
             <input
@@ -64,17 +61,11 @@ export function CardioEntryForm({
               onChange={(event) => setLevel(event.target.value)}
             />
           </label>
-          <label>
-            Session Notes (optional)
-            <input
-              type="text"
-              maxLength={500}
-              placeholder="Steady pace, intervals..."
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-            />
-          </label>
         </div>
+        <p className="ExerciseTrackingHint">
+          Log one entry for a steady session, or separate entries for intervals.
+          Leave level blank when it does not apply.
+        </p>
         <div className="FormActions">
           <button className="Button ButtonPrimary" type="submit">
             {isSaving

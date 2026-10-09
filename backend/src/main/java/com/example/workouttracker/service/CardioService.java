@@ -32,7 +32,7 @@ public class CardioService {
 				.orElseThrow(() -> new ResourceNotFoundException("Workout exercise not found."));
 		requireCardio(exercise);
 		Values values = normalize(request);
-		CardioEntry entry = new CardioEntry(exercise, values.duration(), values.level(), values.notes());
+		CardioEntry entry = new CardioEntry(exercise, values.duration(), values.level());
 		return WorkoutMapper.toCardioEntryResponse(entries.save(entry));
 	}
 
@@ -40,7 +40,7 @@ public class CardioService {
 		CardioEntry entry = getEntry(id);
 		requireCardio(entry.getWorkoutExercise());
 		Values values = normalize(request);
-		entry.updateDetails(values.duration(), values.level(), values.notes());
+		entry.updateDetails(values.duration(), values.level());
 		entries.flush();
 		return WorkoutMapper.toCardioEntryResponse(entry);
 	}
@@ -74,11 +74,7 @@ public class CardioService {
 		if (level != null) {
 			checkNumber(level, new BigDecimal("999.99"), "level");
 		}
-		String notes = request.notes();
-		if (notes != null && notes.length() > 500) {
-			throw new BadRequestException("notes must be 500 characters or less.");
-		}
-		return new Values(duration, level, notes == null || notes.isBlank() ? null : notes.trim());
+		return new Values(duration, level);
 	}
 
 	private void checkNumber(BigDecimal value, BigDecimal maximum, String field) {
@@ -87,6 +83,6 @@ public class CardioService {
 		}
 	}
 
-	private record Values(BigDecimal duration, BigDecimal level, String notes) {
+	private record Values(BigDecimal duration, BigDecimal level) {
 	}
 }

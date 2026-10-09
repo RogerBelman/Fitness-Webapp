@@ -51,7 +51,7 @@ class WorkoutExerciseCreationTests {
 		Workout workout = newWorkout();
 		long workoutId = workout.getId();
 		Exercise existing = exercises.save(new Exercise(uniqueName("Existing"), "Chest", "None"));
-		workoutExercises.save(new WorkoutExercise(workout, existing, 3, null));
+		workoutExercises.save(new WorkoutExercise(workout, existing, 3));
 		String suffix = uniqueName("").trim();
 		flush();
 		mvc.perform(post("/api/workouts/{id}/exercises/new", workoutId).contentType(MediaType.APPLICATION_JSON)
