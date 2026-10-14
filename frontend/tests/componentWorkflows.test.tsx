@@ -1,16 +1,19 @@
 import type { ReactNode } from 'react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { MeasurementPreferencesProvider } from '../src/contexts/MeasurementPreferences'
 import { AddSetForm } from '../src/components/workouts/AddSetForm'
 import { WorkoutDetails } from '../src/components/workouts/WorkoutDetails'
 import { WorkoutList } from '../src/components/workouts/WorkoutList'
 import { WorkoutTemplateList } from '../src/components/workouts/WorkoutTemplateList'
+import { AppLayout } from '../src/components/AppLayout'
+import { GoalPanel } from '../src/components/progress/GoalPanel'
 import type { Exercise } from '../src/types/exercise'
 import type { Workout, WorkoutDetail } from '../src/types/workout'
 import type { WorkoutTemplate } from '../src/types/workoutTemplate'
+import type { ExerciseGoal } from '../src/types/goal'
 
 const timestamp = '2026-10-14T00:00:00Z'
 const bench = exercise(1, 'Bench Press', 'STRENGTH')
@@ -76,6 +79,80 @@ describe('measurement preferences', () => {
       setNumber: undefined,
       reps: 5,
       weight: 100,
+    })
+  })
+
+  it('changes and persists the weight unit from the app footer', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <MeasurementPreferencesProvider>
+          <Routes>
+            <Route element={<AppLayout />}>
+              <Route index element={<p>Dashboard content</p>} />
+            </Route>
+          </Routes>
+        </MeasurementPreferencesProvider>
+      </MemoryRouter>,
+    )
+
+    const kilograms = screen.getByRole('button', { name: 'kg' })
+    expect(kilograms).toHaveAttribute('aria-pressed', 'false')
+    await user.click(kilograms)
+
+    expect(kilograms).toHaveAttribute('aria-pressed', 'true')
+    expect(window.localStorage.getItem('workout-tracker-weight-unit')).toBe('kg')
+  })
+})
+
+describe('goal workflows', () => {
+  it('creates a goal and edits an existing target', async () => {
+    const user = userEvent.setup()
+    const onCreate = vi.fn().mockResolvedValue(true)
+    const onUpdate = vi.fn().mockResolvedValue(true)
+    const goal: ExerciseGoal = {
+      id: 12,
+      exercise: bench,
+      metric: 'STRENGTH_MAX_WEIGHT',
+      targetValue: 200,
+      currentValue: 175,
+      achieved: false,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    }
+
+    renderWithPreferences(
+      <GoalPanel
+        exercises={[bench]}
+        goals={[goal]}
+        isLoading={false}
+        isSaving={false}
+        errorMessage={null}
+        onCreate={onCreate}
+        onUpdate={onUpdate}
+        onDelete={async () => true}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Add Goal' }))
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Exercise' }), '1')
+    await user.type(screen.getByRole('spinbutton', { name: 'Target (lb)' }), '225')
+    await user.click(screen.getByRole('button', { name: 'Save Goal' }))
+    expect(onCreate).toHaveBeenCalledWith({
+      exerciseId: 1,
+      metric: 'STRENGTH_MAX_WEIGHT',
+      targetValue: 225,
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Edit Target' }))
+    const editTarget = screen.getByRole('spinbutton', { name: 'New target (lb)' })
+    await user.clear(editTarget)
+    await user.type(editTarget, '240')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    expect(onUpdate).toHaveBeenCalledWith(12, {
+      exerciseId: 1,
+      metric: 'STRENGTH_MAX_WEIGHT',
+      targetValue: 240,
     })
   })
 })
@@ -147,6 +224,46 @@ describe('template workflows', () => {
       workoutDate: '2026-10-13',
       title: 'Evening Strength',
       notes: 'Keep the pace steady',
+    })
+  })
+
+  it('keeps detail edits explicit while exercise changes save immediately', async () => {
+    const user = userEvent.setup()
+    const onUpdate = vi.fn().mockResolvedValue(true)
+    const onAddExercise = vi.fn().mockResolvedValue(true)
+    const cableRow = exercise(2, 'Cable Row', 'STRENGTH')
+
+    renderWithPreferences(
+      <WorkoutTemplateList
+        templates={[template()]}
+        isLoading={false}
+        isSaving={false}
+        onUpdate={onUpdate}
+        onDelete={async () => true}
+        onStart={async () => null}
+        exercises={[bench, cableRow]}
+        isLoadingExercises={false}
+        onAddExercise={onAddExercise}
+        onMoveExercise={async () => true}
+        onRemoveExercise={async () => true}
+        editingId={8}
+        onEditingIdChange={() => undefined}
+      />,
+    )
+
+    const name = screen.getByRole('textbox', { name: 'Template Name' })
+    await user.clear(name)
+    await user.type(name, 'Updated Routine')
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Add Exercise' }), '2')
+    await user.click(screen.getByRole('button', { name: 'Add Exercise' }))
+
+    expect(onAddExercise).toHaveBeenCalledWith(8, 2)
+    expect(onUpdate).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Save Details' }))
+    expect(onUpdate).toHaveBeenCalledWith(8, {
+      name: 'Updated Routine',
+      notes: 'Use controlled reps',
     })
   })
 })

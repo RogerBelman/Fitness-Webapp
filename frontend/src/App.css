@@ -128,11 +128,61 @@
 .AppFooterContent {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 10px;
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
   padding: 14px 0;
+}
+
+.FooterLink {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.FooterLink:hover,
+.FooterLink.active {
+  color: var(--accent);
+}
+
+.FooterPreferences {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.DataBackupGrid {
+  display: grid;
+  gap: 16px;
+}
+
+.DataBackupCard {
+  align-content: start;
+  gap: 18px;
+}
+
+.DataBackupCard h2 {
+  margin: 0 0 6px;
+}
+
+.DataBackupCard .Button {
+  width: fit-content;
+}
+
+.BackupFileField {
+  display: grid;
+  gap: 8px;
+}
+
+.BackupFileField input[type='file'] {
+  padding: 9px;
+}
+
+.SelectedBackupFile {
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .PreferenceLabel {
@@ -372,6 +422,10 @@ textarea:disabled {
 
   .MetricGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .DataBackupGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .ExerciseFilterBar {

@@ -19,6 +19,7 @@ This repository contains a full-stack workout tracking application built with a 
 - Visualize maximum-weight and workout-volume trends with a responsive chart.
 - Track cardio minutes, workout duration trends, and recorded machine levels with separate charts and history.
 - Switch strength weights and volume between pounds and kilograms throughout the browser app.
+- Export all training data to a portable JSON backup and validate imported backups before replacing current data.
 - Validate API requests and return consistent error responses.
 - Run PostgreSQL locally with Docker or connect Spring Boot to Neon.
 - Apply versioned schema changes automatically with Flyway.
@@ -61,10 +62,13 @@ Routes:
 | `/workouts?new=1` | Workouts with the new-workout form open |
 | `/workouts/templates` | Workout template management |
 | `/workouts/{id}` | Workout Detail |
+| `/data` | Data export and backup restore |
 
 The Dashboard shows a Monday–Sunday calendar with previous/next week controls and a Today shortcut. Its Month Overview dialog marks days with workouts and selecting a date returns to that day on the Dashboard. Select a day to see its workouts, exercises, strength sets and volume, and cardio minutes. Add Workout opens the creation form on the combined Workouts page and preselects the chosen date for today or a past day. Workout history can be searched by workout or exercise name and filtered by Strength, Cardio, Mixed, and date range. New Workout opens the same form above workout history without leaving the Workouts page; Cancel returns to browsing. Creating a workout opens it immediately for exercise entry. Each exercise shows either sets/reps/weight or cardio duration/level according to its training type. Existing `/workouts/new` links redirect to this form and preserve the selected date. Strength charts, goals, maximum volume, and exercise history live on the separate Progress page.
 
-The Weight control in the main header switches strength entry, totals, goals, history, and charts between pounds and kilograms. PostgreSQL stores pounds as the canonical value; the frontend converts values when reading and submitting them. The selected display unit is saved in browser local storage.
+The Weight units control in the footer switches strength entry, totals, goals, history, and charts between pounds and kilograms. PostgreSQL stores pounds as the canonical value; the frontend converts values when reading and submitting them. The selected display unit is saved in browser local storage.
+
+The Data & Backup page downloads exercises, workouts, strength sets, cardio entries, templates, and goals as a versioned JSON snapshot. Import validates the complete snapshot first and then replaces the current dataset in one database transaction. Invalid files leave existing data unchanged.
 
 The Workout Templates page can create a reusable routine directly or save one from an existing workout. After creating a template, add exercises from the library, arrange their order, and start a workout with empty performance entries.
 
@@ -78,6 +82,7 @@ Frontend API files:
 | `src/api/exercises.ts` | Exercise endpoint functions |
 | `src/api/workouts.ts` | Workout endpoint functions |
 | `src/api/progress.ts` | Personal-record and exercise-history endpoint functions |
+| `src/api/dataBackup.ts` | Portable JSON export and transactional import functions |
 | `src/types/exercise.ts` | Exercise request and response types |
 | `src/types/progress.ts` | Personal-record and progress-history response types |
 | `src/types/workout.ts` | Workout, workout exercise, and set entry types |
@@ -417,6 +422,15 @@ Strength history points include the number of sets, heaviest set weight and reps
 
 Strength goals support maximum weight and maximum volume in one workout. Cardio goals support maximum combined duration in one workout and maximum recorded level. One goal is allowed per exercise and metric. The response includes `currentValue` and `achieved`, calculated from current workout entries each time goals are read.
 
+## Data Backup API
+
+| Method | Path | Purpose | Success |
+| --- | --- | --- | --- |
+| `GET` | `/api/data-backup` | Export the complete versioned JSON snapshot | `200 OK` |
+| `PUT` | `/api/data-backup` | Validate and replace all data from a snapshot | `200 OK` |
+
+The backup uses exercise names as portable references rather than database IDs. Import verifies unique exercises, valid references and ordering, matching Strength/Cardio entries, and compatible goal metrics before deleting any current records. Deletion and restoration run in the same transaction, so a database error also rolls back the replacement.
+
 Workout relationship model:
 
 ```text
@@ -488,6 +502,7 @@ Current test focus:
 | `ExerciseInstructionsTests` | Permanent instructions, session-note independence, clearing, and length validation |
 | `CardioTrackingTests` | Mixed totals, duration/level validation, entry updates/deletes, training-type protection, and deletion cascades |
 | `WorkoutControllerTests` | Workout API endpoint behavior |
+| `DataBackupControllerTests` | Nested export, transactional replacement, and validation before deletion |
 | `ExerciseServiceTests` | Exercise creation business rules |
 | `WorkoutServiceTests` | Workout creation and set validation business rules |
 | `WorkoutMapperTests` | Total sets and total volume calculation |
@@ -504,7 +519,7 @@ npm run lint
 npm run build
 ```
 
-The frontend suite retains seven calendar utility tests and adds interaction coverage for workout history filtering, pounds/kilograms conversion, focused exercise reordering, and starting a workout from a template.
+The frontend suite retains seven calendar utility tests and adds interaction coverage for workout history filtering, pounds/kilograms conversion and preference persistence, focused exercise reordering, goal creation and editing, explicit template-detail saving, immediate template exercise changes, starting a workout from a template, and confirmed backup replacement.
 
 ## Local Sample Data
 

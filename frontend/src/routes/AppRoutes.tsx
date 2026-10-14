@@ -6,6 +6,7 @@ import { Progress } from '../pages/Progress'
 import { WorkoutDetail } from '../pages/WorkoutDetail'
 import { Workouts } from '../pages/Workouts'
 import { WorkoutTemplates } from '../pages/WorkoutTemplates'
+import { DataBackup } from '../pages/DataBackup'
 
 export function AppRoutes() {
   return (
@@ -18,6 +19,7 @@ export function AppRoutes() {
         <Route path="workouts" element={<Workouts />} />
         <Route path="workouts/templates" element={<WorkoutTemplates />} />
         <Route path="workouts/:workoutId" element={<WorkoutDetail />} />
+        <Route path="data" element={<DataBackup />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

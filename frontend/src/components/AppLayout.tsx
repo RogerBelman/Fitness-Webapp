@@ -41,20 +41,25 @@ export function AppLayout() {
 
       <footer className="AppFooter">
         <div className="AppFooterContent">
-          <span className="PreferenceLabel">Weight units</span>
-          <div className="WeightUnitControl" role="group" aria-label="Weight unit">
-            <div className="WeightUnitToggle">
-              {(['lb', 'kg'] as const).map((unit) => (
-                <button
-                  aria-pressed={weightUnit === unit}
-                  className={weightUnit === unit ? 'WeightUnitOption active' : 'WeightUnitOption'}
-                  key={unit}
-                  onClick={() => setWeightUnit(unit)}
-                  type="button"
-                >
-                  {unit}
-                </button>
-              ))}
+          <NavLink className="FooterLink" to="/data">
+            Data &amp; Backup
+          </NavLink>
+          <div className="FooterPreferences">
+            <span className="PreferenceLabel">Weight units</span>
+            <div className="WeightUnitControl" role="group" aria-label="Weight unit">
+              <div className="WeightUnitToggle">
+                {(['lb', 'kg'] as const).map((unit) => (
+                  <button
+                    aria-pressed={weightUnit === unit}
+                    className={weightUnit === unit ? 'WeightUnitOption active' : 'WeightUnitOption'}
+                    key={unit}
+                    onClick={() => setWeightUnit(unit)}
+                    type="button"
+                  >
+                    {unit}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
