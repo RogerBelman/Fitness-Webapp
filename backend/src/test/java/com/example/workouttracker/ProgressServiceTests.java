@@ -103,6 +103,7 @@ class ProgressServiceTests {
 				.isEqualTo(LocalDate.of(2026, 9, 25));
 		assertThat(response.history().getFirst().totalSets()).isEqualTo(2);
 		assertThat(response.history().getFirst().maxWeight()).isEqualByComparingTo("185.00");
+		assertThat(response.history().getFirst().maxWeightReps()).isEqualTo(5);
 		assertThat(response.history().getFirst().totalVolume()).isEqualByComparingTo("2275.00");
 	}
 

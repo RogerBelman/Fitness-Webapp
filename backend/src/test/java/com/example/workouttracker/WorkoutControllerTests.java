@@ -72,6 +72,15 @@ class WorkoutControllerTests {
 	}
 
 	@Test
+	void retiredRepeatWorkoutRouteReturnsNotFound() throws Exception {
+		mockMvc.perform(post("/api/workouts/1/repeat")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"workoutDate\":\"2026-10-12\"}"))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.message").value("API route not found."));
+	}
+
+	@Test
 	void listsWorkoutsWithTotals() throws Exception {
 		Exercise exercise = exerciseRepository.save(new Exercise(unique("Deadlift"), "Back", "Strength"));
 		Workout workout = workoutRepository.save(new Workout(LocalDate.of(2026, 8, 20), "Pull Day", null));
@@ -83,7 +92,9 @@ class WorkoutControllerTests {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$[?(@.id == " + workout.getId() + ")]", hasSize(1)))
 				.andExpect(jsonPath("$[?(@.id == " + workout.getId() + ")].totalSets", contains(2)))
-				.andExpect(jsonPath("$[?(@.id == " + workout.getId() + ")].totalVolume", contains(2250.00)));
+				.andExpect(jsonPath("$[?(@.id == " + workout.getId() + ")].totalVolume", contains(2250.00)))
+				.andExpect(jsonPath("$[?(@.id == " + workout.getId() + ")].exerciseNames[0]", contains(exercise.getName())))
+				.andExpect(jsonPath("$[?(@.id == " + workout.getId() + ")].trainingTypes[0]", contains("STRENGTH")));
 	}
 
 	@Test

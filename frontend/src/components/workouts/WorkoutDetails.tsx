@@ -1,5 +1,6 @@
 import { Fragment, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useMeasurementPreferences } from '../../hooks/useMeasurementPreferences'
 import type {
   SetEntry,
   CardioEntryRequest,
@@ -11,6 +12,7 @@ import { DeleteButton } from '../DeleteButton'
 import { TrainingTypeBadge } from '../TrainingTypeBadge'
 import { AddSetForm } from './AddSetForm'
 import { CardioEntries } from './CardioEntries'
+import { formatWeight } from '../../utils/weightMeasurement'
 
 type WorkoutDetailsProps = {
   onAddCardio: (id: number, request: CardioEntryRequest) => Promise<boolean>
@@ -49,6 +51,7 @@ export function WorkoutDetails({
   exerciseActions,
   addExercisePanel,
 }: WorkoutDetailsProps) {
+  const { weightUnit } = useMeasurementPreferences()
   const [expandedExerciseIds, setExpandedExerciseIds] = useState<Set<number>>(
     () => new Set(),
   )
@@ -78,11 +81,13 @@ export function WorkoutDetails({
         </article>
         <article className="MetricCard">
           <span>Strength Volume</span>
-          <strong>{formatWeight(workout.totalVolume)} lb</strong>
+          <strong>
+            {formatWeight(workout.totalVolume, weightUnit)} {weightUnit}
+          </strong>
         </article>
         <article className="MetricCard">
           <span>Cardio Duration</span>
-          <strong>{formatWeight(workout.totalCardioMinutes)} min</strong>
+          <strong>{formatNumber(workout.totalCardioMinutes)} min</strong>
         </article>
       </section>
 
@@ -220,7 +225,7 @@ export function WorkoutDetails({
                   </div>
                   <span className="WorkoutExerciseTotal">
                     {workoutExercise.exercise.trainingType === 'CARDIO'
-                      ? `${formatWeight(workoutExercise.cardioEntries.reduce((total, entry) => total + entry.durationMinutes, 0))} min`
+                      ? `${formatNumber(workoutExercise.cardioEntries.reduce((total, entry) => total + entry.durationMinutes, 0))} min`
                       : `${workoutExercise.sets.length} sets`}
                   </span>
                 </div>
@@ -293,6 +298,7 @@ function SetTable({
   onSave,
   onDelete,
 }: SetTableProps) {
+  const { weightUnit } = useMeasurementPreferences()
   const [editingId, setEditingId] = useState<number | null>(null)
   return (
     <div className="TableScroll">
@@ -311,7 +317,9 @@ function SetTable({
               <tr>
                 <td>{set.setNumber}</td>
                 <td>{set.reps}</td>
-                <td>{formatWeight(set.weight)} lb</td>
+                <td>
+                  {formatWeight(set.weight, weightUnit)} {weightUnit}
+                </td>
                 <td>
                   <div className="RowActions">
                     <button
@@ -356,8 +364,8 @@ function SetTable({
   )
 }
 
-function formatWeight(weight: number) {
+function formatNumber(value: number) {
   return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(
-    weight,
+    value,
   )
 }

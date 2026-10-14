@@ -3,13 +3,21 @@
 begin;
 
 \if :replace_all
+delete from exercise_goals;
+delete from workout_templates;
 delete from workouts;
 delete from exercises;
 \else
+delete from exercise_goals
+where exercise_id in (
+    select id from exercises where instructions like '[Sample data]%'
+);
+delete from workout_templates where notes like '[Sample data]%';
+delete from workout_template_exercises
+where exercise_id in (
+    select id from exercises where instructions like '[Sample data]%'
+);
 delete from workouts where notes like '[Sample data]%';
-delete from exercises e
-where e.instructions like '[Sample data]%'
-  and not exists (select 1 from workout_exercises we where we.exercise_id = e.id);
 \endif
 
 create temporary table sample_exercises (
@@ -26,9 +34,30 @@ insert into sample_exercises values
 ('stairs', 'Sample Stair Climber', null, 'CARDIO', 'Use the same machine for level comparisons. Record duration in minutes.', null),
 ('walk', 'Sample Outdoor Walk', null, 'CARDIO', 'Record walking duration. Leave machine level blank for outdoor walks.', null);
 
--- Fail on name collisions instead of overwriting exercises used by other workouts.
+-- Reuse sample exercises referenced by retained workouts, but never overwrite a
+-- same-name personal exercise.
+do $$
+begin
+    if exists (
+        select 1
+        from exercises exercise
+        join sample_exercises sample on sample.name = exercise.name
+        where exercise.instructions is null
+           or exercise.instructions not like '[Sample data]%'
+    ) then
+        raise exception 'A non-sample exercise has the same name as a sample exercise.';
+    end if;
+end $$;
+
 insert into exercises (name, muscle_group, category, training_type, instructions)
-select name, muscle_group, 'None', training_type, '[Sample data] ' || instructions from sample_exercises;
+select name, muscle_group, 'None', training_type, '[Sample data] ' || instructions
+from sample_exercises
+on conflict (name) do update set
+    muscle_group = excluded.muscle_group,
+    category = excluded.category,
+    training_type = excluded.training_type,
+    instructions = excluded.instructions,
+    updated_at = now();
 
 create temporary table sample_workouts (sequence integer, days_ago integer, kind integer, block integer, workout_id bigint) on commit drop;
 insert into sample_workouts (sequence, days_ago, kind, block)
@@ -85,5 +114,34 @@ from sample_workouts w
 join workout_exercises we on we.workout_id = w.workout_id
 join exercises e on e.id = we.exercise_id
 where e.name = 'Sample Stationary Bike';
+
+insert into workout_templates (name, notes) values
+('Sample Push And Bike', '[Sample data] Reusable strength and cardio routine.'),
+('Sample Lower And Stairs', '[Sample data] Reusable lower-body and cardio routine.'),
+('Sample Pull And Walk', '[Sample data] Reusable pull and outdoor cardio routine.');
+
+insert into workout_template_exercises (workout_template_id, exercise_id, exercise_order)
+select template.id, exercise.id, choice.exercise_order
+from (values
+    ('Sample Push And Bike', 'Sample Bench Press', 1),
+    ('Sample Push And Bike', 'Sample Dumbbell Shoulder Press', 2),
+    ('Sample Push And Bike', 'Sample Stationary Bike', 3),
+    ('Sample Lower And Stairs', 'Sample Back Squat', 1),
+    ('Sample Lower And Stairs', 'Sample Romanian Deadlift', 2),
+    ('Sample Lower And Stairs', 'Sample Stair Climber', 3),
+    ('Sample Pull And Walk', 'Sample Cable Row', 1),
+    ('Sample Pull And Walk', 'Sample Lat Pulldown', 2),
+    ('Sample Pull And Walk', 'Sample Outdoor Walk', 3)
+) choice(template_name, exercise_name, exercise_order)
+join workout_templates template on template.name = choice.template_name
+join exercises exercise on exercise.name = choice.exercise_name;
+
+insert into exercise_goals (exercise_id, metric, target_value)
+select exercise.id, goal.metric, goal.target_value
+from (values
+    ('Sample Bench Press', 'STRENGTH_MAX_WEIGHT', 120.00),
+    ('Sample Stationary Bike', 'CARDIO_DURATION', 30.00)
+) goal(exercise_name, metric, target_value)
+join exercises exercise on exercise.name = goal.exercise_name;
 
 commit;

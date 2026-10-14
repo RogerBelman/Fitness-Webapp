@@ -28,6 +28,7 @@ export function WorkoutDetail() {
     addSetEntry,
     saveWorkout,
     removeWorkout,
+    saveAsTemplate,
     saveExercise,
     removeExercise,
     saveSet,
@@ -62,7 +63,15 @@ export function WorkoutDetail() {
                   disabled={isSaving || isEditing || isReorderingExercises}
                   onClick={() => setIsEditing(true)}
                 >
-                  Edit Workout
+                  Edit Details
+                </button>
+                <button
+                  className="Button ButtonSecondary"
+                  type="button"
+                  disabled={isSaving || isEditing || isReorderingExercises}
+                  onClick={() => void saveAsTemplate()}
+                >
+                  Save as Template
                 </button>
                 <DeleteButton
                   label="Delete Workout"
@@ -145,7 +154,7 @@ export function WorkoutDetail() {
                     {isAddingExercise ? 'Close' : 'Add Exercise'}
                   </button>
                 ) : null}
-                {workout.exercises.length > 1 ? (
+                {workout.exercises.length > 1 && !isAddingExercise ? (
                   <button
                     className={`Button ${isReorderingExercises ? 'ButtonPrimary' : 'ButtonSecondary'}`}
                     type="button"

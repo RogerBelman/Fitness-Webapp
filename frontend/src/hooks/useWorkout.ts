@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ApiError } from '../api/client'
 import * as api from '../api/workouts'
+import { createTemplateFromWorkout } from '../api/workoutTemplates'
 import type { ExerciseRequest } from '../types/exercise'
 import type {
   AddWorkoutExerciseRequest,
@@ -101,6 +102,12 @@ export function useWorkout(workoutId: string | undefined) {
       mutate(() => api.updateWorkout(id!, request), 'Workout updated.'),
     removeWorkout: () =>
       mutate(() => api.deleteWorkout(id!), 'Workout deleted.', false),
+    saveAsTemplate: () =>
+      mutate(
+        () => createTemplateFromWorkout(id!),
+        'Workout saved as a template.',
+        false,
+      ),
     saveExercise: (exerciseId: number, request: UpdateWorkoutExerciseRequest) =>
       mutate(
         () => api.updateWorkoutExercise(exerciseId, request),

@@ -5,10 +5,12 @@ import { DayWorkouts } from '../components/dashboard/DayWorkouts'
 import { useWorkouts } from '../hooks/useWorkouts'
 import { useDayWorkouts } from '../hooks/useDayWorkouts'
 import { getTodayDate } from '../utils/workoutCalendar'
+import { MonthlyWorkoutCalendar } from '../components/dashboard/MonthlyWorkoutCalendar'
 
 export function Dashboard() {
   const today = getTodayDate()
   const [selectedDate, setSelectedDate] = useState(getTodayDate)
+  const [isMonthOpen, setIsMonthOpen] = useState(false)
   const { workouts, isLoading, errorMessage, reloadWorkouts } = useWorkouts()
   const day = useDayWorkouts(
     selectedDate,
@@ -20,8 +22,11 @@ export function Dashboard() {
     <section className="PageStack">
       <PageHeader
         title="Dashboard"
-        description="Your week of training. Select a day to see its workouts and exercises."
+        description="Review your training schedule and select a day to see its workouts and exercises."
+        actions={<button className="Button ButtonSecondary" type="button" onClick={() => setIsMonthOpen(true)}>Month Overview</button>}
       />
+
+      {isMonthOpen ? <MonthlyWorkoutCalendar workouts={workouts} selectedDate={selectedDate} today={today} onSelectDate={setSelectedDate} onClose={() => setIsMonthOpen(false)} /> : null}
 
       {errorMessage ? (
         <div className="Alert AlertError DashboardError" role="alert">

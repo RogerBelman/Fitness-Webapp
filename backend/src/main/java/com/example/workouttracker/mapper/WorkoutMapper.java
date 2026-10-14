@@ -27,6 +27,14 @@ public final class WorkoutMapper {
 				totalSets(workout),
 				totalVolume(workout),
 				totalCardioMinutes(workout),
+				workout.getWorkoutExercises().stream()
+						.map(workoutExercise -> workoutExercise.getExercise().getName())
+						.distinct()
+						.toList(),
+				workout.getWorkoutExercises().stream()
+						.map(workoutExercise -> workoutExercise.getExercise().getTrainingType())
+						.distinct()
+						.toList(),
 				workout.getCreatedAt(),
 				workout.getUpdatedAt());
 	}

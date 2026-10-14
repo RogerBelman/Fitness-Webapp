@@ -22,7 +22,7 @@ try {
     $sql += Get-Content -Raw (Join-Path $PSScriptRoot 'sample-data.sql')
     $sql | docker compose exec -T postgres sh -c 'psql -X -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
     if ($LASTEXITCODE -ne 0) { throw "Sample refresh failed and was rolled back. Backup: $backupPath" }
-    Write-Output 'Created 9 sample exercises, 12 workouts, 72 strength sets, and 16 cardio entries.'
+    Write-Output 'Created 9 sample exercises, 12 workouts, 3 templates, 2 goals, 72 strength sets, and 16 cardio entries.'
     Write-Output "Backup: $backupPath"
 }
 finally {

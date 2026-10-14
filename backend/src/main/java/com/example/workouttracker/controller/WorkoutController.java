@@ -19,8 +19,10 @@ import com.example.workouttracker.dto.WorkoutDetailResponse;
 import com.example.workouttracker.dto.WorkoutExerciseResponse;
 import com.example.workouttracker.dto.WorkoutRequest;
 import com.example.workouttracker.dto.WorkoutResponse;
+import com.example.workouttracker.dto.WorkoutTemplateResponse;
 import com.example.workouttracker.service.WorkoutService;
 import com.example.workouttracker.service.WorkoutExerciseCreationService;
+import com.example.workouttracker.service.WorkoutTemplateService;
 
 import jakarta.validation.Valid;
 
@@ -30,10 +32,19 @@ public class WorkoutController {
 
 	private final WorkoutService workoutService;
 	private final WorkoutExerciseCreationService exerciseCreationService;
+	private final WorkoutTemplateService templateService;
 
-	public WorkoutController(WorkoutService workoutService, WorkoutExerciseCreationService exerciseCreationService) {
+	public WorkoutController(WorkoutService workoutService, WorkoutExerciseCreationService exerciseCreationService,
+			WorkoutTemplateService templateService) {
 		this.workoutService = workoutService;
 		this.exerciseCreationService = exerciseCreationService;
+		this.templateService = templateService;
+	}
+
+	@PostMapping("/{id}/template")
+	public ResponseEntity<WorkoutTemplateResponse> createTemplate(@PathVariable Long id) {
+		WorkoutTemplateResponse response = templateService.createFromWorkout(id);
+		return ResponseEntity.created(URI.create("/api/workout-templates/" + response.id())).body(response);
 	}
 
 	@PostMapping

@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { createWorkout } from '../api/workouts'
 import { PageHeader } from '../components/PageHeader'
@@ -16,6 +16,8 @@ export function Workouts() {
   const [isSaving, setIsSaving] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const saving = useRef(false)
+  const createButtonRef = useRef<HTMLButtonElement>(null)
+  const shouldRestoreCreateFocus = useRef(false)
   const isCreating = searchParams.get('new') === '1'
   const initialDate = getInitialWorkoutDate(searchParams.get('date'))
 
@@ -28,11 +30,19 @@ export function Workouts() {
 
   function closeCreator() {
     setCreateError(null)
+    shouldRestoreCreateFocus.current = true
     const params = new URLSearchParams(searchParams)
     params.delete('new')
     params.delete('date')
     setSearchParams(params, { replace: true })
   }
+
+  useEffect(() => {
+    if (!isCreating && shouldRestoreCreateFocus.current) {
+      createButtonRef.current?.focus()
+      shouldRestoreCreateFocus.current = false
+    }
+  }, [isCreating])
 
   async function handleCreate(request: WorkoutRequest): Promise<boolean> {
     if (saving.current) return false
@@ -58,32 +68,28 @@ export function Workouts() {
         title="Workouts"
         description="Start a workout or revisit a past session."
         actions={
-          <button
-            className="Button ButtonPrimary"
-            type="button"
-            disabled={isCreating}
-            aria-expanded={isCreating}
-            aria-controls={isCreating ? 'new-workout-panel' : undefined}
-            onClick={openCreator}
-          >
-            New Workout
-          </button>
+          !isCreating ? (
+            <>
+              <Link className="Button ButtonSecondary" to="/workouts/templates">
+                Manage Templates
+              </Link>
+              <button
+                ref={createButtonRef}
+                className="Button ButtonPrimary"
+                type="button"
+                aria-expanded="false"
+                aria-controls="new-workout-panel"
+                onClick={openCreator}
+              >
+                New Workout
+              </button>
+            </>
+          ) : undefined
         }
       />
 
       {isCreating ? (
-        <section
-          className="WorkoutCreatePanel"
-          id="new-workout-panel"
-          aria-labelledby="new-workout-heading"
-        >
-          <div className="SectionHeader">
-            <h2 id="new-workout-heading">New Workout</h2>
-          </div>
-          <p className="EmptyState">
-            Choose a date and an optional title. Creating the workout opens it
-            so you can add exercises and log your performance.
-          </p>
+        <div className="WorkoutCreatePanel" id="new-workout-panel">
           {createError ? (
             <p className="Alert AlertError" role="alert">
               {createError}
@@ -96,7 +102,7 @@ export function Workouts() {
             onCreate={handleCreate}
             onCancel={closeCreator}
           />
-        </section>
+        </div>
       ) : null}
 
       {errorMessage ? (

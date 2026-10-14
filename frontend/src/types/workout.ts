@@ -1,6 +1,6 @@
 import type { Exercise } from './exercise'
 
-export type Workout = {
+type WorkoutBase = {
   id: number
   workoutDate: string
   title: string | null
@@ -12,7 +12,12 @@ export type Workout = {
   updatedAt: string
 }
 
-export type WorkoutDetail = Workout & {
+export type Workout = WorkoutBase & {
+  exerciseNames: string[]
+  trainingTypes: Exercise['trainingType'][]
+}
+
+export type WorkoutDetail = WorkoutBase & {
   exercises: WorkoutExercise[]
 }
 

@@ -93,60 +93,71 @@ export function CardioProgressSummary({
           />
         </>
       ) : null}
-
-      <section className="ContentBand">
-        <div className="SectionHeader">
-          <h2>Cardio History</h2>
-          <span className="RecordCount">{history.length}</span>
-        </div>
-        {history.length === 0 ? (
-          <p className="EmptyState">
-            No cardio entries yet. Add this exercise to a workout and log its
-            duration to start tracking progress.
-          </p>
-        ) : (
-          <div className="TableScroll">
-            <table className="ProgressTable">
-              <thead>
-                <tr>
-                  <th scope="col">Date</th>
-                  <th scope="col">Entries</th>
-                  <th scope="col">Duration</th>
-                  <th scope="col">Highest Level</th>
-                  <th scope="col">
-                    <span className="VisuallyHidden">Workout</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.map((point) => (
-                  <tr key={point.workoutId}>
-                    <td>
-                      {new Intl.DateTimeFormat('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        timeZone: 'UTC',
-                      }).format(new Date(`${point.workoutDate}T00:00:00Z`))}
-                    </td>
-                    <td>{point.totalEntries}</td>
-                    <td>{formatNumber(point.totalDurationMinutes)} min</td>
-                    <td>
-                      {point.maxLevel === null
-                        ? 'Not recorded'
-                        : formatNumber(point.maxLevel)}
-                    </td>
-                    <td>
-                      <Link to={`/workouts/${point.workoutId}`}>Details</Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <CardioProgressHistory progress={progress} />
     </>
+  )
+}
+
+function CardioProgressHistory({
+  progress,
+}: {
+  progress: CardioProgress
+}) {
+  const { history } = progress
+
+  return (
+    <section className="ContentBand">
+      <div className="SectionHeader">
+        <h2>Cardio History</h2>
+        <span className="RecordCount">{history.length}</span>
+      </div>
+      {history.length === 0 ? (
+        <p className="EmptyState">
+          No cardio entries yet. Add this exercise to a workout and log its
+          duration to start tracking progress.
+        </p>
+      ) : (
+        <div className="TableScroll">
+          <table className="ProgressTable">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Entries</th>
+                <th scope="col">Duration</th>
+                <th scope="col">Highest Level</th>
+                <th scope="col">
+                  <span className="VisuallyHidden">Workout</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.map((point) => (
+                <tr key={point.workoutId}>
+                  <td>
+                    {new Intl.DateTimeFormat('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      timeZone: 'UTC',
+                    }).format(new Date(`${point.workoutDate}T00:00:00Z`))}
+                  </td>
+                  <td>{point.totalEntries}</td>
+                  <td>{formatNumber(point.totalDurationMinutes)} min</td>
+                  <td>
+                    {point.maxLevel === null
+                      ? 'Not recorded'
+                      : formatNumber(point.maxLevel)}
+                  </td>
+                  <td>
+                    <Link to={`/workouts/${point.workoutId}`}>Details</Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   )
 }
 

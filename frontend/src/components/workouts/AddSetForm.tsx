@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { useMeasurementPreferences } from '../../hooks/useMeasurementPreferences'
 import type { SetEntry, SetEntryRequest } from '../../types/workout'
+import { toPounds, weightInputValue } from '../../utils/weightMeasurement'
 
 type AddSetFormProps = {
   isSaving: boolean
@@ -15,15 +17,25 @@ export function AddSetForm({
   initialValues,
   onCancel,
 }: AddSetFormProps) {
+  const { weightUnit } = useMeasurementPreferences()
   const [reps, setReps] = useState(
     initialValues ? String(initialValues.reps) : '',
   )
   const [weight, setWeight] = useState(
-    initialValues ? String(initialValues.weight) : '',
+    initialValues ? weightInputValue(initialValues.weight, weightUnit) : '',
   )
   const [setNumber, setSetNumber] = useState(
     initialValues ? String(initialValues.setNumber) : '',
   )
+  const previousUnit = useRef(weightUnit)
+
+  useEffect(() => {
+    if (previousUnit.current !== weightUnit && weight) {
+      const pounds = toPounds(Number(weight), previousUnit.current)
+      setWeight(weightInputValue(pounds, weightUnit))
+    }
+    previousUnit.current = weightUnit
+  }, [weight, weightUnit])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -31,7 +43,7 @@ export function AddSetForm({
     const wasAdded = await onAdd({
       setNumber: initialValues ? Number(setNumber) : undefined,
       reps: Number(reps),
-      weight: Number(weight),
+      weight: toPounds(Number(weight), weightUnit),
     })
 
     if (wasAdded && !initialValues) {
@@ -72,10 +84,10 @@ export function AddSetForm({
           </label>
 
           <label>
-            Weight (lb)
+            Weight ({weightUnit})
             <input
               min="0"
-              max="99999.99"
+              max={weightUnit === 'kg' ? '45359.23' : '99999.99'}
               onChange={(event) => setWeight(event.target.value)}
               required
               step="0.01"

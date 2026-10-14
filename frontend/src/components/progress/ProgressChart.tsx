@@ -7,15 +7,17 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { useMeasurementPreferences } from '../../hooks/useMeasurementPreferences'
 import type {
   CardioProgressPoint,
   ExerciseProgressPoint,
 } from '../../types/progress'
+import { formatWeight } from '../../utils/weightMeasurement'
 
 type ProgressChartProps = {
   exerciseName: string
   history: (ExerciseProgressPoint | CardioProgressPoint)[]
-  metric?: 'maxWeight' | 'totalDurationMinutes' | 'maxLevel'
+  metric?: 'maxWeight' | 'totalVolume' | 'totalDurationMinutes' | 'maxLevel'
 }
 
 export function ProgressChart({
@@ -23,14 +25,21 @@ export function ProgressChart({
   history,
   metric = 'maxWeight',
 }: ProgressChartProps) {
+  const { weightUnit } = useMeasurementPreferences()
   const label =
     metric === 'maxWeight'
       ? 'Max Weight'
+      : metric === 'totalVolume'
+        ? 'Workout Volume'
       : metric === 'maxLevel'
         ? 'Highest Level'
         : 'Duration'
   const unit =
-    metric === 'maxWeight' ? 'lb' : metric === 'maxLevel' ? 'level' : 'min'
+    metric === 'maxWeight' || metric === 'totalVolume'
+      ? weightUnit
+      : metric === 'maxLevel'
+        ? 'level'
+        : 'min'
   return (
     <section className="ContentBand" aria-labelledby="progress-chart-heading">
       <div className="SectionHeader">
@@ -65,7 +74,11 @@ export function ProgressChart({
               allowDecimals={metric !== 'maxWeight'}
               axisLine={false}
               domain={['auto', 'auto']}
-              tickFormatter={(value: number) => formatWeight(value)}
+              tickFormatter={(value: number) =>
+                metric === 'maxWeight' || metric === 'totalVolume'
+                  ? formatWeight(value, weightUnit)
+                  : formatNumber(value)
+              }
               tickLine={false}
               tickMargin={8}
               width={52}
@@ -83,7 +96,11 @@ export function ProgressChart({
               itemStyle={{ color: 'var(--text)' }}
               cursor={{ stroke: 'var(--control-border)' }}
               formatter={(value) => [
-                `${formatWeight(Number(value))} ${unit}`,
+                `${
+                  metric === 'maxWeight' || metric === 'totalVolume'
+                    ? formatWeight(Number(value), weightUnit)
+                    : formatNumber(Number(value))
+                } ${unit}`,
                 label,
               ]}
               labelFormatter={(label) => formatWorkoutDate(String(label))}
@@ -110,9 +127,9 @@ export function ProgressChart({
   )
 }
 
-function formatWeight(weight: number) {
+function formatNumber(value: number) {
   return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(
-    weight,
+    value,
   )
 }
 

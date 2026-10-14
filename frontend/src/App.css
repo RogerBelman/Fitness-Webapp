@@ -1,4 +1,6 @@
 .AppShell {
+  display: flex;
+  flex-direction: column;
   min-height: 100svh;
 }
 
@@ -44,6 +46,50 @@
   padding-bottom: 2px;
 }
 
+.WeightUnitControl {
+  display: flex;
+  align-items: center;
+}
+
+.WeightUnitToggle {
+  display: inline-grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.WeightUnitOption {
+  min-width: 36px;
+  min-height: 30px;
+  padding: 4px 8px;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: none;
+}
+
+.WeightUnitOption:hover:not(.active) {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.WeightUnitOption.active {
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+.WeightUnitOption:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .NavLink {
   flex: 0 0 auto;
   min-height: 38px;
@@ -68,9 +114,31 @@
 }
 
 .PageShell {
+  flex: 1 0 auto;
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
   padding: 24px 0 56px;
+}
+
+.AppFooter {
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.AppFooterContent {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 14px 0;
+}
+
+.PreferenceLabel {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .PageStack {
@@ -184,7 +252,7 @@
 
 .ContentBand,
 .FormSurface,
-.Toolbar {
+.FilterBar {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -220,10 +288,14 @@
   color: var(--muted);
 }
 
-.Toolbar {
+.FilterBar {
   display: grid;
   gap: 14px;
   padding: 16px;
+}
+
+.FilterAction {
+  width: 100%;
 }
 
 .FormSurface {
@@ -302,12 +374,38 @@ textarea:disabled {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .Toolbar {
-    grid-template-columns: 1fr 2fr 1fr;
+  .ExerciseFilterBar {
+    grid-template-columns: 1fr 2fr 1fr auto;
+    align-items: end;
   }
 
-  .Toolbar.CardioToolbar {
-    grid-template-columns: 1fr 2fr;
+  .ExerciseFilterBar.CardioFilterBar {
+    grid-template-columns: 1fr 2fr auto;
+  }
+
+  .WorkoutFilterBar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+  }
+
+  .FilterAction {
+    width: auto;
+  }
+}
+
+@media (min-width: 1000px) {
+  .WorkoutFilterBar {
+    grid-template-columns:
+      minmax(210px, 1.4fr)
+      minmax(150px, 0.8fr)
+      repeat(2, minmax(145px, 0.8fr))
+      auto;
+  }
+}
+
+@media (max-width: 719px) {
+  .MainNav {
+    width: 100%;
   }
 }
 
@@ -419,6 +517,15 @@ textarea:disabled {
   border-radius: 8px;
 }
 
+.ProgressWorkspace {
+  display: grid;
+  gap: 20px;
+}
+
+.ProgressPrompt {
+  min-height: 120px;
+}
+
 .ProgressControlsHeader {
   display: flex;
   align-items: center;
@@ -484,6 +591,230 @@ textarea:disabled {
   border-bottom: 0;
 }
 
+.GoalPanel {
+  min-height: auto;
+}
+
+.GoalHeaderActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.GoalForm {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  background: var(--surface-raised);
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+}
+
+.GoalFormHeader h3,
+.GoalFormHeader p {
+  margin: 0;
+}
+
+.GoalFormHeader p {
+  margin-top: 5px;
+  color: var(--muted);
+}
+
+.GoalFormFields,
+.GoalEdit {
+  display: grid;
+  gap: 12px;
+  align-items: end;
+}
+
+.GoalFormActions {
+  justify-content: flex-end;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.GoalList {
+  display: grid;
+  gap: 12px;
+}
+
+.GoalCard {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.GoalCardHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.GoalCardHeader h3,
+.GoalCardHeader p {
+  margin: 0;
+}
+
+.GoalCardHeader p {
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.GoalCardHeader strong {
+  color: var(--accent);
+}
+
+.GoalValue {
+  display: grid;
+  gap: 5px;
+  text-align: right;
+}
+
+.GoalValue span {
+  width: fit-content;
+  margin-left: auto;
+  padding: 3px 8px;
+  color: var(--success);
+  background: var(--success-background);
+  border: 1px solid var(--success-border);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.GoalProgress {
+  height: 9px;
+  overflow: hidden;
+  background: var(--input-background);
+  border-radius: 999px;
+}
+
+.GoalProgress span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+}
+
+.MonthDialog {
+  width: min(620px, calc(100% - 24px));
+}
+
+.MonthHeader,
+.MonthToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.MonthHeader h2 {
+  margin: 3px 0 0;
+}
+
+.MonthToolbar {
+  margin: 18px 0 12px;
+}
+
+.MonthWeekdays,
+.MonthGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.MonthWeekdays span {
+  padding: 6px 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.MonthDay {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  aspect-ratio: 1;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.MonthDay:hover,
+.MonthDay:focus-visible {
+  border-color: var(--accent);
+  background: var(--surface-hover);
+}
+
+.MonthDayActive {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.MonthDaySelected {
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+.MonthDayToday span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.MonthDay small {
+  position: absolute;
+  right: 4px;
+  bottom: 3px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.MonthLegend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.MonthLegend span {
+  width: 12px;
+  height: 12px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+}
+
+@media (min-width: 720px) {
+  .GoalFormFields {
+    grid-template-columns: 2fr 2fr 1fr;
+  }
+
+  .GoalEdit {
+    grid-template-columns: minmax(140px, 220px) auto auto;
+    justify-content: start;
+  }
+
+}
+
+@media (min-width: 900px) {
+  .GoalList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .VisuallyHidden {
   position: absolute;
   width: 1px;
@@ -506,6 +837,7 @@ textarea:disabled {
   justify-content: space-between;
   gap: 16px;
   padding: 14px;
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   border-radius: 8px;
 }
@@ -526,24 +858,17 @@ textarea:disabled {
   min-width: 0;
 }
 
-.ExerciseInstructions p,
-.DayExerciseInstructions p {
+.ExerciseInstructions p {
   margin: 6px 0 0;
   color: var(--muted);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-.ExerciseInstructions summary,
-.DayExerciseInstructions summary {
+.ExerciseInstructions summary {
   width: fit-content;
   font-weight: 700;
   cursor: pointer;
-}
-
-.DayExerciseInstructions {
-  margin-top: 6px;
-  font-size: 13px;
 }
 
 .WorkoutList {
@@ -551,11 +876,221 @@ textarea:disabled {
   gap: 10px;
 }
 
+.SectionDescription {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.TemplateSection {
+  min-height: auto;
+}
+
+.TemplateList {
+  display: grid;
+  gap: 14px;
+}
+
+.TemplateCard {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  background: var(--surface-raised);
+  border: 1px solid var(--control-border);
+  border-radius: 10px;
+}
+
+.TemplateHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.TemplateHeader h3 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.TemplateHeader p,
+.TemplateNotes {
+  margin-top: 5px;
+  color: var(--muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.TemplateExercises {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.TemplateExercises li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.TemplateStartForm {
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+}
+
+.TemplateStartFields {
+  display: grid;
+  gap: 14px;
+}
+
+.TemplateStartActions {
+  justify-content: flex-end;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+@media (min-width: 720px) {
+  .TemplateStartFields {
+    grid-template-columns: minmax(160px, 0.7fr) minmax(0, 1.3fr);
+  }
+}
+
+.TemplateEditor {
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+  background: var(--surface-raised);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+}
+
+.TemplateEditorHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.TemplateEditorHeader h3 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.TemplateEditorHeader p {
+  max-width: 52ch;
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.TemplateEditorSectionHeader {
+  padding-left: 12px;
+  border-left: 3px solid var(--accent);
+}
+
+.TemplateEditorSectionHeader h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.TemplateEditorSectionHeader p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.TemplateDetailsForm {
+  max-width: none;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.TemplateExerciseEditor {
+  display: grid;
+  gap: 14px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.TemplateEditExerciseList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.TemplateEditExerciseList > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.TemplateExerciseIdentity {
+  display: flex;
+  flex: 1 1 260px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.TemplateExerciseIdentity strong {
+  overflow-wrap: anywhere;
+}
+
+.TemplateExerciseIdentity details {
+  flex-basis: 100%;
+  color: var(--muted);
+}
+
+.TemplateExerciseIdentity summary {
+  width: fit-content;
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.TemplateExerciseIdentity details p {
+  margin-top: 6px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.TemplateAddExercise {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+@media (min-width: 720px) {
+  .TemplateAddExercise {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+}
+
 .WorkoutRow {
   display: grid;
   gap: 16px;
   padding: 16px;
   color: inherit;
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   border-radius: 8px;
   text-decoration: none;
@@ -953,6 +1488,11 @@ textarea:disabled {
   cursor: pointer;
 }
 
+.CalendarDayHasWorkouts {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
 .CalendarDay:hover {
   background: var(--surface-hover);
 }
@@ -1052,8 +1592,7 @@ textarea:disabled {
 }
 
 .DayEmptyState p:last-child,
-.DayWorkoutHeader p,
-.DayWorkoutNotes {
+.DayWorkoutHeader p {
   color: var(--muted);
 }
 
@@ -1073,8 +1612,7 @@ textarea:disabled {
   min-width: 0;
 }
 
-.DayWorkoutHeader h3,
-.DayWorkoutNotes {
+.DayWorkoutHeader h3 {
   overflow-wrap: anywhere;
 }
 
@@ -1091,6 +1629,10 @@ textarea:disabled {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
+  padding: 12px 14px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 
 .DayExerciseList li > div {
@@ -1194,7 +1736,7 @@ textarea:disabled {
   min-width: 0;
 }
 
-.ExerciseEditor {
+.EditorPanel {
   width: 100%;
   max-width: none;
   padding: 24px;
@@ -1202,16 +1744,16 @@ textarea:disabled {
   border-radius: 12px;
 }
 
-.ExerciseEditor .FormFieldset {
+.EditorPanel .FormFieldset {
   gap: 24px;
 }
 
-.ExerciseEditorHeader h2 {
+.EditorPanelHeader h2 {
   margin: 0 0 6px;
   font-size: 22px;
 }
 
-.ExerciseEditorHeader p,
+.EditorPanelHeader p,
 .ExerciseTrackingHint,
 .OptionalLabel {
   color: var(--muted);
@@ -1275,7 +1817,7 @@ textarea:disabled {
   font-weight: 400;
 }
 
-.ExerciseEditorActions {
+.EditorPanelActions {
   justify-content: flex-end;
   padding-top: 20px;
   border-top: 1px solid var(--border);
@@ -1372,7 +1914,7 @@ textarea:disabled {
 }
 
 @media (max-width: 479px) {
-  .ExerciseEditor,
+  .EditorPanel,
   .WorkoutExerciseRow {
     padding: 16px;
   }

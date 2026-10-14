@@ -21,13 +21,15 @@ class FlywayMigrationTests {
 				"""
 				select table_name
 				from information_schema.tables
-				where table_schema = 'public'
-					and table_name in ('exercises', 'workouts', 'workout_exercises', 'set_entries')
+				where table_schema = current_schema()
+					and table_name in ('exercises', 'exercise_goals', 'workouts', 'workout_exercises', 'set_entries',
+						'workout_templates', 'workout_template_exercises')
 				order by table_name
 				""",
 				String.class);
 
-		assertThat(tableNames).containsExactly("exercises", "set_entries", "workout_exercises", "workouts");
+		assertThat(tableNames).containsExactly("exercise_goals", "exercises", "set_entries", "workout_exercises",
+				"workout_template_exercises", "workout_templates", "workouts");
 	}
 
 	@Test
@@ -49,7 +51,7 @@ class FlywayMigrationTests {
 				"""
 				select table_name || '.' || column_name
 				from information_schema.columns
-				where table_schema = 'public'
+				where table_schema = current_schema()
 				  and table_name in ('workout_exercises', 'cardio_entries')
 				  and column_name = 'notes'
 				""",

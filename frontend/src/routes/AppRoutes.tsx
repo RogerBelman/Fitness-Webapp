@@ -5,6 +5,7 @@ import { ExerciseLibrary } from '../pages/ExerciseLibrary'
 import { Progress } from '../pages/Progress'
 import { WorkoutDetail } from '../pages/WorkoutDetail'
 import { Workouts } from '../pages/Workouts'
+import { WorkoutTemplates } from '../pages/WorkoutTemplates'
 
 export function AppRoutes() {
   return (
@@ -15,6 +16,7 @@ export function AppRoutes() {
         <Route path="exercises" element={<ExerciseLibrary />} />
         <Route path="workouts/new" element={<NewWorkoutRedirect />} />
         <Route path="workouts" element={<Workouts />} />
+        <Route path="workouts/templates" element={<WorkoutTemplates />} />
         <Route path="workouts/:workoutId" element={<WorkoutDetail />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

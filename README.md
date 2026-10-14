@@ -5,22 +5,24 @@ This repository contains a full-stack workout tracking application built with a 
 ## Features
 
 - Create, list, filter, update, and delete exercises through the REST API.
-- Save permanent exercise instructions for setup and technique, visible in the library, workout details, and Dashboard exercise summaries.
+- Save permanent exercise instructions for setup and technique, visible in the library and workout details.
 - Create workouts and add ordered exercises and sets.
 - Choose Strength or Cardio for each exercise. Log cardio duration and optional machine level, with edit/delete support.
-- Review workout history with strength set counts, strength volume, and separate cardio minutes.
-- Browse workouts in a weekly Dashboard calendar with day selection, workout counts, and exercise summaries.
+- Review workout history with strength set counts, strength volume, separate cardio minutes, and search, training-type, and date filters.
+- Browse workouts in a weekly Dashboard calendar or a compact monthly overview with workout-day counts.
 - View complete workout details, including permanent exercise instructions and individual sets.
 - Edit workout dates, titles, and notes; edit exercise order within a workout; correct set numbers, reps, and weights.
 - Delete workouts, remove exercises from a workout, and delete individual sets with confirmation prompts.
 - Edit and delete library exercises, with deletion blocked while an exercise is used in workout history.
-- Track exercise personal records and workout-by-workout progress.
-- Visualize maximum-weight trends with a responsive chart.
+- Track exercise personal records, maximum workout volume, and workout-by-workout progress.
+- Create editable strength and cardio goals whose progress updates from logged workouts.
+- Visualize maximum-weight and workout-volume trends with a responsive chart.
 - Track cardio minutes, workout duration trends, and recorded machine levels with separate charts and history.
+- Switch strength weights and volume between pounds and kilograms throughout the browser app.
 - Validate API requests and return consistent error responses.
 - Run PostgreSQL locally with Docker or connect Spring Boot to Neon.
 - Apply versioned schema changes automatically with Flyway.
-- Test controller, service, mapper, database connection, and migration behavior with JUnit.
+- Test backend behavior with JUnit and frontend utilities and interactions with Node, Vitest, Testing Library, and jsdom.
 
 ## Technology Stack
 
@@ -31,7 +33,7 @@ This repository contains a full-stack workout tracking application built with a 
 | Database | PostgreSQL, Neon |
 | Migrations | Flyway |
 | Local development | Docker Compose |
-| Testing | JUnit, MockMvc, Mockito, AssertJ |
+| Testing | JUnit, MockMvc, Mockito, AssertJ, Vitest, Testing Library, jsdom |
 
 ## Project Structure
 
@@ -57,9 +59,14 @@ Routes:
 | `/exercises` | Exercise Library |
 | `/workouts` | Workouts: history and inline creation |
 | `/workouts?new=1` | Workouts with the new-workout form open |
+| `/workouts/templates` | Workout template management |
 | `/workouts/{id}` | Workout Detail |
 
-The Dashboard shows a Monday–Sunday calendar with previous/next week controls and a Today shortcut. Select a day to see its workouts, exercises, strength sets and volume, and cardio minutes. Add Workout opens the creation form on the combined Workouts page and preselects the chosen date for today or a past day. New Workout opens the same form above workout history without leaving the Workouts page; Cancel returns to browsing. Creating a workout opens it immediately for exercise entry. Each exercise shows either sets/reps/weight or cardio duration/level according to its training type. Existing `/workouts/new` links redirect to this form and preserve the selected date. Strength charts, personal records, and exercise history live on the separate Progress page.
+The Dashboard shows a Monday–Sunday calendar with previous/next week controls and a Today shortcut. Its Month Overview dialog marks days with workouts and selecting a date returns to that day on the Dashboard. Select a day to see its workouts, exercises, strength sets and volume, and cardio minutes. Add Workout opens the creation form on the combined Workouts page and preselects the chosen date for today or a past day. Workout history can be searched by workout or exercise name and filtered by Strength, Cardio, Mixed, and date range. New Workout opens the same form above workout history without leaving the Workouts page; Cancel returns to browsing. Creating a workout opens it immediately for exercise entry. Each exercise shows either sets/reps/weight or cardio duration/level according to its training type. Existing `/workouts/new` links redirect to this form and preserve the selected date. Strength charts, goals, maximum volume, and exercise history live on the separate Progress page.
+
+The Weight control in the main header switches strength entry, totals, goals, history, and charts between pounds and kilograms. PostgreSQL stores pounds as the canonical value; the frontend converts values when reading and submitting them. The selected display unit is saved in browser local storage.
+
+The Workout Templates page can create a reusable routine directly or save one from an existing workout. After creating a template, add exercises from the library, arrange their order, and start a workout with empty performance entries.
 
 On a workout, **Add From Your Library** lets you select a saved exercise and choose **Add to Workout**. A separate **Not in your library?** section explains **Create New Exercise**, which opens an inline form. **Create & Add to Workout** saves the reusable exercise and adds it to the current workout in one transaction. The form supports Strength and Cardio, instructions, and Cancel. Duplicate names keep the form open so you can correct the name or cancel and select the existing exercise.
 
@@ -338,6 +345,7 @@ Endpoints:
 | Method | Path | Purpose | Success |
 | --- | --- | --- | --- |
 | `POST` | `/api/workouts` | Create a workout | `201 Created` |
+| `POST` | `/api/workouts/{id}/template` | Save a workout's title, notes, and ordered exercises as a reusable template | `201 Created` |
 | `GET` | `/api/workouts` | List workout summaries | `200 OK` |
 | `GET` | `/api/workouts/{id}` | Get workout details with exercises and sets | `200 OK` |
 | `POST` | `/api/workouts/{id}/exercises` | Add an exercise to a workout | `201 Created` |
@@ -352,12 +360,22 @@ Endpoints:
 | `POST` | `/api/workout-exercises/{id}/cardio-entries` | Log cardio duration and level | `201 Created` |
 | `PUT` | `/api/cardio-entries/{id}` | Edit a cardio entry | `200 OK` |
 | `DELETE` | `/api/cardio-entries/{id}` | Delete a cardio entry | `204 No Content` |
+| `GET` | `/api/workout-templates` | List reusable workout templates | `200 OK` |
+| `POST` | `/api/workout-templates` | Create an empty reusable workout template | `201 Created` |
+| `PUT` | `/api/workout-templates/{id}` | Update a template's name and notes | `200 OK` |
+| `DELETE` | `/api/workout-templates/{id}` | Delete a template without deleting workout history | `204 No Content` |
+| `POST` | `/api/workout-templates/{id}/workouts` | Start a dated workout from a template without logged entries | `201 Created` |
+| `POST` | `/api/workout-templates/{id}/exercises` | Add a library exercise to a template | `201 Created` |
+| `PUT` | `/api/workout-template-exercises/{id}` | Change an exercise's template order | `200 OK` |
+| `DELETE` | `/api/workout-template-exercises/{id}` | Remove an exercise from a template | `204 No Content` |
 
 Updates use the same workout and set request bodies shown above. Omit `workoutDate` or `setNumber` on an update to keep its existing value. An omitted or blank workout title or workout notes clears that text. For workout exercises, send `exerciseOrder`; omitting it keeps the existing order. The library exercise associated with logged sets stays the same.
 
 Duplicate set numbers within an exercise and duplicate exercise orders within a workout return `409 Conflict`. Weight supports values from `0` to `99999.99`, with up to two decimal places. Deletion leaves gaps in set numbers and exercise order; new entries use the highest remaining number plus one.
 
 Deleting a workout removes its workout exercises and sets. Removing a workout exercise removes its sets while keeping the reusable exercise in the library. Library deletion returns `409 Conflict` when an exercise is still referenced by a workout. Totals, progress history, and personal records are calculated from the remaining sets, so edits and deletions affect the next read automatically.
+
+Workout templates are stored separately from workout history, so they do not affect dashboard or progress totals. Save as Template copies the workout title, workout notes, and ordered exercises. The dedicated Workout Templates page can create an empty template and supports renaming a template and editing its notes, exercises, and exercise order. Starting a template opens a short confirmation form for the required `workoutDate` and optional workout-specific title and notes, then creates a new workout with empty strength sets and cardio entries. Omitting the title or notes from the API request uses the template value. Deleting a template does not delete workouts previously created from it. Removing an exercise from a template keeps it in the exercise library; an exercise still referenced by any template cannot be deleted from the library.
 
 Cardio create/update request:
 
@@ -369,6 +387,8 @@ Cardio create/update request:
 ```
 
 Duration is required, from `0.01` to `99999.99` minutes. Level is optional, from `0` to `999.99`; both support up to two decimal places. Omitting level on an update clears it. Multiple entries can represent intervals at different levels. Cardio entries are accepted only for Cardio exercises, and sets only for Strength exercises. Workouts can contain both kinds. Summaries return `totalCardioMinutes` separately from `totalSets` and `totalVolume`; details include `cardioEntries` on each workout exercise. Deleting a workout or workout exercise also removes its cardio entries.
+
+Workout summaries also return `exerciseNames` and the distinct `trainingTypes` represented in the workout. The frontend uses these fields for history search and Strength, Cardio, or Mixed filtering without loading every workout detail.
 
 ## Progress API
 
@@ -383,6 +403,19 @@ same weight, the set with more reps wins. An existing exercise with no logged se
 | `GET` | `/api/progress/exercises/{exerciseId}/cardio-history` | Get cardio duration and level history grouped by workout | `200 OK` |
 
 Cardio history returns `exerciseId`, `exerciseName`, and `history`, ordered by date then workout ID. Each point includes `workoutId`, `workoutDate`, `totalEntries`, `totalDurationMinutes`, and `maxLevel` (null when no level was recorded). Repeated appearances of the same exercise in a workout are combined. Workouts without logged cardio entries are omitted. Missing exercises return `404`; requesting cardio history for a Strength exercise returns `400`. Edits and deletions are reflected on the next read.
+
+Strength history points include the number of sets, heaviest set weight and reps, and total workout volume. The Progress page uses this ordered history for maximum-weight and workout-volume charts.
+
+## Exercise Goal API
+
+| Method | Path | Purpose | Success |
+| --- | --- | --- | --- |
+| `GET` | `/api/goals` | List exercise goals with current progress | `200 OK` |
+| `POST` | `/api/goals` | Create an exercise goal | `201 Created` |
+| `PUT` | `/api/goals/{id}` | Update an exercise goal | `200 OK` |
+| `DELETE` | `/api/goals/{id}` | Delete an exercise goal | `204 No Content` |
+
+Strength goals support maximum weight and maximum volume in one workout. Cardio goals support maximum combined duration in one workout and maximum recorded level. One goal is allowed per exercise and metric. The response includes `currentValue` and `achieved`, calculated from current workout entries each time goals are read.
 
 Workout relationship model:
 
@@ -441,6 +474,8 @@ cd backend
 .\mvnw.cmd test
 ```
 
+Tests use the dedicated `workout_tracker_test` schema by default, so running the suite does not read or change development data in the `public` schema. Override the test connection with `TEST_SPRING_DATASOURCE_URL`, `TEST_SPRING_DATASOURCE_USERNAME`, and `TEST_SPRING_DATASOURCE_PASSWORD` when needed.
+
 Controller tests call the REST API layer through `MockMvc`. They are useful when we want to verify endpoint paths, status codes, headers, and JSON response bodies.
 
 Service tests call service classes directly with mocked repositories. They are useful when we want to verify business rules without making an HTTP request or touching the database.
@@ -469,6 +504,8 @@ npm run lint
 npm run build
 ```
 
+The frontend suite retains seven calendar utility tests and adds interaction coverage for workout history filtering, pounds/kilograms conversion, focused exercise reordering, and starting a workout from a template.
+
 ## Local Sample Data
 
 With Docker PostgreSQL running and the backend migrations applied, run from the repository root:
@@ -477,14 +514,14 @@ With Docker PostgreSQL running and the backend migrations applied, run from the 
 .\scripts\refresh-sample-data.ps1
 ```
 
-This replaces only data marked `[Sample data]`, creates 9 clearly named sample exercises and 12 workouts over the last four weeks, and includes 72 strength sets and 16 cardio entries. Permanent exercise instructions and workout notes demonstrate the current forms. Samples include multiple cardio intervals and outdoor walks without machine levels. Dates use America/Chicago; pass `-SampleDate yyyy-MM-dd` for a fixed end date.
+This replaces only data marked `[Sample data]`, creates 9 clearly named sample exercises, 12 workouts over the last four weeks, 3 reusable templates, and 2 progress goals, and includes 72 strength sets and 16 cardio entries. Permanent exercise instructions and workout notes demonstrate the current forms. Samples include mixed workouts, multiple cardio intervals, outdoor walks without machine levels, progressive strength loads, and goal progress. Dates use America/Chicago; pass `-SampleDate yyyy-MM-dd` for a fixed end date.
 
-The script backs up the local Compose database to ignored `backend/target/sample-data-backups/` before making changes and applies the refresh in one transaction. A name collision with an exercise retained in another workout stops the refresh rather than overwriting it. To explicitly replace **all** existing workouts and exercises, including unmarked older samples and personal entries, run `.\scripts\refresh-sample-data.ps1 -ReplaceAll`. This script does not connect to Neon or other remote databases.
+The script backs up the local Compose database to ignored `backend/target/sample-data-backups/` before making changes and applies the refresh in one transaction. A name collision with an exercise retained in another workout stops the refresh rather than overwriting it. To explicitly replace **all** existing local workouts, exercises, templates, and goals, including unmarked older samples and personal entries, run `.\scripts\refresh-sample-data.ps1 -ReplaceAll`. This script does not connect to Neon or other remote databases.
 
 ## Future Plans
 
 - Add user accounts, authentication, and authorization so each user owns their workout data.
-- Add reusable workout templates and planned routines.
-- Expand progress analytics with additional trends, goals, and personal-record history.
+- Add scheduled routines and calendar planning based on workout templates.
+- Expand progress analytics with estimated one-rep max and training-frequency trends.
 - Refine the responsive UI, accessibility, and overall interaction design.
 - Deploy the frontend and backend with Neon as the production database and add automated deployment checks.

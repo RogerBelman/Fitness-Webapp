@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useMeasurementPreferences } from '../hooks/useMeasurementPreferences'
 
 const navItems = [
   { to: '/', label: 'Dashboard', end: true },
@@ -8,6 +9,8 @@ const navItems = [
 ]
 
 export function AppLayout() {
+  const { weightUnit, setWeightUnit } = useMeasurementPreferences()
+
   return (
     <div className="AppShell">
       <header className="TopBar">
@@ -35,6 +38,27 @@ export function AppLayout() {
       <main className="PageShell">
         <Outlet />
       </main>
+
+      <footer className="AppFooter">
+        <div className="AppFooterContent">
+          <span className="PreferenceLabel">Weight units</span>
+          <div className="WeightUnitControl" role="group" aria-label="Weight unit">
+            <div className="WeightUnitToggle">
+              {(['lb', 'kg'] as const).map((unit) => (
+                <button
+                  aria-pressed={weightUnit === unit}
+                  className={weightUnit === unit ? 'WeightUnitOption active' : 'WeightUnitOption'}
+                  key={unit}
+                  onClick={() => setWeightUnit(unit)}
+                  type="button"
+                >
+                  {unit}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

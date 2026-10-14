@@ -18,6 +18,7 @@ import com.example.workouttracker.dto.ExerciseResponse;
 import com.example.workouttracker.entity.Exercise;
 import com.example.workouttracker.exception.DuplicateResourceException;
 import com.example.workouttracker.repository.ExerciseRepository;
+import com.example.workouttracker.repository.ExerciseGoalRepository;
 import com.example.workouttracker.repository.WorkoutExerciseRepository;
 import com.example.workouttracker.repository.SetEntryRepository;
 import com.example.workouttracker.repository.CardioEntryRepository;
@@ -34,6 +35,7 @@ class ExerciseServiceTests {
 
 	@Mock private SetEntryRepository setEntryRepository;
 	@Mock private CardioEntryRepository cardioEntryRepository;
+	@Mock private ExerciseGoalRepository exerciseGoalRepository;
 
 	@InjectMocks
 	private ExerciseService exerciseService;

@@ -52,12 +52,12 @@ export function ExerciseForm({
 
   return (
     <form
-      className="FormSurface ExerciseEditor"
+      className="FormSurface EditorPanel ExerciseEditor"
       onSubmit={handleSubmit}
       aria-labelledby={`${formId}-title`}
     >
       <fieldset className="FormFieldset" disabled={isSaving}>
-        <header className="ExerciseEditorHeader">
+        <header className="EditorPanelHeader ExerciseEditorHeader">
           <h2 id={`${formId}-title`}>
             {initialValues ? 'Edit Exercise' : 'New Exercise'}
           </h2>
@@ -169,7 +169,7 @@ export function ExerciseForm({
           </p>
         ) : null}
 
-        <div className="FormActions ExerciseEditorActions">
+        <div className="FormActions EditorPanelActions ExerciseEditorActions">
           {onCancel ? (
             <button
               className="Button ButtonSecondary"

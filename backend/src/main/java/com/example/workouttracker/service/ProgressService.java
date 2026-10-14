@@ -94,10 +94,14 @@ public class ProgressService {
 	private ExerciseProgressPointResponse toProgressPoint(
 			Workout workout,
 			List<SetEntry> setEntries) {
-		BigDecimal maxWeight = setEntries.stream()
-				.map(SetEntry::getWeight)
-				.max(BigDecimal::compareTo)
-				.orElse(BigDecimal.ZERO);
+		SetEntry bestSet = setEntries.stream()
+				.max((left, right) -> {
+					int weightComparison = left.getWeight().compareTo(right.getWeight());
+					return weightComparison != 0
+							? weightComparison
+							: left.getReps().compareTo(right.getReps());
+				})
+				.orElseThrow();
 		BigDecimal totalVolume = setEntries.stream()
 				.map(setEntry -> setEntry.getWeight().multiply(BigDecimal.valueOf(setEntry.getReps())))
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -106,7 +110,8 @@ public class ProgressService {
 				workout.getId(),
 				workout.getWorkoutDate(),
 				setEntries.size(),
-				maxWeight,
+				bestSet.getWeight(),
+				bestSet.getReps(),
 				totalVolume);
 	}
 

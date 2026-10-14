@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
+import { useMeasurementPreferences } from '../../hooks/useMeasurementPreferences'
 import type { Workout, WorkoutDetail } from '../../types/workout'
 import { formatCalendarDate } from '../../utils/workoutCalendar'
 import { TrainingTypeBadge } from '../TrainingTypeBadge'
+import { formatWeight } from '../../utils/weightMeasurement'
 
 type DayWorkoutsProps = {
   date: string
@@ -22,6 +24,7 @@ export function DayWorkouts({
   isLoadingDetails,
   errorMessage,
 }: DayWorkoutsProps) {
+  const { weightUnit } = useMeasurementPreferences()
   const selectedWorkouts = workouts.filter(
     (workout) => workout.workoutDate === date,
   )
@@ -84,7 +87,8 @@ export function DayWorkouts({
                     <p>
                       {workout.totalSets}{' '}
                       {workout.totalSets === 1 ? 'set' : 'sets'} ·{' '}
-                      {formatVolume(workout.totalVolume)} lb strength volume ·{' '}
+                      {formatWeight(workout.totalVolume, weightUnit)} {weightUnit}{' '}
+                      strength volume ·{' '}
                       {formatVolume(workout.totalCardioMinutes)} min cardio
                     </p>
                   </div>
@@ -95,9 +99,6 @@ export function DayWorkouts({
                     Open Workout
                   </Link>
                 </div>
-                {workout.notes ? (
-                  <p className="DayWorkoutNotes">{workout.notes}</p>
-                ) : null}
                 {isLoadingDetails ? (
                   <p className="EmptyState" role="status">
                     Loading exercises...
@@ -122,12 +123,6 @@ export function DayWorkouts({
                               <span>{item.exercise.muscleGroup}</span>
                             ) : null}
                           </div>
-                          {item.exercise.instructions ? (
-                            <details className="DayExerciseInstructions">
-                              <summary>Instructions</summary>
-                              <p>{item.exercise.instructions}</p>
-                            </details>
-                          ) : null}
                         </div>
                         <span>
                           {item.exercise.trainingType === 'CARDIO'

@@ -16,7 +16,9 @@ import com.example.workouttracker.exception.DuplicateResourceException;
 import com.example.workouttracker.exception.ResourceNotFoundException;
 import com.example.workouttracker.mapper.ExerciseMapper;
 import com.example.workouttracker.repository.ExerciseRepository;
+import com.example.workouttracker.repository.ExerciseGoalRepository;
 import com.example.workouttracker.repository.WorkoutExerciseRepository;
+import com.example.workouttracker.repository.WorkoutTemplateExerciseRepository;
 import com.example.workouttracker.repository.SetEntryRepository;
 import com.example.workouttracker.repository.CardioEntryRepository;
 
@@ -28,13 +30,19 @@ public class ExerciseService {
 	private final WorkoutExerciseRepository workoutExerciseRepository;
 	private final SetEntryRepository setEntryRepository;
 	private final CardioEntryRepository cardioEntryRepository;
+	private final WorkoutTemplateExerciseRepository workoutTemplateExerciseRepository;
+	private final ExerciseGoalRepository exerciseGoalRepository;
 
 	public ExerciseService(ExerciseRepository exerciseRepository, WorkoutExerciseRepository workoutExerciseRepository,
-			SetEntryRepository setEntryRepository, CardioEntryRepository cardioEntryRepository) {
+			SetEntryRepository setEntryRepository, CardioEntryRepository cardioEntryRepository,
+			WorkoutTemplateExerciseRepository workoutTemplateExerciseRepository,
+			ExerciseGoalRepository exerciseGoalRepository) {
 		this.exerciseRepository = exerciseRepository;
 		this.workoutExerciseRepository = workoutExerciseRepository;
 		this.setEntryRepository = setEntryRepository;
 		this.cardioEntryRepository = cardioEntryRepository;
+		this.workoutTemplateExerciseRepository = workoutTemplateExerciseRepository;
+		this.exerciseGoalRepository = exerciseGoalRepository;
 	}
 
 	@Transactional(readOnly = true)
@@ -110,6 +118,14 @@ public class ExerciseService {
 		if (workoutExerciseRepository.existsByExerciseId(id)) {
 			throw new DuplicateResourceException(
 					"Exercise is used in workout history. Remove it from those workouts before deleting it from the library.");
+		}
+		if (workoutTemplateExerciseRepository.existsByExerciseId(id)) {
+			throw new DuplicateResourceException(
+					"Exercise is used in a workout template. Remove that template before deleting it from the library.");
+		}
+		if (exerciseGoalRepository.existsByExerciseId(id)) {
+			throw new DuplicateResourceException(
+					"Exercise has an active goal. Delete the goal before deleting the exercise.");
 		}
 		exerciseRepository.deleteById(id);
 		exerciseRepository.flush();

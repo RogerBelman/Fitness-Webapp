@@ -1,10 +1,12 @@
 import type { Workout } from '../../types/workout'
+import { useMeasurementPreferences } from '../../hooks/useMeasurementPreferences'
 import {
   addDays,
   formatCalendarDate,
   formatWeekRange,
   getWeekDates,
 } from '../../utils/workoutCalendar'
+import { formatWeight } from '../../utils/weightMeasurement'
 
 type WeeklyCalendarProps = {
   workouts: Workout[]
@@ -23,6 +25,7 @@ export function WeeklyCalendar({
   hasError,
   onSelectDate,
 }: WeeklyCalendarProps) {
+  const { weightUnit } = useMeasurementPreferences()
   const dates = getWeekDates(selectedDate)
   const weekWorkouts = workouts.filter(
     (workout) =>
@@ -92,6 +95,7 @@ export function WeeklyCalendar({
             (workout) => workout.workoutDate === date,
           )
           const isToday = date === today
+          const hasWorkouts = isReady && dayWorkouts.length > 0
           const weekday = formatCalendarDate(date, { weekday: 'short' })
           const fullDate = formatCalendarDate(date, {
             weekday: 'long',
@@ -101,7 +105,7 @@ export function WeeklyCalendar({
           })
           return (
             <button
-              className={`CalendarDay${isToday ? ' CalendarDayToday' : ''}`}
+              className={`CalendarDay${isToday ? ' CalendarDayToday' : ''}${hasWorkouts ? ' CalendarDayHasWorkouts' : ''}`}
               key={date}
               type="button"
               aria-pressed={date === selectedDate}
@@ -116,10 +120,6 @@ export function WeeklyCalendar({
               <span className="CalendarCount">
                 {isReady ? (
                   <>
-                    <span
-                      className={`CalendarDot${dayWorkouts.length > 0 ? ' CalendarDotActive' : ''}`}
-                      aria-hidden="true"
-                    />
                     {dayWorkouts.length}
                     <span className="CalendarCountLabel">
                       {' '}
@@ -162,7 +162,7 @@ export function WeeklyCalendar({
           <dt>Strength volume</dt>
           <dd>
             {isReady
-              ? `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(totalVolume)} lb`
+              ? `${formatWeight(totalVolume, weightUnit)} ${weightUnit}`
               : '—'}
           </dd>
         </div>

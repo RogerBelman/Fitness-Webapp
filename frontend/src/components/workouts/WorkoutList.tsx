@@ -1,5 +1,12 @@
 import { Link } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { useMeasurementPreferences } from '../../hooks/useMeasurementPreferences'
 import type { Workout } from '../../types/workout'
+import { formatWeight } from '../../utils/weightMeasurement'
+import {
+  filterWorkouts,
+  type WorkoutTrainingFilter,
+} from '../../utils/workoutFilters'
 
 type WorkoutListProps = {
   workouts: Workout[]
@@ -7,11 +14,84 @@ type WorkoutListProps = {
 }
 
 export function WorkoutList({ workouts, isLoading }: WorkoutListProps) {
+  const { weightUnit } = useMeasurementPreferences()
+  const [search, setSearch] = useState('')
+  const [trainingType, setTrainingType] =
+    useState<WorkoutTrainingFilter>('ALL')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const filteredWorkouts = useMemo(
+    () =>
+      filterWorkouts(workouts, { search, trainingType, fromDate, toDate }),
+    [fromDate, search, toDate, trainingType, workouts],
+  )
+  const hasFilters = Boolean(
+    search || trainingType !== 'ALL' || fromDate || toDate,
+  )
+
   return (
-    <section className="ContentBand">
+    <>
+      <section className="FilterBar WorkoutFilterBar" aria-label="Workout filters">
+        <label className="WorkoutSearchField">
+          Search Workouts
+          <input
+            type="search"
+            value={search}
+            placeholder="Workout or exercise name"
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </label>
+        <label>
+          Training Type
+          <select
+            value={trainingType}
+            onChange={(event) =>
+              setTrainingType(event.target.value as WorkoutTrainingFilter)
+            }
+          >
+            <option value="ALL">All types</option>
+            <option value="STRENGTH">Strength only</option>
+            <option value="CARDIO">Cardio only</option>
+            <option value="MIXED">Mixed</option>
+          </select>
+        </label>
+        <label>
+          From Date
+          <input
+            type="date"
+            value={fromDate}
+            max={toDate || undefined}
+            onChange={(event) => setFromDate(event.target.value)}
+          />
+        </label>
+        <label>
+          To Date
+          <input
+            type="date"
+            value={toDate}
+            min={fromDate || undefined}
+            onChange={(event) => setToDate(event.target.value)}
+          />
+        </label>
+        <button
+          className="Button ButtonSecondary FilterAction"
+          type="button"
+          disabled={!hasFilters}
+          onClick={() => {
+            setSearch('')
+            setTrainingType('ALL')
+            setFromDate('')
+            setToDate('')
+          }}
+        >
+          Clear Filters
+        </button>
+      </section>
+
+      <section className="ContentBand">
       <div className="SectionHeader">
         <h2>Workout History</h2>
-        <span className="RecordCount">{workouts.length}</span>
+        <span className="RecordCount">{filteredWorkouts.length}</span>
       </div>
 
       {isLoading ? <p className="EmptyState">Loading workouts...</p> : null}
@@ -20,9 +100,13 @@ export function WorkoutList({ workouts, isLoading }: WorkoutListProps) {
         <p className="EmptyState">No workout history yet.</p>
       ) : null}
 
-      {!isLoading && workouts.length > 0 ? (
+      {!isLoading && workouts.length > 0 && filteredWorkouts.length === 0 ? (
+        <p className="EmptyState">No workouts match these filters.</p>
+      ) : null}
+
+      {!isLoading && filteredWorkouts.length > 0 ? (
         <div className="WorkoutList">
-          {workouts.map((workout) => (
+          {filteredWorkouts.map((workout) => (
             <Link
               className="WorkoutRow"
               key={workout.id}
@@ -43,7 +127,9 @@ export function WorkoutList({ workouts, isLoading }: WorkoutListProps) {
                 </div>
                 <div>
                   <dt>Strength Volume</dt>
-                  <dd>{formatVolume(workout.totalVolume)} lb</dd>
+                  <dd>
+                    {formatWeight(workout.totalVolume, weightUnit)} {weightUnit}
+                  </dd>
                 </div>
                 <div>
                   <dt>Cardio</dt>
@@ -54,7 +140,8 @@ export function WorkoutList({ workouts, isLoading }: WorkoutListProps) {
           ))}
         </div>
       ) : null}
-    </section>
+      </section>
+    </>
   )
 }
 

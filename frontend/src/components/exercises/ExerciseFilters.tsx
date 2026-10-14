@@ -20,7 +20,7 @@ export function ExerciseFilters({
   const isCardio = trainingType === 'CARDIO'
   return (
     <section
-      className={`Toolbar${isCardio ? ' CardioToolbar' : ''}`}
+      className={`FilterBar ExerciseFilterBar${isCardio ? ' CardioFilterBar' : ''}`}
       aria-label="Exercise filters"
     >
       <label>
@@ -62,6 +62,18 @@ export function ExerciseFilters({
           </select>
         </label>
       ) : null}
+      <button
+        className="Button ButtonSecondary FilterAction"
+        type="button"
+        disabled={!trainingType && !searchTerm && !muscleGroup}
+        onClick={() => {
+          onTrainingTypeChange('')
+          onSearchChange('')
+          onMuscleGroupChange('')
+        }}
+      >
+        Clear Filters
+      </button>
     </section>
   )
 }

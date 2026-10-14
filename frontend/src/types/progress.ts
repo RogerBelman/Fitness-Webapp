@@ -16,6 +16,7 @@ export type ExerciseProgressPoint = {
   workoutDate: string
   totalSets: number
   maxWeight: number
+  maxWeightReps: number
   totalVolume: number
 }
 

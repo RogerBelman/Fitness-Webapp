@@ -8,5 +8,6 @@ public record ExerciseProgressPointResponse(
 		LocalDate workoutDate,
 		int totalSets,
 		BigDecimal maxWeight,
+		Integer maxWeightReps,
 		BigDecimal totalVolume) {
 }
