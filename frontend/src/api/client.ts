@@ -1,5 +1,12 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 
+type CsrfToken = {
+  headerName: string
+  token: string
+}
+
+let csrfTokenPromise: Promise<CsrfToken> | null = null
+
 type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown
 }
@@ -20,17 +27,12 @@ export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const headers = new Headers(options.headers)
+  let response = await sendRequest(path, options)
 
-  if (options.body !== undefined) {
-    headers.set('Content-Type', 'application/json')
+  if (response.status === 403 && requiresCsrf(options.method)) {
+    resetCsrfToken()
+    response = await sendRequest(path, options)
   }
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
-  })
 
   if (!response.ok) {
     const details = await readJson(response)
@@ -42,6 +44,52 @@ export async function apiRequest<T>(
   }
 
   return response.json() as Promise<T>
+}
+
+export function resetCsrfToken() {
+  csrfTokenPromise = null
+}
+
+async function sendRequest(path: string, options: RequestOptions) {
+  const headers = new Headers(options.headers)
+
+  if (options.body !== undefined) {
+    headers.set('Content-Type', 'application/json')
+  }
+
+  if (requiresCsrf(options.method)) {
+    const csrf = await getCsrfToken()
+    headers.set(csrf.headerName, csrf.token)
+  }
+
+  return fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    credentials: options.credentials ?? 'include',
+    headers,
+    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+  })
+}
+
+function requiresCsrf(method: string | undefined) {
+  return !['GET', 'HEAD', 'OPTIONS'].includes((method ?? 'GET').toUpperCase())
+}
+
+function getCsrfToken() {
+  csrfTokenPromise ??= fetch(`${API_BASE_URL}/api/auth/csrf`, {
+    credentials: 'include',
+  })
+    .then(async (response) => {
+      if (!response.ok) {
+        const details = await readJson(response)
+        throw new ApiError(response.status, response.statusText, details)
+      }
+      return response.json() as Promise<CsrfToken>
+    })
+    .catch((error: unknown) => {
+      csrfTokenPromise = null
+      throw error
+    })
+  return csrfTokenPromise
 }
 
 async function readJson(response: Response) {

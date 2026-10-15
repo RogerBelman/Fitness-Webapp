@@ -4,10 +4,11 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -20,6 +21,13 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+	@ExceptionHandler(AuthenticationException.class)
+	public ResponseEntity<ApiErrorResponse> handleAuthentication(
+			AuthenticationException exception,
+			HttpServletRequest request) {
+		return buildResponse(HttpStatus.UNAUTHORIZED, "Invalid username or password.", request);
+	}
 
 	@ExceptionHandler(ResourceNotFoundException.class)
 	public ResponseEntity<ApiErrorResponse> handleResourceNotFound(

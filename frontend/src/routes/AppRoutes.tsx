@@ -7,19 +7,24 @@ import { WorkoutDetail } from '../pages/WorkoutDetail'
 import { Workouts } from '../pages/Workouts'
 import { WorkoutTemplates } from '../pages/WorkoutTemplates'
 import { DataBackup } from '../pages/DataBackup'
+import { Login } from '../pages/Login'
+import { ProtectedRoute } from './ProtectedRoute'
 
 export function AppRoutes() {
   return (
     <Routes>
-      <Route element={<AppLayout />}>
-        <Route index element={<Dashboard />} />
-        <Route path="progress" element={<Progress />} />
-        <Route path="exercises" element={<ExerciseLibrary />} />
-        <Route path="workouts/new" element={<NewWorkoutRedirect />} />
-        <Route path="workouts" element={<Workouts />} />
-        <Route path="workouts/templates" element={<WorkoutTemplates />} />
-        <Route path="workouts/:workoutId" element={<WorkoutDetail />} />
-        <Route path="data" element={<DataBackup />} />
+      <Route path="login" element={<Login />} />
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AppLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="progress" element={<Progress />} />
+          <Route path="exercises" element={<ExerciseLibrary />} />
+          <Route path="workouts/new" element={<NewWorkoutRedirect />} />
+          <Route path="workouts" element={<Workouts />} />
+          <Route path="workouts/templates" element={<WorkoutTemplates />} />
+          <Route path="workouts/:workoutId" element={<WorkoutDetail />} />
+          <Route path="data" element={<DataBackup />} />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

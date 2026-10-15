@@ -46,6 +46,49 @@
   padding-bottom: 2px;
 }
 
+.TopBarControls {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+
+.AccountControl {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 8px 7px 12px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.AccountControl span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.AccountControl button {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  color: var(--accent);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.AccountControl button:hover {
+  background: var(--accent-soft);
+}
+
 .WeightUnitControl {
   display: flex;
   align-items: center;
@@ -409,6 +452,17 @@ textarea:disabled {
     padding: 16px 24px;
   }
 
+  .TopBarControls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: auto;
+  }
+
+  .AccountControl {
+    max-width: 220px;
+  }
+
   .PageShell {
     width: min(1120px, calc(100% - 48px));
     padding-top: 36px;
@@ -460,6 +514,115 @@ textarea:disabled {
 @media (max-width: 719px) {
   .MainNav {
     width: 100%;
+  }
+}
+
+.AuthShell {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: 24px 16px;
+  background:
+    radial-gradient(circle at top, #1b365c 0, transparent 42%),
+    var(--background);
+}
+
+.AuthCard {
+  display: grid;
+  gap: 22px;
+  width: min(440px, 100%);
+  padding: 28px;
+  background: var(--surface);
+  border: 1px solid var(--dialog-border);
+  border-radius: 14px;
+  box-shadow: var(--popup-shadow);
+}
+
+.AuthBrand {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  color: var(--on-accent);
+  background: var(--accent);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.AuthHeading {
+  display: grid;
+  gap: 7px;
+}
+
+.AuthHeading h1 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.15;
+}
+
+.AuthHeading > p:last-child,
+.AuthLoading {
+  color: var(--muted);
+}
+
+.AuthEyebrow {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.AuthModeToggle {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3px;
+  padding: 3px;
+  background: var(--input-background);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.AuthModeToggle button {
+  min-height: 38px;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.AuthModeToggle button[aria-selected='true'] {
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+.AuthForm {
+  display: grid;
+  gap: 16px;
+}
+
+.AuthField {
+  display: grid;
+  gap: 6px;
+}
+
+.FieldHint {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.AuthSubmit {
+  width: 100%;
+  margin-top: 2px;
+}
+
+@media (max-width: 479px) {
+  .AuthCard {
+    padding: 22px 18px;
   }
 }
 

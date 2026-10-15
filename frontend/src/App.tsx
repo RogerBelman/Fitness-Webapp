@@ -1,12 +1,15 @@
 import './App.css'
+import { AuthProvider } from './contexts/AuthProvider'
 import { MeasurementPreferencesProvider } from './contexts/MeasurementPreferences'
 import { AppRoutes } from './routes/AppRoutes'
 
 function App() {
   return (
-    <MeasurementPreferencesProvider>
-      <AppRoutes />
-    </MeasurementPreferencesProvider>
+    <AuthProvider>
+      <MeasurementPreferencesProvider>
+        <AppRoutes />
+      </MeasurementPreferencesProvider>
+    </AuthProvider>
   )
 }
 

@@ -20,6 +20,7 @@ This repository contains a full-stack workout tracking application built with a 
 - Track cardio minutes, workout duration trends, and recorded machine levels with separate charts and history.
 - Switch strength weights and volume between pounds and kilograms throughout the browser app.
 - Export all training data to a portable JSON backup and validate imported backups before replacing current data.
+- Register accounts and use server-managed login sessions with BCrypt-hashed passwords.
 - Validate API requests and return consistent error responses.
 - Run PostgreSQL locally with Docker or connect Spring Boot to Neon.
 - Apply versioned schema changes automatically with Flyway.
@@ -30,7 +31,7 @@ This repository contains a full-stack workout tracking application built with a 
 | Area | Technologies |
 | --- | --- |
 | Frontend | React, TypeScript, Vite, React Router, Recharts |
-| Backend | Java 21, Spring Boot, Spring Web MVC, Spring Data JPA |
+| Backend | Java 21, Spring Boot, Spring Web MVC, Spring Data JPA, Spring Security |
 | Database | PostgreSQL, Neon |
 | Migrations | Flyway |
 | Local development | Docker Compose |
@@ -55,6 +56,7 @@ Routes:
 
 | Path | Page |
 | --- | --- |
+| `/login` | Sign in or create an account |
 | `/` | Dashboard |
 | `/progress` | Exercise Progress |
 | `/exercises` | Exercise Library |
@@ -68,6 +70,8 @@ The Dashboard shows a Monday–Sunday calendar with previous/next week controls 
 
 The Weight units control in the footer switches strength entry, totals, goals, history, and charts between pounds and kilograms. PostgreSQL stores pounds as the canonical value; the frontend converts values when reading and submitting them. The selected display unit is saved in browser local storage.
 
+The browser restores the signed-in account from its server session when the app loads. Signed-out visitors are sent to the Login page, and a successful login returns them to the page they originally requested. Registration creates the account and signs in immediately. The current username and Sign Out control appear in the application header.
+
 The Data & Backup page downloads exercises, workouts, strength sets, cardio entries, templates, and goals as a versioned JSON snapshot. Import validates the complete snapshot first and then replaces the current dataset in one database transaction. Invalid files leave existing data unchanged.
 
 The Workout Templates page can create a reusable routine directly or save one from an existing workout. After creating a template, add exercises from the library, arrange their order, and start a workout with empty performance entries.
@@ -78,7 +82,8 @@ Frontend API files:
 
 | File | Purpose |
 | --- | --- |
-| `src/api/client.ts` | Shared `fetch` wrapper with base URL and API error handling |
+| `src/api/client.ts` | Shared `fetch` wrapper with credentials, CSRF protection, base URL, and API error handling |
+| `src/api/auth.ts` | Registration, login, current-account, and logout functions |
 | `src/api/exercises.ts` | Exercise endpoint functions |
 | `src/api/workouts.ts` | Workout endpoint functions |
 | `src/api/progress.ts` | Personal-record and exercise-history endpoint functions |
@@ -242,6 +247,33 @@ V1__create_workout_schema.sql
 ```
 
 The `V1` part is the version. Flyway records each applied migration in `flyway_schema_history`, so every developer and environment can move through the same schema changes in the same order.
+
+## Authentication API
+
+Authentication uses server-managed HTTP sessions. The browser receives a `JSESSIONID` cookie after a successful login; the cookie is HttpOnly, expires with the session, and contains an opaque session identifier rather than user details or a password.
+
+| Method | Path | Purpose | Success |
+| --- | --- | --- | --- |
+| `GET` | `/api/auth/csrf` | Issue the CSRF token required for browser writes | `200 OK` |
+| `POST` | `/api/auth/register` | Create an account | `201 Created` |
+| `POST` | `/api/auth/login` | Verify credentials and create a session | `200 OK` |
+| `GET` | `/api/auth/me` | Restore the current account from the session | `200 OK` |
+| `POST` | `/api/auth/logout` | Invalidate the session and delete its cookie | `204 No Content` |
+
+Registration and login request bodies use the same credential shape:
+
+```json
+{
+  "username": "learning_user",
+  "password": "a-long-private-password"
+}
+```
+
+Usernames are trimmed, stored in lowercase, and may contain letters, numbers, and underscores. Passwords are never stored or returned as plain text. The service stores a one-way BCrypt hash, and successful registration, login, and current-user responses contain only the account id, normalized username, and creation time. Invalid login attempts always return the same message so callers cannot determine whether a username exists.
+
+Cross-origin browser requests use `credentials: "include"` so the browser sends the session cookie to the API. Local CORS configuration permits credentials from the configured React origins. Before each `POST`, `PUT`, or `DELETE`, the shared frontend client obtains a token from `/api/auth/csrf` and sends it in the header named by that response. Spring Security compares the token with the value stored in the browser session before allowing the request. Set `SESSION_COOKIE_SECURE=true` when the backend is served over HTTPS.
+
+The React routes require a signed-in account, but ownership rules for exercises, workouts, templates, and goals have not been added yet. Those backend API routes remain public, and existing training data is not assigned to an account. Separating each user's records is the next authentication phase.
 
 ## Exercise API
 
@@ -498,6 +530,7 @@ Current test focus:
 
 | Test file | Purpose |
 | --- | --- |
+| `AuthControllerTests` | Registration, password hashing, login sessions, current-user restoration, logout, CSRF enforcement, and generic credential failures |
 | `ExerciseControllerTests` | Exercise API endpoint behavior |
 | `ExerciseInstructionsTests` | Permanent instructions, session-note independence, clearing, and length validation |
 | `CardioTrackingTests` | Mixed totals, duration/level validation, entry updates/deletes, training-type protection, and deletion cascades |
@@ -535,7 +568,7 @@ The script backs up the local Compose database to ignored `backend/target/sample
 
 ## Future Plans
 
-- Add user accounts, authentication, and authorization so each user owns their workout data.
+- Assign exercises, workouts, templates, and goals to their owning account and enforce that ownership in every data query.
 - Add scheduled routines and calendar planning based on workout templates.
 - Expand progress analytics with estimated one-rep max and training-frequency trends.
 - Refine the responsive UI, accessibility, and overall interaction design.

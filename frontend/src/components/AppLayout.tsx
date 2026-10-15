@@ -1,5 +1,8 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { useState } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useMeasurementPreferences } from '../hooks/useMeasurementPreferences'
+import { useAuth } from '../hooks/useAuth'
+import { ActionFeedback } from './ActionFeedback'
 
 const navItems = [
   { to: '/', label: 'Dashboard', end: true },
@@ -10,6 +13,19 @@ const navItems = [
 
 export function AppLayout() {
   const { weightUnit, setWeightUnit } = useMeasurementPreferences()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const [logoutError, setLogoutError] = useState<string | null>(null)
+
+  async function signOut() {
+    setLogoutError(null)
+    try {
+      await logout()
+      navigate('/login', { replace: true })
+    } catch {
+      setLogoutError('Could not sign out. Please try again.')
+    }
+  }
 
   return (
     <div className="AppShell">
@@ -19,21 +35,29 @@ export function AppLayout() {
           <span>Workout Tracker</span>
         </NavLink>
 
-        <nav className="MainNav" aria-label="Main navigation">
-          {navItems.map((item) => (
-            <NavLink
-              className={({ isActive }) =>
-                isActive ? 'NavLink NavLinkActive' : 'NavLink'
-              }
-              end={item.end}
-              key={item.to}
-              to={item.to}
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+        <div className="TopBarControls">
+          <nav className="MainNav" aria-label="Main navigation">
+            {navItems.map((item) => (
+              <NavLink
+                className={({ isActive }) =>
+                  isActive ? 'NavLink NavLinkActive' : 'NavLink'
+                }
+                end={item.end}
+                key={item.to}
+                to={item.to}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+          <div className="AccountControl">
+            <span title={user?.username}>{user?.username}</span>
+            <button type="button" onClick={() => void signOut()}>Sign Out</button>
+          </div>
+        </div>
       </header>
+
+      <ActionFeedback errorMessage={logoutError} />
 
       <main className="PageShell">
         <Outlet />

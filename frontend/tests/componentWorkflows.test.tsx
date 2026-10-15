@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { MeasurementPreferencesProvider } from '../src/contexts/MeasurementPreferences'
+import { AuthContext } from '../src/contexts/authContext'
 import { AddSetForm } from '../src/components/workouts/AddSetForm'
 import { WorkoutDetails } from '../src/components/workouts/WorkoutDetails'
 import { WorkoutList } from '../src/components/workouts/WorkoutList'
@@ -86,13 +87,23 @@ describe('measurement preferences', () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
-        <MeasurementPreferencesProvider>
-          <Routes>
-            <Route element={<AppLayout />}>
-              <Route index element={<p>Dashboard content</p>} />
-            </Route>
-          </Routes>
-        </MeasurementPreferencesProvider>
+        <AuthContext.Provider
+          value={{
+            user: { id: 1, username: 'test_user', createdAt: timestamp },
+            isLoading: false,
+            login: async () => undefined,
+            register: async () => undefined,
+            logout: async () => undefined,
+          }}
+        >
+          <MeasurementPreferencesProvider>
+            <Routes>
+              <Route element={<AppLayout />}>
+                <Route index element={<p>Dashboard content</p>} />
+              </Route>
+            </Routes>
+          </MeasurementPreferencesProvider>
+        </AuthContext.Provider>
       </MemoryRouter>,
     )
 
