@@ -21,6 +21,7 @@ This repository contains a full-stack workout tracking application built with a 
 - Switch strength weights and volume between pounds and kilograms throughout the browser app.
 - Export all training data to a portable JSON backup and validate imported backups before replacing current data.
 - Register accounts and use server-managed login sessions with BCrypt-hashed passwords.
+- Keep each account's exercises, workouts, templates, goals, progress, and backups separate.
 - Validate API requests and return consistent error responses.
 - Run PostgreSQL locally with Docker or connect Spring Boot to Neon.
 - Apply versioned schema changes automatically with Flyway.
@@ -273,7 +274,7 @@ Usernames are trimmed, stored in lowercase, and may contain letters, numbers, an
 
 Cross-origin browser requests use `credentials: "include"` so the browser sends the session cookie to the API. Local CORS configuration permits credentials from the configured React origins. Before each `POST`, `PUT`, or `DELETE`, the shared frontend client obtains a token from `/api/auth/csrf` and sends it in the header named by that response. Spring Security compares the token with the value stored in the browser session before allowing the request. Set `SESSION_COOKIE_SECURE=true` when the backend is served over HTTPS.
 
-The React routes require a signed-in account, but ownership rules for exercises, workouts, templates, and goals have not been added yet. Those backend API routes remain public, and existing training data is not assigned to an account. Separating each user's records is the next authentication phase.
+All training-data API routes require a signed-in account. Exercises, workouts, and templates store their owner directly, while goals and performance entries inherit ownership through their parent records. Every list and ID lookup includes the current account. Requesting another user's record returns the same `404 Not Found` response as a missing record, and exercise names are unique within one account rather than across the whole application.
 
 ## Exercise API
 
@@ -461,11 +462,16 @@ Strength goals support maximum weight and maximum volume in one workout. Cardio 
 | `GET` | `/api/data-backup` | Export the complete versioned JSON snapshot | `200 OK` |
 | `PUT` | `/api/data-backup` | Validate and replace all data from a snapshot | `200 OK` |
 
-The backup uses exercise names as portable references rather than database IDs. Import verifies unique exercises, valid references and ordering, matching Strength/Cardio entries, and compatible goal metrics before deleting any current records. Deletion and restoration run in the same transaction, so a database error also rolls back the replacement.
+The backup uses exercise names as portable references rather than database IDs. Export includes only the signed-in user's data. Import verifies unique exercises, valid references and ordering, matching Strength/Cardio entries, and compatible goal metrics before replacing that user's current records. Deletion and restoration run in the same transaction, so a database error also rolls back the replacement and never changes another account.
 
 Workout relationship model:
 
 ```text
+app_users
+  one-to-many exercises
+  one-to-many workouts
+  one-to-many workout_templates
+
 workouts
   one-to-many workout_exercises
 
@@ -559,16 +565,15 @@ The frontend suite retains seven calendar utility tests and adds interaction cov
 With Docker PostgreSQL running and the backend migrations applied, run from the repository root:
 
 ```powershell
-.\scripts\refresh-sample-data.ps1
+.\scripts\refresh-sample-data.ps1 -Username roger
 ```
 
 This replaces only data marked `[Sample data]`, creates 9 clearly named sample exercises, 12 workouts over the last four weeks, 3 reusable templates, and 2 progress goals, and includes 72 strength sets and 16 cardio entries. Permanent exercise instructions and workout notes demonstrate the current forms. Samples include mixed workouts, multiple cardio intervals, outdoor walks without machine levels, progressive strength loads, and goal progress. Dates use America/Chicago; pass `-SampleDate yyyy-MM-dd` for a fixed end date.
 
-The script backs up the local Compose database to ignored `backend/target/sample-data-backups/` before making changes and applies the refresh in one transaction. A name collision with an exercise retained in another workout stops the refresh rather than overwriting it. To explicitly replace **all** existing local workouts, exercises, templates, and goals, including unmarked older samples and personal entries, run `.\scripts\refresh-sample-data.ps1 -ReplaceAll`. This script does not connect to Neon or other remote databases.
+The required `-Username` must identify an existing registered account. The script backs up the local Compose database to ignored `backend/target/sample-data-backups/` before making changes and applies the refresh in one transaction. A name collision with an exercise retained in another workout stops the refresh rather than overwriting it. To replace every workout, exercise, template, and goal owned by the selected account, including unmarked entries, run `.\scripts\refresh-sample-data.ps1 -Username roger -ReplaceAll`. Other accounts are left unchanged. This script does not connect to Neon or other remote databases.
 
 ## Future Plans
 
-- Assign exercises, workouts, templates, and goals to their owning account and enforce that ownership in every data query.
 - Add scheduled routines and calendar planning based on workout templates.
 - Expand progress analytics with estimated one-rep max and training-frequency trends.
 - Refine the responsive UI, accessibility, and overall interaction design.

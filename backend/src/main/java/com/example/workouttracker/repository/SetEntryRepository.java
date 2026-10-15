@@ -15,6 +15,8 @@ public interface SetEntryRepository extends JpaRepository<SetEntry, Long> {
 
 	Optional<SetEntry> findFirstByWorkoutExerciseIdOrderBySetNumberDesc(Long workoutExerciseId);
 
+	Optional<SetEntry> findByIdAndWorkoutExerciseWorkoutUserId(Long id, Long userId);
+
 	Optional<SetEntry> findFirstByWorkoutExercise_Exercise_IdOrderByWeightDescRepsDescIdDesc(Long exerciseId);
 
 	@Query("""

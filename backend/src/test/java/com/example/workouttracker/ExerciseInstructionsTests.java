@@ -31,6 +31,8 @@ import jakarta.persistence.EntityManager;
 @AutoConfigureMockMvc
 @Transactional
 class ExerciseInstructionsTests {
+
+	@Autowired private TestUserSupport testUsers;
 	@Autowired private MockMvc mockMvc;
 	@Autowired private ExerciseRepository exercises;
 	@Autowired private WorkoutRepository workouts;
@@ -55,8 +57,8 @@ class ExerciseInstructionsTests {
 
 	@Test
 	void updatedInstructionsAppearInWorkoutsAlongsideWorkoutNotes() throws Exception {
-		Exercise exercise = exercises.save(new Exercise("Technique " + UUID.randomUUID(), "Chest", "Barbell"));
-		Workout workout = workouts.save(new Workout(LocalDate.of(2026, 8, 20), "Push day", "Session notes"));
+		Exercise exercise = exercises.save(new Exercise(testUsers.owner(), "Technique " + UUID.randomUUID(), "Chest", "Barbell"));
+		Workout workout = workouts.save(new Workout(testUsers.owner(), LocalDate.of(2026, 8, 20), "Push day", "Session notes"));
 		workoutExercises.save(new WorkoutExercise(workout, exercise, 1));
 		Long workoutId = workout.getId();
 		Long exerciseId = exercise.getId();
@@ -76,7 +78,7 @@ class ExerciseInstructionsTests {
 
 	@Test
 	void blankNullOrOmittedInstructionsClearTheLibraryField() throws Exception {
-		Exercise exercise = exercises.save(new Exercise("Clear instructions " + UUID.randomUUID(), "Chest", "Barbell"));
+		Exercise exercise = exercises.save(new Exercise(testUsers.owner(), "Clear instructions " + UUID.randomUUID(), "Chest", "Barbell"));
 		Long id = exercise.getId();
 		String name = exercise.getName();
 		for (String field : new String[] { ",\"instructions\":\"   \"", ",\"instructions\":null", "" }) {
@@ -91,7 +93,7 @@ class ExerciseInstructionsTests {
 
 	@Test
 	void rejectsInstructionsLongerThanTheLimitOnCreateAndUpdate() throws Exception {
-		Exercise exercise = exercises.save(new Exercise("Length test " + UUID.randomUUID(), "Chest", "Barbell", "Original cue"));
+		Exercise exercise = exercises.save(new Exercise(testUsers.owner(), "Length test " + UUID.randomUUID(), "Chest", "Barbell", "Original cue"));
 		Long id = exercise.getId();
 		String name = exercise.getName();
 		flushAndClear();

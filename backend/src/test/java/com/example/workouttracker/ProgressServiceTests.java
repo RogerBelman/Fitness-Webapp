@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.example.workouttracker.dto.ExercisePersonalRecordResponse;
 import com.example.workouttracker.dto.ExerciseProgressResponse;
 import com.example.workouttracker.entity.Exercise;
+import com.example.workouttracker.entity.AppUser;
 import com.example.workouttracker.entity.SetEntry;
 import com.example.workouttracker.entity.Workout;
 import com.example.workouttracker.entity.WorkoutExercise;
@@ -28,6 +29,7 @@ import com.example.workouttracker.repository.ExerciseRepository;
 import com.example.workouttracker.repository.SetEntryRepository;
 import com.example.workouttracker.repository.CardioEntryRepository;
 import com.example.workouttracker.service.ProgressService;
+import com.example.workouttracker.service.CurrentUserService;
 
 @ExtendWith(MockitoExtension.class)
 class ProgressServiceTests {
@@ -41,11 +43,19 @@ class ProgressServiceTests {
 	@Mock
 	private CardioEntryRepository cardioEntryRepository;
 
+	@Mock
+	private CurrentUserService currentUserService;
+
+	@Mock
+	private AppUser currentUser;
+
 	private ProgressService progressService;
 
 	@BeforeEach
 	void setUp() {
-		progressService = new ProgressService(exerciseRepository, setEntryRepository, cardioEntryRepository);
+		progressService = new ProgressService(
+				exerciseRepository, setEntryRepository, cardioEntryRepository, currentUserService);
+		when(currentUserService.requireCurrentUser()).thenReturn(currentUser);
 	}
 
 	@Test
@@ -55,7 +65,7 @@ class ProgressServiceTests {
 		Workout workout = new Workout(LocalDate.of(2026, 9, 25), "Push Day", null);
 		WorkoutExercise workoutExercise = new WorkoutExercise(workout, exercise, 1);
 		SetEntry setEntry = new SetEntry(workoutExercise, 1, 5, new BigDecimal("185.00"));
-		when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.of(exercise));
+		when(exerciseRepository.findByIdAndUserId(exerciseId, 0L)).thenReturn(Optional.of(exercise));
 		when(setEntryRepository
 				.findFirstByWorkoutExercise_Exercise_IdOrderByWeightDescRepsDescIdDesc(exerciseId))
 				.thenReturn(Optional.of(setEntry));
@@ -72,7 +82,7 @@ class ProgressServiceTests {
 	void returnsEmptyRecordWhenExerciseHasNoSets() {
 		Long exerciseId = 12L;
 		Exercise exercise = new Exercise("Bench Press", "Chest", "Strength");
-		when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.of(exercise));
+		when(exerciseRepository.findByIdAndUserId(exerciseId, 0L)).thenReturn(Optional.of(exercise));
 		when(setEntryRepository
 				.findFirstByWorkoutExercise_Exercise_IdOrderByWeightDescRepsDescIdDesc(exerciseId))
 				.thenReturn(Optional.empty());
@@ -91,7 +101,7 @@ class ProgressServiceTests {
 		WorkoutExercise workoutExercise = new WorkoutExercise(workout, exercise, 1);
 		SetEntry firstSet = new SetEntry(workoutExercise, 1, 10, new BigDecimal("135.00"));
 		SetEntry secondSet = new SetEntry(workoutExercise, 2, 5, new BigDecimal("185.00"));
-		when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.of(exercise));
+		when(exerciseRepository.findByIdAndUserId(exerciseId, 0L)).thenReturn(Optional.of(exercise));
 		when(setEntryRepository.findAllForExerciseHistory(exerciseId))
 				.thenReturn(List.of(firstSet, secondSet));
 
@@ -111,7 +121,7 @@ class ProgressServiceTests {
 	void returnsEmptyHistoryWhenExerciseHasNoSets() {
 		Long exerciseId = 12L;
 		Exercise exercise = new Exercise("Bench Press", "Chest", "Strength");
-		when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.of(exercise));
+		when(exerciseRepository.findByIdAndUserId(exerciseId, 0L)).thenReturn(Optional.of(exercise));
 		when(setEntryRepository.findAllForExerciseHistory(exerciseId)).thenReturn(List.of());
 
 		ExerciseProgressResponse response = progressService.findHistory(exerciseId);
@@ -122,7 +132,7 @@ class ProgressServiceTests {
 	@Test
 	void rejectsMissingExercise() {
 		Long exerciseId = 999L;
-		when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.empty());
+		when(exerciseRepository.findByIdAndUserId(exerciseId, 0L)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> progressService.findPersonalRecord(exerciseId))
 				.isInstanceOf(ResourceNotFoundException.class)

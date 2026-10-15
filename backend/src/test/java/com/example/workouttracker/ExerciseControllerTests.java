@@ -28,6 +28,8 @@ import com.example.workouttracker.repository.ExerciseRepository;
 @Transactional
 class ExerciseControllerTests {
 
+	@Autowired private TestUserSupport testUsers;
+
 	@Autowired
 	private MockMvc mockMvc;
 
@@ -77,8 +79,8 @@ class ExerciseControllerTests {
 	@Test
 	void listsExercisesWithMuscleGroupFilter() throws Exception {
 		String muscleGroup = unique("Chest");
-		exerciseRepository.save(new Exercise(unique("Bench Press"), muscleGroup, "Strength"));
-		exerciseRepository.save(new Exercise(unique("Romanian Deadlift"), unique("Hamstrings"), "Strength"));
+		exerciseRepository.save(new Exercise(testUsers.owner(), unique("Bench Press"), muscleGroup, "Strength"));
+		exerciseRepository.save(new Exercise(testUsers.owner(), unique("Romanian Deadlift"), unique("Hamstrings"), "Strength"));
 
 		mockMvc.perform(get("/api/exercises")
 				.param("muscleGroup", muscleGroup.toLowerCase()))
@@ -89,7 +91,7 @@ class ExerciseControllerTests {
 
 	@Test
 	void getsExerciseById() throws Exception {
-		Exercise exercise = exerciseRepository.save(new Exercise(unique("Pull Up"), "Back", "Bodyweight"));
+		Exercise exercise = exerciseRepository.save(new Exercise(testUsers.owner(), unique("Pull Up"), "Back", "Bodyweight"));
 
 		mockMvc.perform(get("/api/exercises/{id}", exercise.getId()))
 				.andExpect(status().isOk())
@@ -109,7 +111,7 @@ class ExerciseControllerTests {
 
 	@Test
 	void updatesExercise() throws Exception {
-		Exercise exercise = exerciseRepository.save(new Exercise(unique("Strict Press"), "Shoulders", "Strength"));
+		Exercise exercise = exerciseRepository.save(new Exercise(testUsers.owner(), unique("Strict Press"), "Shoulders", "Strength"));
 		String updatedName = unique("Overhead Press");
 
 		mockMvc.perform(put("/api/exercises/{id}", exercise.getId())
@@ -130,7 +132,7 @@ class ExerciseControllerTests {
 	@Test
 	void returnsConflictForDuplicateExerciseName() throws Exception {
 		String name = unique("Incline Press");
-		exerciseRepository.save(new Exercise(name, "Chest", "Barbell"));
+		exerciseRepository.save(new Exercise(testUsers.owner(), name, "Chest", "Barbell"));
 
 		mockMvc.perform(post("/api/exercises")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -150,7 +152,7 @@ class ExerciseControllerTests {
 
 	@Test
 	void deletesExercise() throws Exception {
-		Exercise exercise = exerciseRepository.save(new Exercise(unique("Cable Row"), "Back", "Machine"));
+		Exercise exercise = exerciseRepository.save(new Exercise(testUsers.owner(), unique("Cable Row"), "Back", "Machine"));
 
 		mockMvc.perform(delete("/api/exercises/{id}", exercise.getId()))
 				.andExpect(status().isNoContent());

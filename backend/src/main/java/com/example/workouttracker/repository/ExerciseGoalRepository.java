@@ -9,7 +9,9 @@ import com.example.workouttracker.entity.GoalMetric;
 
 public interface ExerciseGoalRepository extends JpaRepository<ExerciseGoal, Long> {
 
-	List<ExerciseGoal> findAllByOrderByCreatedAtDescIdDesc();
+	List<ExerciseGoal> findByExerciseUserIdOrderByCreatedAtDescIdDesc(Long userId);
+
+	java.util.Optional<ExerciseGoal> findByIdAndExerciseUserId(Long id, Long userId);
 
 	boolean existsByExerciseId(Long exerciseId);
 

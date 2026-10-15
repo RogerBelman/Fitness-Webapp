@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.anonymous;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -105,7 +106,7 @@ class AuthControllerTests {
 
 	@Test
 	void requiresAuthenticationForCurrentUser() throws Exception {
-		mvc.perform(get("/api/auth/me"))
+		mvc.perform(get("/api/auth/me").with(anonymous()))
 				.andExpect(status().isUnauthorized())
 				.andExpect(jsonPath("$.message").value("Authentication is required."));
 	}
@@ -142,9 +143,9 @@ class AuthControllerTests {
 	}
 
 	@Test
-	void keepsWorkoutRoutesPublicDuringTheAuthenticationPhase() throws Exception {
-		mvc.perform(get("/api/workouts"))
-				.andExpect(status().isOk());
+	void requiresAuthenticationForWorkoutData() throws Exception {
+		mvc.perform(get("/api/workouts").with(anonymous()))
+				.andExpect(status().isUnauthorized());
 	}
 
 	@Test

@@ -55,7 +55,8 @@ public class SecurityConfig {
 						.securityContextRepository(securityContextRepository)
 						.requireExplicitSave(true))
 				.authorizeHttpRequests(authorize -> authorize
-						.requestMatchers("/api/auth/me", "/api/auth/logout").authenticated()
+						.requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/csrf").permitAll()
+						.requestMatchers("/api/**").authenticated()
 						.anyRequest().permitAll())
 				.exceptionHandling(exceptions -> exceptions
 						.authenticationEntryPoint(authenticationEntryPoint)

@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.workouttracker.dto.ExerciseRequest;
 import com.example.workouttracker.dto.ExerciseResponse;
 import com.example.workouttracker.entity.Exercise;
+import com.example.workouttracker.entity.AppUser;
 import com.example.workouttracker.entity.TrainingType;
 import com.example.workouttracker.exception.BadRequestException;
 import com.example.workouttracker.exception.DuplicateResourceException;
@@ -32,22 +33,26 @@ public class ExerciseService {
 	private final CardioEntryRepository cardioEntryRepository;
 	private final WorkoutTemplateExerciseRepository workoutTemplateExerciseRepository;
 	private final ExerciseGoalRepository exerciseGoalRepository;
+	private final CurrentUserService currentUserService;
 
 	public ExerciseService(ExerciseRepository exerciseRepository, WorkoutExerciseRepository workoutExerciseRepository,
 			SetEntryRepository setEntryRepository, CardioEntryRepository cardioEntryRepository,
 			WorkoutTemplateExerciseRepository workoutTemplateExerciseRepository,
-			ExerciseGoalRepository exerciseGoalRepository) {
+			ExerciseGoalRepository exerciseGoalRepository,
+			CurrentUserService currentUserService) {
 		this.exerciseRepository = exerciseRepository;
 		this.workoutExerciseRepository = workoutExerciseRepository;
 		this.setEntryRepository = setEntryRepository;
 		this.cardioEntryRepository = cardioEntryRepository;
 		this.workoutTemplateExerciseRepository = workoutTemplateExerciseRepository;
 		this.exerciseGoalRepository = exerciseGoalRepository;
+		this.currentUserService = currentUserService;
 	}
 
 	@Transactional(readOnly = true)
 	public List<ExerciseResponse> findAll(Optional<String> muscleGroup, Optional<String> category,
 			Optional<String> trainingType) {
+		Long userId = currentUserService.requireCurrentUser().getId();
 		TrainingType requestedType = trainingType.filter(value -> !value.isBlank()).map(value -> {
 			try {
 				return TrainingType.valueOf(value.trim().toUpperCase(Locale.ROOT));
@@ -60,15 +65,15 @@ public class ExerciseService {
 
 		List<Exercise> exercises;
 		if (normalizedMuscleGroup.isPresent() && normalizedCategory.isPresent()) {
-			exercises = exerciseRepository.findByMuscleGroupIgnoreCaseAndCategoryIgnoreCase(
-					normalizedMuscleGroup.get(),
+			exercises = exerciseRepository.findByUserIdAndMuscleGroupIgnoreCaseAndCategoryIgnoreCase(
+					userId, normalizedMuscleGroup.get(),
 					normalizedCategory.get());
 		} else if (normalizedMuscleGroup.isPresent()) {
-			exercises = exerciseRepository.findByMuscleGroupIgnoreCase(normalizedMuscleGroup.get());
+			exercises = exerciseRepository.findByUserIdAndMuscleGroupIgnoreCase(userId, normalizedMuscleGroup.get());
 		} else if (normalizedCategory.isPresent()) {
-			exercises = exerciseRepository.findByCategoryIgnoreCase(normalizedCategory.get());
+			exercises = exerciseRepository.findByUserIdAndCategoryIgnoreCase(userId, normalizedCategory.get());
 		} else {
-			exercises = exerciseRepository.findAll();
+			exercises = exerciseRepository.findByUserId(userId);
 		}
 
 		return exercises.stream()
@@ -83,12 +88,13 @@ public class ExerciseService {
 	}
 
 	public ExerciseResponse create(ExerciseRequest request) {
+		AppUser user = currentUserService.requireCurrentUser();
 		ExerciseValues values = normalize(request, TrainingType.STRENGTH);
-		if (exerciseRepository.existsByNameIgnoreCase(values.name())) {
+		if (exerciseRepository.existsByUserIdAndNameIgnoreCase(user.getId(), values.name())) {
 			throw new DuplicateResourceException("Exercise name already exists.");
 		}
 
-		Exercise exercise = new Exercise(values.name(), values.muscleGroup(), values.category(), values.instructions(), values.trainingType());
+		Exercise exercise = new Exercise(user, values.name(), values.muscleGroup(), values.category(), values.instructions(), values.trainingType());
 		return ExerciseMapper.toResponse(exerciseRepository.save(exercise));
 	}
 
@@ -101,7 +107,8 @@ public class ExerciseService {
 			throw new DuplicateResourceException("Remove logged entries before changing an exercise's training type.");
 		}
 
-		if (exerciseRepository.existsByNameIgnoreCaseAndIdNot(values.name(), id)) {
+		if (exerciseRepository.existsByUserIdAndNameIgnoreCaseAndIdNot(
+				exercise.getUser().getId(), values.name(), id)) {
 			throw new DuplicateResourceException("Exercise name already exists.");
 		}
 
@@ -111,9 +118,7 @@ public class ExerciseService {
 	}
 
 	public void delete(Long id) {
-		if (!exerciseRepository.existsById(id)) {
-			throw new ResourceNotFoundException("Exercise not found.");
-		}
+		Exercise exercise = getExercise(id);
 
 		if (workoutExerciseRepository.existsByExerciseId(id)) {
 			throw new DuplicateResourceException(
@@ -127,12 +132,13 @@ public class ExerciseService {
 			throw new DuplicateResourceException(
 					"Exercise has an active goal. Delete the goal before deleting the exercise.");
 		}
-		exerciseRepository.deleteById(id);
+		exerciseRepository.delete(exercise);
 		exerciseRepository.flush();
 	}
 
 	private Exercise getExercise(Long id) {
-		return exerciseRepository.findById(id)
+		Long userId = currentUserService.requireCurrentUser().getId();
+		return exerciseRepository.findByIdAndUserId(id, userId)
 				.orElseThrow(() -> new ResourceNotFoundException("Exercise not found."));
 	}
 

@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.workouttracker.dto.DataBackup;
 import com.example.workouttracker.dto.DataImportResponse;
 import com.example.workouttracker.entity.CardioEntry;
+import com.example.workouttracker.entity.AppUser;
 import com.example.workouttracker.entity.Exercise;
 import com.example.workouttracker.entity.ExerciseGoal;
 import com.example.workouttracker.entity.GoalMetric;
@@ -43,30 +44,34 @@ public class DataBackupService {
 	private final WorkoutTemplateRepository templateRepository;
 	private final ExerciseGoalRepository goalRepository;
 	private final EntityManager entityManager;
+	private final CurrentUserService currentUserService;
 
 	public DataBackupService(
 			ExerciseRepository exerciseRepository,
 			WorkoutRepository workoutRepository,
 			WorkoutTemplateRepository templateRepository,
 			ExerciseGoalRepository goalRepository,
-			EntityManager entityManager) {
+			EntityManager entityManager,
+			CurrentUserService currentUserService) {
 		this.exerciseRepository = exerciseRepository;
 		this.workoutRepository = workoutRepository;
 		this.templateRepository = templateRepository;
 		this.goalRepository = goalRepository;
 		this.entityManager = entityManager;
+		this.currentUserService = currentUserService;
 	}
 
 	@Transactional(readOnly = true)
 	public DataBackup exportBackup() {
-		List<DataBackup.ExerciseData> exercises = exerciseRepository.findAll().stream()
+		Long userId = currentUserService.requireCurrentUser().getId();
+		List<DataBackup.ExerciseData> exercises = exerciseRepository.findByUserId(userId).stream()
 				.sorted(Comparator.comparing(Exercise::getName, String.CASE_INSENSITIVE_ORDER))
 				.map(exercise -> new DataBackup.ExerciseData(
 						exercise.getName(), exercise.getMuscleGroup(), exercise.getCategory(),
 						exercise.getInstructions(), exercise.getTrainingType()))
 				.toList();
 
-		List<DataBackup.WorkoutData> workouts = workoutRepository.findAllByOrderByWorkoutDateDescIdDesc().stream()
+		List<DataBackup.WorkoutData> workouts = workoutRepository.findByUserIdOrderByWorkoutDateDescIdDesc(userId).stream()
 				.map(workout -> new DataBackup.WorkoutData(
 						workout.getWorkoutDate(), workout.getTitle(), workout.getNotes(),
 						workout.getWorkoutExercises().stream().map(item -> new DataBackup.WorkoutExerciseData(
@@ -77,14 +82,14 @@ public class DataBackupService {
 										entry.getDurationMinutes(), entry.getLevel())).toList())).toList()))
 				.toList();
 
-		List<DataBackup.TemplateData> templates = templateRepository.findAllByOrderByNameAscIdAsc().stream()
+		List<DataBackup.TemplateData> templates = templateRepository.findByUserIdOrderByNameAscIdAsc(userId).stream()
 				.map(template -> new DataBackup.TemplateData(
 						template.getName(), template.getNotes(),
 						template.getExercises().stream().map(item -> new DataBackup.TemplateExerciseData(
 								item.getExercise().getName(), item.getExerciseOrder())).toList()))
 				.toList();
 
-		List<DataBackup.GoalData> goals = goalRepository.findAllByOrderByCreatedAtDescIdDesc().stream()
+		List<DataBackup.GoalData> goals = goalRepository.findByExerciseUserIdOrderByCreatedAtDescIdDesc(userId).stream()
 				.map(goal -> new DataBackup.GoalData(
 						goal.getExercise().getName(), goal.getMetric(), goal.getTargetValue()))
 				.toList();
@@ -95,24 +100,26 @@ public class DataBackupService {
 	@Transactional
 	public DataImportResponse importBackup(DataBackup backup) {
 		Map<String, DataBackup.ExerciseData> exerciseData = validate(backup);
+		AppUser user = currentUserService.requireCurrentUser();
+		Long userId = user.getId();
 
-		goalRepository.deleteAll();
-		templateRepository.deleteAll();
-		workoutRepository.deleteAll();
-		exerciseRepository.deleteAll();
+		goalRepository.deleteAll(goalRepository.findByExerciseUserIdOrderByCreatedAtDescIdDesc(userId));
+		templateRepository.deleteAll(templateRepository.findByUserIdOrderByNameAscIdAsc(userId));
+		workoutRepository.deleteAll(workoutRepository.findByUserIdOrderByWorkoutDateDescIdDesc(userId));
+		exerciseRepository.deleteAll(exerciseRepository.findByUserId(userId));
 		entityManager.flush();
 		entityManager.clear();
 
 		Map<String, Exercise> exercisesByName = new HashMap<>();
 		for (DataBackup.ExerciseData item : exerciseData.values()) {
 			Exercise exercise = exerciseRepository.save(new Exercise(
-					item.name().strip(), nullableText(item.muscleGroup()), item.category().strip(),
+					user, item.name().strip(), nullableText(item.muscleGroup()), item.category().strip(),
 					nullableText(item.instructions()), item.trainingType()));
 			exercisesByName.put(key(item.name()), exercise);
 		}
 
 		for (DataBackup.WorkoutData item : backup.workouts()) {
-			Workout workout = new Workout(item.workoutDate(), nullableText(item.title()), nullableText(item.notes()));
+			Workout workout = new Workout(user, item.workoutDate(), nullableText(item.title()), nullableText(item.notes()));
 			for (DataBackup.WorkoutExerciseData exerciseDataItem : item.exercises()) {
 				Exercise exercise = exercisesByName.get(key(exerciseDataItem.exerciseName()));
 				WorkoutExercise workoutExercise = new WorkoutExercise(
@@ -128,7 +135,7 @@ public class DataBackupService {
 		}
 
 		for (DataBackup.TemplateData item : backup.templates()) {
-			WorkoutTemplate template = new WorkoutTemplate(item.name().strip(), nullableText(item.notes()));
+			WorkoutTemplate template = new WorkoutTemplate(user, item.name().strip(), nullableText(item.notes()));
 			for (DataBackup.TemplateExerciseData exercise : item.exercises()) {
 				new WorkoutTemplateExercise(
 						template, exercisesByName.get(key(exercise.exerciseName())), exercise.exerciseOrder());

@@ -21,14 +21,18 @@ import com.example.workouttracker.repository.WorkoutExerciseRepository;
 public class CardioService {
 	private final WorkoutExerciseRepository workoutExercises;
 	private final CardioEntryRepository entries;
+	private final CurrentUserService currentUserService;
 
-	public CardioService(WorkoutExerciseRepository workoutExercises, CardioEntryRepository entries) {
+	public CardioService(WorkoutExerciseRepository workoutExercises, CardioEntryRepository entries,
+			CurrentUserService currentUserService) {
 		this.workoutExercises = workoutExercises;
 		this.entries = entries;
+		this.currentUserService = currentUserService;
 	}
 
 	public CardioEntryResponse create(Long workoutExerciseId, CardioEntryRequest request) {
-		WorkoutExercise exercise = workoutExercises.findById(workoutExerciseId)
+		Long userId = currentUserService.requireCurrentUser().getId();
+		WorkoutExercise exercise = workoutExercises.findByIdAndWorkoutUserId(workoutExerciseId, userId)
 				.orElseThrow(() -> new ResourceNotFoundException("Workout exercise not found."));
 		requireCardio(exercise);
 		Values values = normalize(request);
@@ -52,7 +56,9 @@ public class CardioService {
 	}
 
 	private CardioEntry getEntry(Long id) {
-		return entries.findById(id).orElseThrow(() -> new ResourceNotFoundException("Cardio entry not found."));
+		Long userId = currentUserService.requireCurrentUser().getId();
+		return entries.findByIdAndWorkoutExerciseWorkoutUserId(id, userId)
+				.orElseThrow(() -> new ResourceNotFoundException("Cardio entry not found."));
 	}
 
 	private void requireCardio(WorkoutExercise exercise) {

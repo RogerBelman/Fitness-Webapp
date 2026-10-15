@@ -35,6 +35,8 @@ import com.example.workouttracker.repository.WorkoutRepository;
 @Transactional
 class ExerciseGoalControllerTests {
 
+	@Autowired private TestUserSupport testUsers;
+
 	@Autowired private MockMvc mvc;
 	@Autowired private ExerciseRepository exercises;
 	@Autowired private WorkoutRepository workouts;
@@ -44,7 +46,7 @@ class ExerciseGoalControllerTests {
 
 	@Test
 	void createsUpdatesAndDeletesMaxVolumeGoalUsingBestWorkoutTotal() throws Exception {
-		Exercise exercise = exercises.save(new Exercise("Goal Bench " + UUID.randomUUID(), "Chest", "None"));
+		Exercise exercise = exercises.save(new Exercise(testUsers.owner(), "Goal Bench " + UUID.randomUUID(), "Chest", "None"));
 		logWorkout(exercise, "2026-10-01", new String[][] { { "100", "10" }, { "100", "5" } });
 		logWorkout(exercise, "2026-10-02", new String[][] { { "120", "10" } });
 
@@ -67,14 +69,14 @@ class ExerciseGoalControllerTests {
 
 	@Test
 	void rejectsGoalMetricThatDoesNotMatchExerciseType() throws Exception {
-		Exercise cardio = exercises.save(new Exercise("Goal Bike " + UUID.randomUUID(), null, "None", null, TrainingType.CARDIO));
+		Exercise cardio = exercises.save(new Exercise(testUsers.owner(), "Goal Bike " + UUID.randomUUID(), null, "None", null, TrainingType.CARDIO));
 		mvc.perform(post("/api/goals").contentType("application/json").content(request(cardio, "STRENGTH_MAX_WEIGHT", "100")))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message").value("Goal metric must match the exercise training type."));
 	}
 
 	private void logWorkout(Exercise exercise, String date, String[][] entries) {
-		Workout workout = workouts.save(new Workout(LocalDate.parse(date), "Goal test", null));
+		Workout workout = workouts.save(new Workout(testUsers.owner(), LocalDate.parse(date), "Goal test", null));
 		WorkoutExercise row = workoutExercises.save(new WorkoutExercise(workout, exercise, 1));
 		for (int index = 0; index < entries.length; index++) {
 			sets.save(new SetEntry(row, index + 1, Integer.valueOf(entries[index][1]), new BigDecimal(entries[index][0])));

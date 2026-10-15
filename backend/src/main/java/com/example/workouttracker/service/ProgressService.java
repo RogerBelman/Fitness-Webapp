@@ -34,14 +34,17 @@ public class ProgressService {
 	private final ExerciseRepository exerciseRepository;
 	private final SetEntryRepository setEntryRepository;
 	private final CardioEntryRepository cardioEntryRepository;
+	private final CurrentUserService currentUserService;
 
 	public ProgressService(
 			ExerciseRepository exerciseRepository,
 			SetEntryRepository setEntryRepository,
-			CardioEntryRepository cardioEntryRepository) {
+			CardioEntryRepository cardioEntryRepository,
+			CurrentUserService currentUserService) {
 		this.exerciseRepository = exerciseRepository;
 		this.setEntryRepository = setEntryRepository;
 		this.cardioEntryRepository = cardioEntryRepository;
+		this.currentUserService = currentUserService;
 	}
 
 	public ExercisePersonalRecordResponse findPersonalRecord(Long exerciseId) {
@@ -116,7 +119,8 @@ public class ProgressService {
 	}
 
 	private Exercise getExercise(Long exerciseId) {
-		return exerciseRepository.findById(exerciseId)
+		Long userId = currentUserService.requireCurrentUser().getId();
+		return exerciseRepository.findByIdAndUserId(exerciseId, userId)
 				.orElseThrow(() -> new ResourceNotFoundException("Exercise not found."));
 	}
 }

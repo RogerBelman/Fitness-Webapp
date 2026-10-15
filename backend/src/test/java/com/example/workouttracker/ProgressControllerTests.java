@@ -30,6 +30,8 @@ import com.example.workouttracker.repository.WorkoutRepository;
 @Transactional
 class ProgressControllerTests {
 
+	@Autowired private TestUserSupport testUsers;
+
 	@Autowired
 	private MockMvc mockMvc;
 
@@ -48,9 +50,9 @@ class ProgressControllerTests {
 	@Test
 	void returnsHeaviestSetAsPersonalRecord() throws Exception {
 		Exercise exercise = exerciseRepository.save(
-				new Exercise(unique("Bench Press"), "Chest", "Strength"));
+				new Exercise(testUsers.owner(), unique("Bench Press"), "Chest", "Strength"));
 		Workout workout = workoutRepository.save(
-				new Workout(LocalDate.of(2026, 9, 25), "Push Day", null));
+				new Workout(testUsers.owner(), LocalDate.of(2026, 9, 25), "Push Day", null));
 		WorkoutExercise workoutExercise = workoutExerciseRepository.save(
 				new WorkoutExercise(workout, exercise, 1));
 		setEntryRepository.save(new SetEntry(workoutExercise, 1, 10, new BigDecimal("135.00")));
@@ -69,7 +71,7 @@ class ProgressControllerTests {
 	@Test
 	void returnsNullRecordWhenExerciseHasNoSets() throws Exception {
 		Exercise exercise = exerciseRepository.save(
-				new Exercise(unique("Overhead Press"), "Shoulders", "Strength"));
+				new Exercise(testUsers.owner(), unique("Overhead Press"), "Shoulders", "Strength"));
 
 		mockMvc.perform(get("/api/progress/exercises/{exerciseId}/personal-record", exercise.getId()))
 				.andExpect(status().isOk())
@@ -80,11 +82,11 @@ class ProgressControllerTests {
 	@Test
 	void returnsProgressHistoryOldestFirst() throws Exception {
 		Exercise exercise = exerciseRepository.save(
-				new Exercise(unique("Squat"), "Legs", "Strength"));
+				new Exercise(testUsers.owner(), unique("Squat"), "Legs", "Strength"));
 		Workout firstWorkout = workoutRepository.save(
-				new Workout(LocalDate.of(2026, 9, 10), "First Leg Day", null));
+				new Workout(testUsers.owner(), LocalDate.of(2026, 9, 10), "First Leg Day", null));
 		Workout secondWorkout = workoutRepository.save(
-				new Workout(LocalDate.of(2026, 9, 20), "Second Leg Day", null));
+				new Workout(testUsers.owner(), LocalDate.of(2026, 9, 20), "Second Leg Day", null));
 		WorkoutExercise firstWorkoutExercise = workoutExerciseRepository.save(
 				new WorkoutExercise(firstWorkout, exercise, 1));
 		WorkoutExercise secondWorkoutExercise = workoutExerciseRepository.save(

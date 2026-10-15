@@ -22,6 +22,7 @@ import com.example.workouttracker.dto.SetEntryRequest;
 import com.example.workouttracker.dto.WorkoutRequest;
 import com.example.workouttracker.dto.WorkoutResponse;
 import com.example.workouttracker.entity.Exercise;
+import com.example.workouttracker.entity.AppUser;
 import com.example.workouttracker.entity.SetEntry;
 import com.example.workouttracker.entity.Workout;
 import com.example.workouttracker.entity.WorkoutExercise;
@@ -31,6 +32,7 @@ import com.example.workouttracker.repository.SetEntryRepository;
 import com.example.workouttracker.repository.WorkoutExerciseRepository;
 import com.example.workouttracker.repository.WorkoutRepository;
 import com.example.workouttracker.service.WorkoutService;
+import com.example.workouttracker.service.CurrentUserService;
 
 @ExtendWith(MockitoExtension.class)
 class WorkoutServiceTests {
@@ -47,6 +49,12 @@ class WorkoutServiceTests {
 	@Mock
 	private SetEntryRepository setEntryRepository;
 
+	@Mock
+	private CurrentUserService currentUserService;
+
+	@Mock
+	private AppUser currentUser;
+
 	private WorkoutService workoutService;
 
 	@BeforeEach
@@ -55,7 +63,9 @@ class WorkoutServiceTests {
 				workoutRepository,
 				exerciseRepository,
 				workoutExerciseRepository,
-				setEntryRepository);
+				setEntryRepository,
+				currentUserService);
+		when(currentUserService.requireCurrentUser()).thenReturn(currentUser);
 	}
 
 	@Test
@@ -80,7 +90,7 @@ class WorkoutServiceTests {
 	@Test
 	void rejectsInvalidReps() {
 		Long workoutExerciseId = 10L;
-		when(workoutExerciseRepository.findById(workoutExerciseId))
+		when(workoutExerciseRepository.findByIdAndWorkoutUserId(workoutExerciseId, 0L))
 				.thenReturn(Optional.of(workoutExercise()));
 
 		SetEntryRequest request = new SetEntryRequest(1, 0, new BigDecimal("135.00"));
@@ -94,7 +104,7 @@ class WorkoutServiceTests {
 	@Test
 	void rejectsNegativeWeight() {
 		Long workoutExerciseId = 10L;
-		when(workoutExerciseRepository.findById(workoutExerciseId))
+		when(workoutExerciseRepository.findByIdAndWorkoutUserId(workoutExerciseId, 0L))
 				.thenReturn(Optional.of(workoutExercise()));
 
 		SetEntryRequest request = new SetEntryRequest(1, 8, new BigDecimal("-1.00"));

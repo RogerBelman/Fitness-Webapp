@@ -36,6 +36,8 @@ import jakarta.persistence.EntityManager;
 @AutoConfigureMockMvc
 @Transactional
 class WorkoutEditingTests {
+
+	@Autowired private TestUserSupport testUsers;
 	@Autowired private MockMvc mockMvc;
 	@Autowired private ExerciseRepository exercises;
 	@Autowired private WorkoutRepository workouts;
@@ -200,8 +202,8 @@ class WorkoutEditingTests {
 	}
 
 	private Fixture fixture() {
-		Exercise exercise = exercises.save(new Exercise("Edit test " + UUID.randomUUID(), "Chest", "Barbell"));
-		Workout workout = workouts.save(new Workout(LocalDate.of(2026, 8, 20), "Push Day", "Original notes"));
+		Exercise exercise = exercises.save(new Exercise(testUsers.owner(), "Edit test " + UUID.randomUUID(), "Chest", "Barbell"));
+		Workout workout = workouts.save(new Workout(testUsers.owner(), LocalDate.of(2026, 8, 20), "Push Day", "Original notes"));
 		WorkoutExercise workoutExercise = workoutExercises.save(new WorkoutExercise(workout, exercise, 1));
 		SetEntry first = sets.save(new SetEntry(workoutExercise, 1, 10, new BigDecimal("100.00")));
 		SetEntry second = sets.save(new SetEntry(workoutExercise, 2, 5, new BigDecimal("150.00")));

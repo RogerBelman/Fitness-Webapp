@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.workouttracker.dto.ExerciseRequest;
@@ -24,6 +25,7 @@ import jakarta.persistence.EntityManager;
 
 @SpringBootTest
 @Transactional
+@WithMockUser(username = MockMvcCsrfConfig.TEST_USERNAME)
 class TextFormattingPersistenceTests {
 	@Autowired private ExerciseService exerciseService;
 	@Autowired private WorkoutService workoutService;

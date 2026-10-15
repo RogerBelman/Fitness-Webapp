@@ -38,6 +38,8 @@ import com.example.workouttracker.repository.WorkoutTemplateExerciseRepository;
 @Transactional
 class WorkoutTemplateControllerTests {
 
+	@Autowired private TestUserSupport testUsers;
+
 	@Autowired
 	private MockMvc mockMvc;
 
@@ -79,11 +81,11 @@ class WorkoutTemplateControllerTests {
 	@Test
 	void savesEditsAndStartsAWorkoutFromTemplateWithoutLoggedEntries() throws Exception {
 		Exercise exercise = exerciseRepository.save(
-				new Exercise("Template Row " + UUID.randomUUID(), "Back", "None"));
+				new Exercise(testUsers.owner(), "Template Row " + UUID.randomUUID(), "Back", "None"));
 		Exercise secondExercise = exerciseRepository.save(
-				new Exercise("Template Curl " + UUID.randomUUID(), "Arms", "None"));
+				new Exercise(testUsers.owner(), "Template Curl " + UUID.randomUUID(), "Arms", "None"));
 		Workout source = workoutRepository.save(
-				new Workout(LocalDate.of(2026, 10, 10), "Pull Routine", "Keep elbows close"));
+				new Workout(testUsers.owner(), LocalDate.of(2026, 10, 10), "Pull Routine", "Keep elbows close"));
 		WorkoutExercise workoutExercise = workoutExerciseRepository.save(
 				new WorkoutExercise(source, exercise, 1));
 		setEntryRepository.save(new SetEntry(workoutExercise, 1, 10, new BigDecimal("100.00")));

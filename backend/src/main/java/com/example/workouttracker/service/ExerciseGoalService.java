@@ -34,18 +34,22 @@ public class ExerciseGoalService {
 	private final ExerciseRepository exerciseRepository;
 	private final SetEntryRepository setEntryRepository;
 	private final CardioEntryRepository cardioEntryRepository;
+	private final CurrentUserService currentUserService;
 
 	public ExerciseGoalService(ExerciseGoalRepository goalRepository, ExerciseRepository exerciseRepository,
-			SetEntryRepository setEntryRepository, CardioEntryRepository cardioEntryRepository) {
+			SetEntryRepository setEntryRepository, CardioEntryRepository cardioEntryRepository,
+			CurrentUserService currentUserService) {
 		this.goalRepository = goalRepository;
 		this.exerciseRepository = exerciseRepository;
 		this.setEntryRepository = setEntryRepository;
 		this.cardioEntryRepository = cardioEntryRepository;
+		this.currentUserService = currentUserService;
 	}
 
 	@Transactional(readOnly = true)
 	public List<ExerciseGoalResponse> findAll() {
-		return goalRepository.findAllByOrderByCreatedAtDescIdDesc().stream()
+		Long userId = currentUserService.requireCurrentUser().getId();
+		return goalRepository.findByExerciseUserIdOrderByCreatedAtDescIdDesc(userId).stream()
 				.map(this::toResponse)
 				.toList();
 	}
@@ -123,12 +127,14 @@ public class ExerciseGoalService {
 	}
 
 	private Exercise getExercise(Long id) {
-		return exerciseRepository.findById(id)
+		Long userId = currentUserService.requireCurrentUser().getId();
+		return exerciseRepository.findByIdAndUserId(id, userId)
 				.orElseThrow(() -> new ResourceNotFoundException("Exercise not found."));
 	}
 
 	private ExerciseGoal getGoal(Long id) {
-		return goalRepository.findById(id)
+		Long userId = currentUserService.requireCurrentUser().getId();
+		return goalRepository.findByIdAndExerciseUserId(id, userId)
 				.orElseThrow(() -> new ResourceNotFoundException("Exercise goal not found."));
 	}
 }

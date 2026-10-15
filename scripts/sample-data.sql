@@ -2,22 +2,45 @@
 -- All cleanup and inserts succeed or roll back together.
 begin;
 
+select set_config(
+    'app.sample_user_id',
+    (select id::text from app_users where username = lower(:'sample_username')),
+    false
+);
+
+do $$
+begin
+    if current_setting('app.sample_user_id', true) is null then
+        raise exception 'The requested account does not exist. Register it before loading sample data.';
+    end if;
+end $$;
+
 \if :replace_all
-delete from exercise_goals;
-delete from workout_templates;
-delete from workouts;
-delete from exercises;
+delete from exercise_goals where exercise_id in (
+    select id from exercises where user_id = current_setting('app.sample_user_id')::bigint
+);
+delete from workout_templates where user_id = current_setting('app.sample_user_id')::bigint;
+delete from workouts where user_id = current_setting('app.sample_user_id')::bigint;
+delete from exercises where user_id = current_setting('app.sample_user_id')::bigint;
 \else
 delete from exercise_goals
 where exercise_id in (
-    select id from exercises where instructions like '[Sample data]%'
+    select id from exercises
+    where user_id = current_setting('app.sample_user_id')::bigint
+      and instructions like '[Sample data]%'
 );
-delete from workout_templates where notes like '[Sample data]%';
+delete from workout_templates
+where user_id = current_setting('app.sample_user_id')::bigint
+  and notes like '[Sample data]%';
 delete from workout_template_exercises
 where exercise_id in (
-    select id from exercises where instructions like '[Sample data]%'
+    select id from exercises
+    where user_id = current_setting('app.sample_user_id')::bigint
+      and instructions like '[Sample data]%'
 );
-delete from workouts where notes like '[Sample data]%';
+delete from workouts
+where user_id = current_setting('app.sample_user_id')::bigint
+  and notes like '[Sample data]%';
 \endif
 
 create temporary table sample_exercises (
@@ -42,17 +65,19 @@ begin
         select 1
         from exercises exercise
         join sample_exercises sample on sample.name = exercise.name
-        where exercise.instructions is null
-           or exercise.instructions not like '[Sample data]%'
+        where exercise.user_id = current_setting('app.sample_user_id')::bigint
+          and (exercise.instructions is null
+           or exercise.instructions not like '[Sample data]%')
     ) then
         raise exception 'A non-sample exercise has the same name as a sample exercise.';
     end if;
 end $$;
 
-insert into exercises (name, muscle_group, category, training_type, instructions)
-select name, muscle_group, 'None', training_type, '[Sample data] ' || instructions
+insert into exercises (user_id, name, muscle_group, category, training_type, instructions)
+select current_setting('app.sample_user_id')::bigint,
+    name, muscle_group, 'None', training_type, '[Sample data] ' || instructions
 from sample_exercises
-on conflict (name) do update set
+on conflict (user_id, lower(name)) do update set
     muscle_group = excluded.muscle_group,
     category = excluded.category,
     training_type = excluded.training_type,
@@ -67,8 +92,9 @@ do $$
 declare sample record; inserted_id bigint;
 begin
     for sample in select * from sample_workouts order by sequence loop
-        insert into workouts (workout_date, title, notes)
+        insert into workouts (user_id, workout_date, title, notes)
         values (
+            current_setting('app.sample_user_id')::bigint,
             current_setting('app.sample_date')::date - sample.days_ago,
             case sample.kind when 0 then 'Sample Push And Bike' when 1 then 'Sample Lower And Stairs' else 'Sample Pull And Walk' end,
             '[Sample data] Training block ' || (sample.block + 1) || '. Fictional entries for exploring workouts and progress.'
@@ -86,7 +112,8 @@ join (values
     (2, 'row', 1), (2, 'pulldown', 2), (2, 'walk', 3)
 ) choice(kind, code, exercise_order) on choice.kind = w.kind
 join sample_exercises se on se.code = choice.code
-join exercises e on e.name = se.name;
+join exercises e on e.name = se.name
+    and e.user_id = current_setting('app.sample_user_id')::bigint;
 
 insert into set_entries (workout_exercise_id, set_number, reps, weight)
 select we.id, s, case when s = 3 then 8 else 10 end, se.base_weight + w.block * 5
@@ -113,12 +140,13 @@ select we.id, 5, 2
 from sample_workouts w
 join workout_exercises we on we.workout_id = w.workout_id
 join exercises e on e.id = we.exercise_id
-where e.name = 'Sample Stationary Bike';
+where e.user_id = current_setting('app.sample_user_id')::bigint
+  and e.name = 'Sample Stationary Bike';
 
-insert into workout_templates (name, notes) values
-('Sample Push And Bike', '[Sample data] Reusable strength and cardio routine.'),
-('Sample Lower And Stairs', '[Sample data] Reusable lower-body and cardio routine.'),
-('Sample Pull And Walk', '[Sample data] Reusable pull and outdoor cardio routine.');
+insert into workout_templates (user_id, name, notes) values
+(current_setting('app.sample_user_id')::bigint, 'Sample Push And Bike', '[Sample data] Reusable strength and cardio routine.'),
+(current_setting('app.sample_user_id')::bigint, 'Sample Lower And Stairs', '[Sample data] Reusable lower-body and cardio routine.'),
+(current_setting('app.sample_user_id')::bigint, 'Sample Pull And Walk', '[Sample data] Reusable pull and outdoor cardio routine.');
 
 insert into workout_template_exercises (workout_template_id, exercise_id, exercise_order)
 select template.id, exercise.id, choice.exercise_order
@@ -134,7 +162,9 @@ from (values
     ('Sample Pull And Walk', 'Sample Outdoor Walk', 3)
 ) choice(template_name, exercise_name, exercise_order)
 join workout_templates template on template.name = choice.template_name
-join exercises exercise on exercise.name = choice.exercise_name;
+    and template.user_id = current_setting('app.sample_user_id')::bigint
+join exercises exercise on exercise.name = choice.exercise_name
+    and exercise.user_id = current_setting('app.sample_user_id')::bigint;
 
 insert into exercise_goals (exercise_id, metric, target_value)
 select exercise.id, goal.metric, goal.target_value
@@ -142,6 +172,7 @@ from (values
     ('Sample Bench Press', 'STRENGTH_MAX_WEIGHT', 120.00),
     ('Sample Stationary Bike', 'CARDIO_DURATION', 30.00)
 ) goal(exercise_name, metric, target_value)
-join exercises exercise on exercise.name = goal.exercise_name;
+join exercises exercise on exercise.name = goal.exercise_name
+    and exercise.user_id = current_setting('app.sample_user_id')::bigint;
 
 commit;

@@ -15,5 +15,7 @@ public interface WorkoutTemplateExerciseRepository extends JpaRepository<Workout
 	Optional<WorkoutTemplateExercise> findByWorkoutTemplateIdAndExerciseOrder(
 			Long templateId, Integer exerciseOrder);
 
+	Optional<WorkoutTemplateExercise> findByIdAndWorkoutTemplateUserId(Long id, Long userId);
+
 	boolean existsByWorkoutTemplateIdAndExerciseOrder(Long templateId, Integer exerciseOrder);
 }

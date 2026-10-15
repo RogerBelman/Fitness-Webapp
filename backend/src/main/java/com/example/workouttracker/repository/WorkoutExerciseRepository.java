@@ -12,6 +12,8 @@ public interface WorkoutExerciseRepository extends JpaRepository<WorkoutExercise
 
 	Optional<WorkoutExercise> findByWorkoutIdAndExerciseOrder(Long workoutId, Integer exerciseOrder);
 
+	Optional<WorkoutExercise> findByIdAndWorkoutUserId(Long id, Long userId);
+
 	boolean existsByWorkoutIdAndExerciseOrder(Long workoutId, Integer exerciseOrder);
 
 	boolean existsByExerciseId(Long exerciseId);

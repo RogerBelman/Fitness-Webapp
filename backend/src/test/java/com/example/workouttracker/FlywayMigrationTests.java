@@ -59,4 +59,21 @@ class FlywayMigrationTests {
 
 		assertThat(columns).isEmpty();
 	}
+
+	@Test
+	void addsOwnershipToEachUserDataRoot() {
+		List<String> columns = jdbcTemplate.queryForList(
+				"""
+				select table_name || '.' || column_name
+				from information_schema.columns
+				where table_schema = current_schema()
+				  and table_name in ('exercises', 'workouts', 'workout_templates')
+				  and column_name = 'user_id'
+				order by table_name
+				""",
+				String.class);
+
+		assertThat(columns).containsExactly(
+				"exercises.user_id", "workout_templates.user_id", "workouts.user_id");
+	}
 }

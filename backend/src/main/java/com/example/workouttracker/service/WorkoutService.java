@@ -16,6 +16,7 @@ import com.example.workouttracker.dto.WorkoutExerciseResponse;
 import com.example.workouttracker.dto.WorkoutRequest;
 import com.example.workouttracker.dto.WorkoutResponse;
 import com.example.workouttracker.entity.Exercise;
+import com.example.workouttracker.entity.AppUser;
 import com.example.workouttracker.entity.SetEntry;
 import com.example.workouttracker.entity.Workout;
 import com.example.workouttracker.entity.WorkoutExercise;
@@ -37,21 +38,25 @@ public class WorkoutService {
 	private final ExerciseRepository exerciseRepository;
 	private final WorkoutExerciseRepository workoutExerciseRepository;
 	private final SetEntryRepository setEntryRepository;
+	private final CurrentUserService currentUserService;
 
 	public WorkoutService(
 			WorkoutRepository workoutRepository,
 			ExerciseRepository exerciseRepository,
 			WorkoutExerciseRepository workoutExerciseRepository,
-			SetEntryRepository setEntryRepository) {
+			SetEntryRepository setEntryRepository,
+			CurrentUserService currentUserService) {
 		this.workoutRepository = workoutRepository;
 		this.exerciseRepository = exerciseRepository;
 		this.workoutExerciseRepository = workoutExerciseRepository;
 		this.setEntryRepository = setEntryRepository;
+		this.currentUserService = currentUserService;
 	}
 
 	@Transactional(readOnly = true)
 	public List<WorkoutResponse> findAll() {
-		return workoutRepository.findAllByOrderByWorkoutDateDescIdDesc().stream()
+		Long userId = currentUserService.requireCurrentUser().getId();
+		return workoutRepository.findByUserIdOrderByWorkoutDateDescIdDesc(userId).stream()
 				.map(WorkoutMapper::toResponse)
 				.toList();
 	}
@@ -62,8 +67,9 @@ public class WorkoutService {
 	}
 
 	public WorkoutResponse create(WorkoutRequest request) {
+		AppUser user = currentUserService.requireCurrentUser();
 		WorkoutValues values = normalizeWorkout(request);
-		Workout workout = new Workout(values.workoutDate(), values.title(), values.notes());
+		Workout workout = new Workout(user, values.workoutDate(), values.title(), values.notes());
 		return WorkoutMapper.toResponse(workoutRepository.save(workout));
 	}
 
@@ -155,7 +161,8 @@ public class WorkoutService {
 	}
 
 	private SetEntry getSetEntry(Long id) {
-		return setEntryRepository.findById(id)
+		Long userId = currentUserService.requireCurrentUser().getId();
+		return setEntryRepository.findByIdAndWorkoutExerciseWorkoutUserId(id, userId)
 				.orElseThrow(() -> new ResourceNotFoundException("Set not found."));
 	}
 
@@ -189,7 +196,8 @@ public class WorkoutService {
 	}
 
 	private Workout getWorkout(Long id) {
-		return workoutRepository.findById(id)
+		Long userId = currentUserService.requireCurrentUser().getId();
+		return workoutRepository.findByIdAndUserId(id, userId)
 				.orElseThrow(() -> new ResourceNotFoundException("Workout not found."));
 	}
 
@@ -200,12 +208,14 @@ public class WorkoutService {
 	}
 
 	private Exercise getExercise(Long id) {
-		return exerciseRepository.findById(id)
+		Long userId = currentUserService.requireCurrentUser().getId();
+		return exerciseRepository.findByIdAndUserId(id, userId)
 				.orElseThrow(() -> new ResourceNotFoundException("Exercise not found."));
 	}
 
 	private WorkoutExercise getWorkoutExercise(Long id) {
-		return workoutExerciseRepository.findById(id)
+		Long userId = currentUserService.requireCurrentUser().getId();
+		return workoutExerciseRepository.findByIdAndWorkoutUserId(id, userId)
 				.orElseThrow(() -> new ResourceNotFoundException("Workout exercise not found."));
 	}
 

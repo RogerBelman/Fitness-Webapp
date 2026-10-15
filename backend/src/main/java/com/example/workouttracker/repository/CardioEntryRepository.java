@@ -4,9 +4,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
+import java.util.Optional;
 import com.example.workouttracker.entity.CardioEntry;
 
 public interface CardioEntryRepository extends JpaRepository<CardioEntry, Long> {
+	Optional<CardioEntry> findByIdAndWorkoutExerciseWorkoutUserId(Long id, Long userId);
+
 	boolean existsByWorkoutExercise_Exercise_Id(Long exerciseId);
 
 	@Query("""

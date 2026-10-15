@@ -1,6 +1,7 @@
 package com.example.workouttracker.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -8,13 +9,18 @@ import com.example.workouttracker.entity.Exercise;
 
 public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
-	List<Exercise> findByMuscleGroupIgnoreCase(String muscleGroup);
+	List<Exercise> findByUserId(Long userId);
 
-	List<Exercise> findByCategoryIgnoreCase(String category);
+	List<Exercise> findByUserIdAndMuscleGroupIgnoreCase(Long userId, String muscleGroup);
 
-	List<Exercise> findByMuscleGroupIgnoreCaseAndCategoryIgnoreCase(String muscleGroup, String category);
+	List<Exercise> findByUserIdAndCategoryIgnoreCase(Long userId, String category);
 
-	boolean existsByNameIgnoreCase(String name);
+	List<Exercise> findByUserIdAndMuscleGroupIgnoreCaseAndCategoryIgnoreCase(
+			Long userId, String muscleGroup, String category);
 
-	boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
+	Optional<Exercise> findByIdAndUserId(Long id, Long userId);
+
+	boolean existsByUserIdAndNameIgnoreCase(Long userId, String name);
+
+	boolean existsByUserIdAndNameIgnoreCaseAndIdNot(Long userId, String name, Long id);
 }

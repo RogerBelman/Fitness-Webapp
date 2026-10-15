@@ -13,6 +13,7 @@ import com.example.workouttracker.dto.WorkoutDetailResponse;
 import com.example.workouttracker.dto.WorkoutTemplateRequest;
 import com.example.workouttracker.dto.WorkoutTemplateResponse;
 import com.example.workouttracker.entity.Workout;
+import com.example.workouttracker.entity.AppUser;
 import com.example.workouttracker.entity.WorkoutExercise;
 import com.example.workouttracker.entity.WorkoutTemplate;
 import com.example.workouttracker.entity.WorkoutTemplateExercise;
@@ -36,23 +37,27 @@ public class WorkoutTemplateService {
 	private final WorkoutRepository workoutRepository;
 	private final WorkoutExerciseRepository workoutExerciseRepository;
 	private final ExerciseRepository exerciseRepository;
+	private final CurrentUserService currentUserService;
 
 	public WorkoutTemplateService(
 			WorkoutTemplateRepository templateRepository,
 			WorkoutTemplateExerciseRepository templateExerciseRepository,
 			WorkoutRepository workoutRepository,
 			WorkoutExerciseRepository workoutExerciseRepository,
-			ExerciseRepository exerciseRepository) {
+			ExerciseRepository exerciseRepository,
+			CurrentUserService currentUserService) {
 		this.templateRepository = templateRepository;
 		this.templateExerciseRepository = templateExerciseRepository;
 		this.workoutRepository = workoutRepository;
 		this.workoutExerciseRepository = workoutExerciseRepository;
 		this.exerciseRepository = exerciseRepository;
+		this.currentUserService = currentUserService;
 	}
 
 	@Transactional(readOnly = true)
 	public List<WorkoutTemplateResponse> findAll() {
-		return templateRepository.findAllByOrderByNameAscIdAsc().stream()
+		Long userId = currentUserService.requireCurrentUser().getId();
+		return templateRepository.findByUserIdOrderByNameAscIdAsc(userId).stream()
 				.map(WorkoutTemplateMapper::toResponse)
 				.toList();
 	}
@@ -61,7 +66,8 @@ public class WorkoutTemplateService {
 		if (request == null) {
 			throw new BadRequestException("Request body is required.");
 		}
-		WorkoutTemplate template = templateRepository.save(new WorkoutTemplate(
+		AppUser user = currentUserService.requireCurrentUser();
+		WorkoutTemplate template = templateRepository.save(new WorkoutTemplate(user,
 				TextFormatting.titleCase(request.name()),
 				optionalText(request.notes())));
 		templateRepository.flush();
@@ -73,7 +79,8 @@ public class WorkoutTemplateService {
 		String name = source.getTitle() == null || source.getTitle().isBlank()
 				? "Workout Template"
 				: source.getTitle();
-		WorkoutTemplate template = templateRepository.save(new WorkoutTemplate(name, source.getNotes()));
+		WorkoutTemplate template = templateRepository.save(
+				new WorkoutTemplate(source.getUser(), name, source.getNotes()));
 		List<WorkoutTemplateExercise> exercises = source.getWorkoutExercises().stream()
 				.map(item -> new WorkoutTemplateExercise(
 						template, item.getExercise(), item.getExerciseOrder()))
@@ -105,7 +112,8 @@ public class WorkoutTemplateService {
 		}
 		WorkoutTemplate template = getTemplate(templateId);
 		Long exerciseId = requiredPositiveLong(request.exerciseId(), "exerciseId");
-		var exercise = exerciseRepository.findById(exerciseId)
+		Long userId = currentUserService.requireCurrentUser().getId();
+		var exercise = exerciseRepository.findByIdAndUserId(exerciseId, userId)
 				.orElseThrow(() -> new ResourceNotFoundException("Exercise not found."));
 		Integer order = resolveExerciseOrder(templateId, request.exerciseOrder());
 		if (templateExerciseRepository.existsByWorkoutTemplateIdAndExerciseOrder(templateId, order)) {
@@ -157,7 +165,7 @@ public class WorkoutTemplateService {
 				? template.getNotes()
 				: optionalText(request.notes());
 		Workout workout = workoutRepository.save(
-				new Workout(request.workoutDate(), title, notes));
+				new Workout(template.getUser(), request.workoutDate(), title, notes));
 		List<WorkoutExercise> exercises = template.getExercises().stream()
 				.sorted(Comparator.comparing(WorkoutTemplateExercise::getExerciseOrder))
 				.map(item -> new WorkoutExercise(workout, item.getExercise(), item.getExerciseOrder()))
@@ -168,12 +176,14 @@ public class WorkoutTemplateService {
 	}
 
 	private WorkoutTemplate getTemplate(Long id) {
-		return templateRepository.findById(id)
+		Long userId = currentUserService.requireCurrentUser().getId();
+		return templateRepository.findByIdAndUserId(id, userId)
 				.orElseThrow(() -> new ResourceNotFoundException("Workout template not found."));
 	}
 
 	private WorkoutTemplateExercise getTemplateExercise(Long id) {
-		return templateExerciseRepository.findById(id)
+		Long userId = currentUserService.requireCurrentUser().getId();
+		return templateExerciseRepository.findByIdAndWorkoutTemplateUserId(id, userId)
 				.orElseThrow(() -> new ResourceNotFoundException("Workout template exercise not found."));
 	}
 
@@ -218,7 +228,8 @@ public class WorkoutTemplateService {
 	}
 
 	private Workout getWorkout(Long id) {
-		return workoutRepository.findById(id)
+		Long userId = currentUserService.requireCurrentUser().getId();
+		return workoutRepository.findByIdAndUserId(id, userId)
 				.orElseThrow(() -> new ResourceNotFoundException("Workout not found."));
 	}
 

@@ -25,6 +25,8 @@ import com.example.workouttracker.repository.*;
 @AutoConfigureMockMvc
 @Transactional
 class CardioProgressTests {
+
+	@Autowired private TestUserSupport testUsers;
     @Autowired private MockMvc mvc;
     @Autowired private ExerciseRepository exercises;
     @Autowired private WorkoutRepository workouts;
@@ -99,7 +101,7 @@ class CardioProgressTests {
 
     @Test
     void rejectsStrengthExercise() throws Exception {
-        Exercise strength = exercises.save(new Exercise("Strength " + UUID.randomUUID(), "Chest", "None"));
+        Exercise strength = exercises.save(new Exercise(testUsers.owner(), "Strength " + UUID.randomUUID(), "Chest", "None"));
         mvc.perform(get(path(strength))).andExpect(status().isBadRequest());
     }
 
@@ -110,11 +112,11 @@ class CardioProgressTests {
     }
 
     private Exercise cardio() {
-        return exercises.save(new Exercise("Bike " + UUID.randomUUID(), null, "None", null, TrainingType.CARDIO));
+        return exercises.save(new Exercise(testUsers.owner(), "Bike " + UUID.randomUUID(), null, "None", null, TrainingType.CARDIO));
     }
 
     private Workout workout(String date) {
-        return workouts.save(new Workout(LocalDate.parse(date), "Cardio test", null));
+        return workouts.save(new Workout(testUsers.owner(), LocalDate.parse(date), "Cardio test", null));
     }
 
     private WorkoutExercise row(Workout workout, Exercise exercise, int order) {

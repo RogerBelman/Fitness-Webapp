@@ -36,6 +36,8 @@ import com.example.workouttracker.repository.WorkoutTemplateRepository;
 @Transactional
 class DataBackupControllerTests {
 
+	@Autowired private TestUserSupport testUsers;
+
 	@Autowired private MockMvc mvc;
 	@Autowired private ExerciseRepository exercises;
 	@Autowired private WorkoutRepository workouts;
@@ -45,12 +47,12 @@ class DataBackupControllerTests {
 	@Test
 	void exportsNestedTrainingData() throws Exception {
 		String name = "Backup Bench " + UUID.randomUUID();
-		Exercise exercise = exercises.save(new Exercise(name, "Chest", "None", "Stay controlled"));
-		Workout workout = new Workout(LocalDate.parse("2026-10-10"), "Backup Day", "Steady pace");
+		Exercise exercise = exercises.save(new Exercise(testUsers.owner(), name, "Chest", "None", "Stay controlled"));
+		Workout workout = new Workout(testUsers.owner(), LocalDate.parse("2026-10-10"), "Backup Day", "Steady pace");
 		WorkoutExercise workoutExercise = new WorkoutExercise(workout, exercise, 1);
 		new SetEntry(workoutExercise, 1, 8, new BigDecimal("135.00"));
 		workouts.save(workout);
-		WorkoutTemplate template = new WorkoutTemplate("Backup Routine", "Reusable");
+		WorkoutTemplate template = new WorkoutTemplate(testUsers.owner(), "Backup Routine", "Reusable");
 		new WorkoutTemplateExercise(template, exercise, 1);
 		templates.save(template);
 		goals.save(new ExerciseGoal(exercise, GoalMetric.STRENGTH_MAX_WEIGHT, new BigDecimal("185.00")));
@@ -67,7 +69,7 @@ class DataBackupControllerTests {
 
 	@Test
 	void replacesAllDataFromAValidBackup() throws Exception {
-		exercises.save(new Exercise("Old Exercise " + UUID.randomUUID(), "Back", "None"));
+		exercises.save(new Exercise(testUsers.owner(), "Old Exercise " + UUID.randomUUID(), "Back", "None"));
 
 		mvc.perform(put("/api/data-backup")
 				.contentType("application/json")
@@ -88,7 +90,7 @@ class DataBackupControllerTests {
 	@Test
 	void rejectsInvalidReferencesBeforeDeletingCurrentData() throws Exception {
 		String retainedName = "Retained Exercise " + UUID.randomUUID();
-		exercises.save(new Exercise(retainedName, "Back", "None"));
+		exercises.save(new Exercise(testUsers.owner(), retainedName, "Back", "None"));
 
 		mvc.perform(put("/api/data-backup")
 				.contentType("application/json")
@@ -98,7 +100,7 @@ class DataBackupControllerTests {
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Invalid backup")));
 
-		org.junit.jupiter.api.Assertions.assertTrue(exercises.existsByNameIgnoreCase(retainedName));
+		org.junit.jupiter.api.Assertions.assertTrue(exercises.existsByUserIdAndNameIgnoreCase(testUsers.owner().getId(), retainedName));
 	}
 
 	private String validBackup() {

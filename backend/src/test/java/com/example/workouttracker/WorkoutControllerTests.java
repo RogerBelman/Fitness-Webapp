@@ -35,6 +35,8 @@ import com.example.workouttracker.repository.WorkoutRepository;
 @Transactional
 class WorkoutControllerTests {
 
+	@Autowired private TestUserSupport testUsers;
+
 	@Autowired
 	private MockMvc mockMvc;
 
@@ -82,8 +84,8 @@ class WorkoutControllerTests {
 
 	@Test
 	void listsWorkoutsWithTotals() throws Exception {
-		Exercise exercise = exerciseRepository.save(new Exercise(unique("Deadlift"), "Back", "Strength"));
-		Workout workout = workoutRepository.save(new Workout(LocalDate.of(2026, 8, 20), "Pull Day", null));
+		Exercise exercise = exerciseRepository.save(new Exercise(testUsers.owner(), unique("Deadlift"), "Back", "Strength"));
+		Workout workout = workoutRepository.save(new Workout(testUsers.owner(), LocalDate.of(2026, 8, 20), "Pull Day", null));
 		WorkoutExercise workoutExercise = workoutExerciseRepository.save(new WorkoutExercise(workout, exercise, 1));
 		setEntryRepository.save(new SetEntry(workoutExercise, 1, 5, new BigDecimal("225.00")));
 		setEntryRepository.save(new SetEntry(workoutExercise, 2, 5, new BigDecimal("225.00")));
@@ -99,8 +101,8 @@ class WorkoutControllerTests {
 
 	@Test
 	void getsWorkoutDetailsWithExercisesAndSets() throws Exception {
-		Exercise exercise = exerciseRepository.save(new Exercise(unique("Bench Press"), "Chest", "Strength"));
-		Workout workout = workoutRepository.save(new Workout(LocalDate.of(2026, 8, 20), "Push Day", "Paused reps"));
+		Exercise exercise = exerciseRepository.save(new Exercise(testUsers.owner(), unique("Bench Press"), "Chest", "Strength"));
+		Workout workout = workoutRepository.save(new Workout(testUsers.owner(), LocalDate.of(2026, 8, 20), "Push Day", "Paused reps"));
 		WorkoutExercise workoutExercise = workoutExerciseRepository.save(
 				new WorkoutExercise(workout, exercise, 1));
 		setEntryRepository.save(new SetEntry(workoutExercise, 1, 8, new BigDecimal("135.00")));
@@ -119,8 +121,8 @@ class WorkoutControllerTests {
 
 	@Test
 	void addsExerciseToWorkout() throws Exception {
-		Exercise exercise = exerciseRepository.save(new Exercise(unique("Lat Pulldown"), "Back", "Machine"));
-		Workout workout = workoutRepository.save(new Workout(LocalDate.of(2026, 8, 20), "Back Day", null));
+		Exercise exercise = exerciseRepository.save(new Exercise(testUsers.owner(), unique("Lat Pulldown"), "Back", "Machine"));
+		Workout workout = workoutRepository.save(new Workout(testUsers.owner(), LocalDate.of(2026, 8, 20), "Back Day", null));
 
 		mockMvc.perform(post("/api/workouts/{id}/exercises", workout.getId())
 				.contentType(MediaType.APPLICATION_JSON)
@@ -140,8 +142,8 @@ class WorkoutControllerTests {
 
 	@Test
 	void addsSetToWorkoutExercise() throws Exception {
-		Exercise exercise = exerciseRepository.save(new Exercise(unique("Goblet Squat"), "Legs", "Dumbbell"));
-		Workout workout = workoutRepository.save(new Workout(LocalDate.of(2026, 8, 20), "Leg Day", null));
+		Exercise exercise = exerciseRepository.save(new Exercise(testUsers.owner(), unique("Goblet Squat"), "Legs", "Dumbbell"));
+		Workout workout = workoutRepository.save(new Workout(testUsers.owner(), LocalDate.of(2026, 8, 20), "Leg Day", null));
 		WorkoutExercise workoutExercise = workoutExerciseRepository.save(new WorkoutExercise(workout, exercise, 1));
 
 		mockMvc.perform(post("/api/workout-exercises/{id}/sets", workoutExercise.getId())
@@ -164,8 +166,8 @@ class WorkoutControllerTests {
 
 	@Test
 	void rejectsInvalidSetRequest() throws Exception {
-		Exercise exercise = exerciseRepository.save(new Exercise(unique("Front Squat"), "Legs", "Barbell"));
-		Workout workout = workoutRepository.save(new Workout(LocalDate.of(2026, 8, 20), "Leg Day", null));
+		Exercise exercise = exerciseRepository.save(new Exercise(testUsers.owner(), unique("Front Squat"), "Legs", "Barbell"));
+		Workout workout = workoutRepository.save(new Workout(testUsers.owner(), LocalDate.of(2026, 8, 20), "Leg Day", null));
 		WorkoutExercise workoutExercise = workoutExerciseRepository.save(new WorkoutExercise(workout, exercise, 1));
 
 		mockMvc.perform(post("/api/workout-exercises/{id}/sets", workoutExercise.getId())

@@ -35,6 +35,8 @@ import jakarta.persistence.EntityManager;
 @AutoConfigureMockMvc
 @Transactional
 class CardioTrackingTests {
+
+	@Autowired private TestUserSupport testUsers;
 	@Autowired private MockMvc mvc;
 	@Autowired private ExerciseRepository exercises;
 	@Autowired private WorkoutRepository workouts;
@@ -189,10 +191,10 @@ class CardioTrackingTests {
 	}
 
 	private Workout newWorkout() {
-		return workouts.save(new Workout(LocalDate.of(2026, 8, 20), "Mixed workout", null));
+		return workouts.save(new Workout(testUsers.owner(), LocalDate.of(2026, 8, 20), "Mixed workout", null));
 	}
 	private WorkoutExercise addExercise(Workout workout, TrainingType type, int order) {
-		Exercise exercise = exercises.save(new Exercise("Test " + UUID.randomUUID(), type == TrainingType.STRENGTH ? "Chest" : null, "None", null, type));
+		Exercise exercise = exercises.save(new Exercise(testUsers.owner(), "Test " + UUID.randomUUID(), type == TrainingType.STRENGTH ? "Chest" : null, "None", null, type));
 		return workoutExercises.save(new WorkoutExercise(workout, exercise, order));
 	}
 	private long addEntry(long id, String body) throws Exception {

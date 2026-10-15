@@ -39,6 +39,8 @@ import jakarta.persistence.EntityManager;
 @AutoConfigureMockMvc
 @Transactional
 class WorkoutExerciseCreationTests {
+
+	@Autowired private TestUserSupport testUsers;
 	@Autowired private MockMvc mvc;
 	@Autowired private ExerciseRepository exercises;
 	@Autowired private WorkoutRepository workouts;
@@ -50,7 +52,7 @@ class WorkoutExerciseCreationTests {
 	void createsReusableStrengthExerciseAndAddsItAtTheEndOfTheWorkout() throws Exception {
 		Workout workout = newWorkout();
 		long workoutId = workout.getId();
-		Exercise existing = exercises.save(new Exercise(uniqueName("Existing"), "Chest", "None"));
+		Exercise existing = exercises.save(new Exercise(testUsers.owner(), uniqueName("Existing"), "Chest", "None"));
 		workoutExercises.save(new WorkoutExercise(workout, existing, 3));
 		String suffix = uniqueName("").trim();
 		flush();
@@ -86,7 +88,7 @@ class WorkoutExerciseCreationTests {
 	void duplicateAndInvalidRequestsDoNotAddWorkoutExercises() throws Exception {
 		long workoutId = newWorkout().getId();
 		String name = uniqueName("Existing Press");
-		exercises.save(new Exercise(name, "Chest", "None"));
+		exercises.save(new Exercise(testUsers.owner(), name, "Chest", "None"));
 		flush();
 		mvc.perform(post("/api/workouts/{id}/exercises/new", workoutId).contentType(MediaType.APPLICATION_JSON)
 				.content("{\"name\":\"" + name.toLowerCase() + "\",\"muscleGroup\":\"Chest\"}"))
@@ -105,7 +107,7 @@ class WorkoutExerciseCreationTests {
 				.content("{\"name\":\"" + name + "\",\"trainingType\":\"CARDIO\"}"))
 				.andExpect(status().isNotFound());
 		flush();
-		assertThat(exercises.existsByNameIgnoreCase(name)).isFalse();
+		assertThat(exercises.existsByUserIdAndNameIgnoreCase(testUsers.owner().getId(), name)).isFalse();
 	}
 
 	@Test
@@ -119,7 +121,7 @@ class WorkoutExerciseCreationTests {
 			mvc.perform(post("/api/workouts/{id}/exercises/new", workoutId).contentType(MediaType.APPLICATION_JSON)
 					.content("{\"name\":\"" + name + "\",\"trainingType\":\"CARDIO\"}"))
 					.andExpect(status().isConflict());
-			assertThat(exercises.existsByNameIgnoreCase(name)).isFalse();
+			assertThat(exercises.existsByUserIdAndNameIgnoreCase(testUsers.owner().getId(), name)).isFalse();
 		} finally {
 			workouts.deleteById(workoutId);
 			exercises.findAll().stream().filter(exercise -> exercise.getName().equalsIgnoreCase(name))
@@ -128,7 +130,7 @@ class WorkoutExerciseCreationTests {
 	}
 
 	private Workout newWorkout() {
-		return workouts.save(new Workout(LocalDate.of(2026, 8, 20), "Workout", null));
+		return workouts.save(new Workout(testUsers.owner(), LocalDate.of(2026, 8, 20), "Workout", null));
 	}
 
 	private String uniqueName(String prefix) {
