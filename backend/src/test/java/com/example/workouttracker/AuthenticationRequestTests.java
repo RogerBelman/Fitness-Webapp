@@ -16,7 +16,7 @@ class AuthenticationRequestTests {
 		String secret = "private-password";
 
 		assertThat(new LoginRequest("user", secret).toString()).doesNotContain(secret);
-		assertThat(new UserRegistrationRequest("user", secret).toString()).doesNotContain(secret);
+		assertThat(new UserRegistrationRequest("user", "user@example.com", secret).toString()).doesNotContain(secret);
 		assertThat(new ChangePasswordRequest(secret, secret).toString()).doesNotContain(secret);
 		assertThat(new DeleteAccountRequest(secret).toString()).doesNotContain(secret);
 	}

@@ -89,12 +89,13 @@ describe('measurement preferences', () => {
       <MemoryRouter>
         <AuthContext.Provider
           value={{
-            user: { id: 1, username: 'test_user', weightUnit: 'lb', createdAt: timestamp },
+            user: { id: 1, username: 'test_user', email: 'test@example.com', weightUnit: 'lb', createdAt: timestamp },
             isLoading: false,
             login: async () => undefined,
             register: async () => undefined,
             logout: async () => undefined,
             updatePreferences,
+            changeEmail: async () => undefined,
             changePassword: async () => undefined,
             deleteAccount: async () => undefined,
           }}
@@ -284,12 +285,13 @@ function renderWithPreferences(ui: ReactNode, weightUnit: 'lb' | 'kg' = 'lb') {
     <MemoryRouter>
       <AuthContext.Provider
         value={{
-          user: { id: 1, username: 'test_user', weightUnit, createdAt: timestamp },
+          user: { id: 1, username: 'test_user', email: 'test@example.com', weightUnit, createdAt: timestamp },
           isLoading: false,
           login: async () => undefined,
           register: async () => undefined,
           logout: async () => undefined,
           updatePreferences: async () => undefined,
+          changeEmail: async () => undefined,
           changePassword: async () => undefined,
           deleteAccount: async () => undefined,
         }}

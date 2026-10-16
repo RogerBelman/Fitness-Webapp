@@ -44,7 +44,7 @@ class AuthControllerTests {
 	void registersAUserWithANormalizedUsernameAndHashedPassword() throws Exception {
 		mvc.perform(post("/api/auth/register")
 				.contentType("application/json")
-				.content("{\"username\":\"Learning_User\",\"password\":\"correct horse battery staple\"}"))
+				.content("{\"username\":\"Learning_User\",\"email\":\"learning@example.com\",\"password\":\"correct horse battery staple\"}"))
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.username").value("learning_user"))
 				.andExpect(jsonPath("$.weightUnit").value("lb"))
@@ -70,7 +70,7 @@ class AuthControllerTests {
 	void validatesUsernameAndPasswordBeforeSaving() throws Exception {
 		mvc.perform(post("/api/auth/register")
 				.contentType("application/json")
-				.content("{\"username\":\"no spaces allowed\",\"password\":\"short\"}"))
+				.content("{\"username\":\"no spaces allowed\",\"email\":\"invalid\",\"password\":\"short\"}"))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.fieldErrors.username").exists())
 				.andExpect(jsonPath("$.fieldErrors.password").exists());
@@ -275,7 +275,8 @@ class AuthControllerTests {
 			throws Exception {
 		return mvc.perform(post("/api/auth/register")
 				.contentType("application/json")
-				.content("{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}"));
+				.content("{\"username\":\"" + username + "\",\"email\":\"" + username.toLowerCase()
+						+ "@example.com\",\"password\":\"" + password + "\"}"));
 	}
 
 	private org.springframework.test.web.servlet.ResultActions login(String username, String password)

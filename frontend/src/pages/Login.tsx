@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { ActionFeedback } from '../components/ActionFeedback'
 import { PasswordInput } from '../components/PasswordInput'
@@ -13,6 +13,7 @@ export function Login() {
   const navigate = useNavigate()
   const [mode, setMode] = useState<AuthMode>('login')
   const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -32,9 +33,8 @@ export function Login() {
 
     setIsSubmitting(true)
     try {
-      const credentials = { username, password }
-      if (mode === 'login') await login(credentials)
-      else await register(credentials)
+      if (mode === 'login') await login({ username, password })
+      else await register({ username, email, password })
       navigate(destinationFrom(location.state), { replace: true })
     } catch (error) {
       setErrorMessage(readAuthError(error))
@@ -106,6 +106,22 @@ export function Login() {
             ) : null}
           </div>
 
+          {mode === 'register' ? (
+            <div className="AuthField">
+              <label htmlFor="auth-email">Email</label>
+              <input
+                id="auth-email"
+                autoComplete="email"
+                maxLength={254}
+                required
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+              <span className="FieldHint">Used only for account recovery.</span>
+            </div>
+          ) : null}
+
           <div className="AuthField">
             <label htmlFor="auth-password">Password</label>
             <PasswordInput
@@ -149,6 +165,11 @@ export function Login() {
                 ? 'Sign In'
                 : 'Create Account'}
           </button>
+          {mode === 'login' ? (
+            <Link className="AuthTextLink" to="/forgot-password">
+              Forgot your password?
+            </Link>
+          ) : null}
         </form>
       </section>
     </main>

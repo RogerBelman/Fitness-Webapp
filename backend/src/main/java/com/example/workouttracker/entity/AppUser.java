@@ -28,6 +28,9 @@ public class AppUser {
 	@Column(name = "weight_unit", nullable = false, length = 2)
 	private String weightUnit = "lb";
 
+	@Column(length = 254, unique = true)
+	private String email;
+
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
@@ -40,6 +43,11 @@ public class AppUser {
 	public AppUser(String username, String passwordHash) {
 		this.username = username;
 		this.passwordHash = passwordHash;
+	}
+
+	public AppUser(String username, String email, String passwordHash) {
+		this(username, passwordHash);
+		this.email = email;
 	}
 
 	public Long getId() {
@@ -64,6 +72,14 @@ public class AppUser {
 
 	public void changeWeightUnit(String weightUnit) {
 		this.weightUnit = weightUnit;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void changeRecoveryEmail(String email) {
+		this.email = email;
 	}
 
 	public Instant getCreatedAt() {

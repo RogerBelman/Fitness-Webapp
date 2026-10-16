@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from '../src/contexts/AuthProvider'
 import { AppLayout } from '../src/components/AppLayout'
 import { Login } from '../src/pages/Login'
+import { ForgotPassword } from '../src/pages/ForgotPassword'
+import { ResetPassword } from '../src/pages/ResetPassword'
 import { ProtectedRoute } from '../src/routes/ProtectedRoute'
 import { AUTH_REQUIRED_EVENT } from '../src/api/client'
 
@@ -14,8 +16,11 @@ const authApi = vi.hoisted(() => ({
   logoutAccount: vi.fn(),
   registerAccount: vi.fn(),
   changeAccountPassword: vi.fn(),
+  changeAccountEmail: vi.fn(),
   deleteCurrentAccount: vi.fn(),
   updateAccountPreferences: vi.fn(),
+  requestPasswordReset: vi.fn(),
+  resetAccountPassword: vi.fn(),
 }))
 
 vi.mock('../src/api/auth', () => authApi)
@@ -23,6 +28,7 @@ vi.mock('../src/api/auth', () => authApi)
 const account = {
   id: 7,
   username: 'learning_user',
+  email: 'learning@example.com',
   weightUnit: 'lb' as const,
   createdAt: '2026-10-14T00:00:00Z',
 }
@@ -34,6 +40,9 @@ describe('authentication workflow', () => {
     authApi.logoutAccount.mockReset().mockResolvedValue(undefined)
     authApi.registerAccount.mockReset().mockResolvedValue(account)
     authApi.updateAccountPreferences.mockReset().mockResolvedValue(account)
+    authApi.changeAccountEmail.mockReset().mockResolvedValue(account)
+    authApi.requestPasswordReset.mockReset().mockResolvedValue(undefined)
+    authApi.resetAccountPassword.mockReset().mockResolvedValue(undefined)
   })
 
   it('returns to the requested protected page after login', async () => {
@@ -63,6 +72,7 @@ describe('authentication workflow', () => {
     await screen.findByRole('heading', { name: 'Welcome back' })
     await user.click(screen.getByRole('tab', { name: 'Create Account' }))
     await user.type(screen.getByLabelText('Username'), 'new_user')
+    await user.type(screen.getByLabelText('Email'), 'new@example.com')
     await user.type(screen.getByLabelText('Password'), 'new-password')
     await user.type(screen.getByLabelText('Confirm Password'), 'new-password')
     await user.click(screen.getByRole('button', { name: 'Create Account' }))
@@ -70,6 +80,7 @@ describe('authentication workflow', () => {
     await waitFor(() => {
       expect(authApi.registerAccount).toHaveBeenCalledWith({
         username: 'new_user',
+        email: 'new@example.com',
         password: 'new-password',
       })
       expect(authApi.loginAccount).toHaveBeenCalledWith({
@@ -117,6 +128,43 @@ describe('authentication workflow', () => {
     window.dispatchEvent(new Event(AUTH_REQUIRED_EVENT))
 
     expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
+  })
+
+  it('requests recovery without revealing whether the email exists', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <ForgotPassword />
+      </MemoryRouter>,
+    )
+
+    await user.type(screen.getByLabelText('Recovery Email'), 'person@example.com')
+    await user.click(screen.getByRole('button', { name: 'Send Reset Link' }))
+
+    await waitFor(() => expect(authApi.requestPasswordReset).toHaveBeenCalledWith('person@example.com'))
+    expect(screen.getByText(/If that email belongs to an account/)).toBeInTheDocument()
+  })
+
+  it('submits a one-time token with the new password', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={['/reset-password?token=one-time-token']}>
+        <Routes>
+          <Route path="reset-password" element={<ResetPassword />} />
+          <Route path="login" element={<p>Login destination</p>} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    await user.type(screen.getByLabelText('New Password'), 'updated-password')
+    await user.type(screen.getByLabelText('Confirm New Password'), 'updated-password')
+    await user.click(screen.getByRole('button', { name: 'Reset Password' }))
+
+    await waitFor(() => expect(authApi.resetAccountPassword).toHaveBeenCalledWith({
+      token: 'one-time-token',
+      newPassword: 'updated-password',
+    }))
+    expect(await screen.findByText('Login destination')).toBeInTheDocument()
   })
 })
 

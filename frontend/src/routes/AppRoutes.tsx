@@ -8,12 +8,16 @@ import { Workouts } from '../pages/Workouts'
 import { WorkoutTemplates } from '../pages/WorkoutTemplates'
 import { Settings } from '../pages/Settings'
 import { Login } from '../pages/Login'
+import { ForgotPassword } from '../pages/ForgotPassword'
+import { ResetPassword } from '../pages/ResetPassword'
 import { ProtectedRoute } from './ProtectedRoute'
 
 export function AppRoutes() {
   return (
     <Routes>
       <Route path="login" element={<Login />} />
+      <Route path="forgot-password" element={<ForgotPassword />} />
+      <Route path="reset-password" element={<ResetPassword />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route index element={<Dashboard />} />

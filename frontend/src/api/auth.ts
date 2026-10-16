@@ -3,15 +3,33 @@ import type {
   AuthUser,
   AccountPreferencesInput,
   ChangePasswordInput,
+  ChangeEmailInput,
   Credentials,
   DeleteAccountInput,
+  RegistrationInput,
+  ResetPasswordInput,
 } from '../types/auth'
 
-export function registerAccount(credentials: Credentials) {
+export function registerAccount(credentials: RegistrationInput) {
   return apiRequest<AuthUser>('/api/auth/register', {
     method: 'POST',
     body: credentials,
   })
+}
+
+export async function requestPasswordReset(email: string) {
+  await apiRequest<void>('/api/auth/password/forgot', {
+    method: 'POST',
+    body: { email },
+  })
+}
+
+export async function resetAccountPassword(input: ResetPasswordInput) {
+  await apiRequest<void>('/api/auth/password/reset', {
+    method: 'POST',
+    body: input,
+  })
+  resetCsrfToken()
 }
 
 export function loginAccount(credentials: Credentials) {
@@ -37,6 +55,13 @@ export async function logoutAccount() {
 
 export function updateAccountPreferences(input: AccountPreferencesInput) {
   return apiRequest<AuthUser>('/api/auth/preferences', {
+    method: 'PUT',
+    body: input,
+  })
+}
+
+export function changeAccountEmail(input: ChangeEmailInput) {
+  return apiRequest<AuthUser>('/api/auth/email', {
     method: 'PUT',
     body: input,
   })

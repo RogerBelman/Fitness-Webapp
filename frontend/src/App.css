@@ -738,6 +738,20 @@ textarea:disabled {
   gap: 6px;
 }
 
+.AuthTextLink {
+  width: fit-content;
+  margin: 0 auto;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+}
+
+.AuthTextLink:hover {
+  text-decoration: underline;
+}
+
 .FieldHint {
   color: var(--muted);
   font-size: 12px;

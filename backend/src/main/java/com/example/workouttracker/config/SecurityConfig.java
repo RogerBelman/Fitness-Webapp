@@ -85,7 +85,12 @@ public class SecurityConfig {
 								event.getResponse(),
 								new InsufficientAuthenticationException("Session expired."))))
 				.authorizeHttpRequests(authorize -> authorize
-						.requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/csrf").permitAll()
+						.requestMatchers(
+								"/api/auth/register",
+								"/api/auth/login",
+								"/api/auth/csrf",
+								"/api/auth/password/forgot",
+								"/api/auth/password/reset").permitAll()
 						.requestMatchers("/api/**").authenticated()
 						.anyRequest().permitAll())
 				.exceptionHandling(exceptions -> exceptions

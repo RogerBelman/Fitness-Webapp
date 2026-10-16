@@ -17,9 +17,11 @@ import { useMeasurementPreferences } from '../hooks/useMeasurementPreferences'
 
 export function Settings() {
   const { weightUnit, setWeightUnit } = useMeasurementPreferences()
-  const { changePassword, deleteAccount } = useAuth()
+  const { user, changeEmail, changePassword, deleteAccount } = useAuth()
   const navigate = useNavigate()
   const [currentPassword, setCurrentPassword] = useState('')
+  const [recoveryEmail, setRecoveryEmail] = useState(user?.email ?? '')
+  const [emailPassword, setEmailPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [deletePassword, setDeletePassword] = useState('')
@@ -53,6 +55,21 @@ export function Settings() {
       })
     } catch (error) {
       setErrorMessage(readError(error, 'Could not change your password.'))
+    } finally {
+      setBusyAction(null)
+    }
+  }
+
+  async function submitEmailChange(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setBusyAction('email')
+    clearFeedback()
+    try {
+      await changeEmail({ email: recoveryEmail, currentPassword: emailPassword })
+      setEmailPassword('')
+      setSuccessMessage('Recovery email updated.')
+    } catch (error) {
+      setErrorMessage(readError(error, 'Could not update your recovery email.'))
     } finally {
       setBusyAction(null)
     }
@@ -185,6 +202,45 @@ export function Settings() {
               </div>
             </div>
           </div>
+        </section>
+
+        <section className="ContentBand SettingsCard" aria-labelledby="recovery-email-heading">
+          <div>
+            <p className="SectionEyebrow">Account</p>
+            <h2 id="recovery-email-heading">Recovery Email</h2>
+            <p className="SectionDescription">
+              Password reset links are sent only to this address.
+            </p>
+          </div>
+          <form className="SettingsForm" onSubmit={(event) => void submitEmailChange(event)}>
+            <div className="SettingsField">
+              <label htmlFor="settings-recovery-email">Email</label>
+              <input
+                id="settings-recovery-email"
+                autoComplete="email"
+                maxLength={254}
+                required
+                type="email"
+                value={recoveryEmail}
+                onChange={(event) => setRecoveryEmail(event.target.value)}
+              />
+            </div>
+            <div className="SettingsField">
+              <label htmlFor="email-current-password">Current Password</label>
+              <PasswordInput
+                id="email-current-password"
+                autoComplete="current-password"
+                maxLength={72}
+                required
+                toggleLabel="recovery email password"
+                value={emailPassword}
+                onChange={(event) => setEmailPassword(event.target.value)}
+              />
+            </div>
+            <button className="Button ButtonPrimary" disabled={busyAction !== null} type="submit">
+              {busyAction === 'email' ? 'Saving...' : 'Save Recovery Email'}
+            </button>
+          </form>
         </section>
 
         <section className="ContentBand SettingsCard" aria-labelledby="security-heading">

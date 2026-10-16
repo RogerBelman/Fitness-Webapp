@@ -12,6 +12,7 @@ const api = vi.hoisted(() => ({
 
 const account = vi.hoisted(() => ({
   updatePreferences: vi.fn(),
+  changeEmail: vi.fn(),
   changePassword: vi.fn(),
   deleteAccount: vi.fn(),
 }))
@@ -19,8 +20,9 @@ const account = vi.hoisted(() => ({
 vi.mock('../src/api/dataBackup', () => api)
 vi.mock('../src/hooks/useAuth', () => ({
   useAuth: () => ({
-    user: { id: 1, username: 'settings_user', weightUnit: 'lb', createdAt: '2026-10-14T00:00:00Z' },
+    user: { id: 1, username: 'settings_user', email: 'settings@example.com', weightUnit: 'lb', createdAt: '2026-10-14T00:00:00Z' },
     updatePreferences: account.updatePreferences,
+    changeEmail: account.changeEmail,
     changePassword: account.changePassword,
     deleteAccount: account.deleteAccount,
   }),
@@ -31,6 +33,7 @@ describe('data backup workflow', () => {
     api.exportDataBackup.mockReset()
     api.importDataBackup.mockReset()
     account.updatePreferences.mockReset()
+    account.changeEmail.mockReset()
     account.changePassword.mockReset()
     account.deleteAccount.mockReset()
   })
@@ -91,6 +94,24 @@ describe('data backup workflow', () => {
     await waitFor(() => expect(account.changePassword).toHaveBeenCalledWith({
       currentPassword: 'current-password',
       newPassword: 'updated-password',
+    }))
+  })
+
+  it('confirms the current password before changing the recovery email', async () => {
+    const user = userEvent.setup()
+    account.changeEmail.mockResolvedValue(undefined)
+    renderSettings()
+
+    const recovery = screen.getByRole('region', { name: 'Recovery Email' })
+    const email = within(recovery).getByLabelText('Email')
+    await user.clear(email)
+    await user.type(email, 'updated@example.com')
+    await user.type(within(recovery).getByLabelText('Current Password'), 'current-password')
+    await user.click(within(recovery).getByRole('button', { name: 'Save Recovery Email' }))
+
+    await waitFor(() => expect(account.changeEmail).toHaveBeenCalledWith({
+      email: 'updated@example.com',
+      currentPassword: 'current-password',
     }))
   })
 

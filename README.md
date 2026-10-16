@@ -21,6 +21,7 @@ This repository contains a full-stack workout tracking application built with a 
 - Switch strength weights and volume between pounds and kilograms throughout the browser app.
 - Export all training data to a portable JSON backup and validate imported backups before replacing current data.
 - Register accounts and use server-managed login sessions with BCrypt-hashed passwords.
+- Recover forgotten passwords through neutral email requests and expiring one-time reset links.
 - Keep each account's exercises, workouts, templates, goals, progress, and backups separate.
 - Sync weight-unit preferences with each account and manage backups, password changes, and account deletion from one Settings page.
 - Validate API requests and return consistent error responses.
@@ -59,6 +60,8 @@ Routes:
 | Path | Page |
 | --- | --- |
 | `/login` | Sign in or create an account |
+| `/forgot-password` | Request a password reset link |
+| `/reset-password?token=...` | Choose a new password from a one-time link |
 | `/` | Dashboard |
 | `/progress` | Exercise Progress |
 | `/exercises` | Exercise Library |
@@ -74,7 +77,7 @@ The Weight units control on the Settings page switches strength entry, totals, g
 
 The browser restores the signed-in account from its server session when the app loads. Signed-out visitors are sent to the Login page, and a successful login returns them to the page they originally requested. Registration creates the account and signs in immediately. The footer displays the current account alongside clearly labeled Settings and Sign Out controls, keeping the application header focused on navigation.
 
-The Settings page downloads exercises, workouts, strength sets, cardio entries, templates, and goals as a versioned JSON snapshot. Import validates the complete snapshot first and then replaces the current dataset in one database transaction. Invalid files leave existing data unchanged. Password changes and account deletion require the current password and end every active session for the account. Account deletion removes that account and its owned training data in one transaction. Password fields include an explicit Show or Hide control.
+The Settings page manages the recovery email and downloads exercises, workouts, strength sets, cardio entries, templates, and goals as a versioned JSON snapshot. Import validates the complete snapshot first and then replaces the current dataset in one database transaction. Invalid files leave existing data unchanged. Password changes, password resets, and account deletion end every active session for the account. Account deletion removes that account and its owned training data in one transaction. Password fields include an explicit Show or Hide control.
 
 The Workout Templates page can create a reusable routine directly or save one from an existing workout. After creating a template, add exercises from the library, arrange their order, and start a workout with empty performance entries.
 
@@ -85,7 +88,7 @@ Frontend API files:
 | File | Purpose |
 | --- | --- |
 | `src/api/client.ts` | Shared `fetch` wrapper with credentials, CSRF protection, base URL, and API error handling |
-| `src/api/auth.ts` | Registration, login, current-account, logout, password-change, and account-deletion functions |
+| `src/api/auth.ts` | Registration, login, recovery, account settings, logout, and account-deletion functions |
 | `src/api/exercises.ts` | Exercise endpoint functions |
 | `src/api/workouts.ts` | Workout endpoint functions |
 | `src/api/progress.ts` | Personal-record and exercise-history endpoint functions |
@@ -149,7 +152,7 @@ http://127.0.0.1:5173
 
 ## Run Locally
 
-From the repository root, start PostgreSQL first:
+From the repository root, start PostgreSQL and the local Mailpit email inbox:
 
 ```powershell
 docker compose up -d
@@ -158,6 +161,7 @@ docker compose up -d
 Start the backend in a second terminal:
 
 ```powershell
+$env:APP_MAIL_ENABLED="true"
 cd backend
 .\mvnw.cmd spring-boot:run
 ```
@@ -170,7 +174,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. The backend API runs at `http://localhost:8080`.
+Open `http://localhost:5173`. The backend API runs at `http://localhost:8080`. Mailpit captures local recovery emails at `http://localhost:8025`; it does not deliver them to real addresses.
 
 The checked-in defaults work without creating a local `.env` file. Docker Compose automatically reads a root `.env` file, so copy `.env.example` to `.env` when you need to customize the container settings. Spring Boot does not load that file automatically; provide custom `SPRING_DATASOURCE_*` values through the terminal or deployment environment.
 
@@ -262,19 +266,25 @@ Authentication uses server-managed HTTP sessions. The browser receives a `JSESSI
 | `GET` | `/api/auth/me` | Restore the current account from the session | `200 OK` |
 | `POST` | `/api/auth/logout` | Invalidate the session and delete its cookie | `204 No Content` |
 | `PUT` | `/api/auth/preferences` | Save account-level measurement preferences | `200 OK` |
+| `PUT` | `/api/auth/email` | Confirm the current password and update the recovery email | `200 OK` |
 | `PUT` | `/api/auth/password` | Verify the current password, save a new hash, and end the session | `204 No Content` |
+| `POST` | `/api/auth/password/forgot` | Request a reset email without revealing whether the account exists | `204 No Content` |
+| `POST` | `/api/auth/password/reset` | Consume a one-time token, change the password, and expire all sessions | `204 No Content` |
 | `DELETE` | `/api/auth/account` | Verify the current password and delete the account and its owned data | `204 No Content` |
 
-Registration and login request bodies use the same credential shape:
+Registration includes the private recovery email:
 
 ```json
 {
   "username": "learning_user",
+  "email": "learner@example.com",
   "password": "a-long-private-password"
 }
 ```
 
-Usernames are trimmed, stored in lowercase, and may contain letters, numbers, and underscores. Passwords are never stored or returned as plain text. The service stores a one-way BCrypt hash, and successful registration, login, and current-user responses contain only the account id, normalized username, and creation time. Invalid login attempts always return the same message so callers cannot determine whether a username exists.
+Usernames and emails are trimmed and stored in lowercase. Usernames may contain letters, numbers, and underscores. Passwords are never stored or returned as plain text. The service stores a one-way BCrypt hash. Password-reset tokens use 32 random bytes; PostgreSQL stores only each token's SHA-256 hash. Tokens expire after 30 minutes, can be used once, and are invalidated when the password or recovery email changes. Invalid login attempts and recovery requests use neutral responses so callers cannot determine whether an account exists.
+
+For production recovery email, set `APP_MAIL_ENABLED=true`, `APP_FRONTEND_BASE_URL`, `APP_MAIL_FROM`, and the `SPRING_MAIL_*` SMTP variables in the deployment environment. Keep SMTP credentials out of source control.
 
 Cross-origin browser requests use `credentials: "include"` so the browser sends the session cookie to the API. Local CORS configuration permits credentials from the configured React origins. Before each `POST`, `PUT`, or `DELETE`, the shared frontend client obtains a token from `/api/auth/csrf` and sends it in the header named by that response. Spring Security compares the token with the value stored in the browser session before allowing the request. Set `SESSION_COOKIE_SECURE=true` when the backend is served over HTTPS.
 
@@ -541,6 +551,7 @@ Current test focus:
 | Test file | Purpose |
 | --- | --- |
 | `AuthControllerTests` | Registration, password hashing and changes, login sessions, current-user restoration, logout, account deletion, CSRF enforcement, and generic credential failures |
+| `PasswordRecoveryTests` | Neutral recovery requests, one-time reset links, password replacement, and active-session expiry |
 | `ExerciseControllerTests` | Exercise API endpoint behavior |
 | `ExerciseInstructionsTests` | Permanent instructions, session-note independence, clearing, and length validation |
 | `CardioTrackingTests` | Mixed totals, duration/level validation, entry updates/deletes, training-type protection, and deletion cascades |
@@ -562,7 +573,7 @@ npm run lint
 npm run build
 ```
 
-The frontend suite retains seven calendar utility tests and adds interaction coverage for workout history filtering, pounds/kilograms conversion and preference persistence, focused exercise reordering, goal creation and editing, explicit template-detail saving, immediate template exercise changes, starting a workout from a template, confirmed backup replacement, password changes, and account-deletion confirmation.
+The frontend suite retains seven calendar utility tests and adds interaction coverage for workout history filtering, pounds/kilograms conversion and preference persistence, focused exercise reordering, goal creation and editing, explicit template-detail saving, immediate template exercise changes, starting a workout from a template, confirmed backup replacement, recovery-email changes, password recovery, password changes, and account-deletion confirmation.
 
 ## Local Sample Data
 

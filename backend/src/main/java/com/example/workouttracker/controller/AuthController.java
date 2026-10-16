@@ -20,13 +20,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.workouttracker.dto.CsrfTokenResponse;
 import com.example.workouttracker.dto.ChangePasswordRequest;
+import com.example.workouttracker.dto.ChangeEmailRequest;
 import com.example.workouttracker.dto.DeleteAccountRequest;
 import com.example.workouttracker.dto.LoginRequest;
+import com.example.workouttracker.dto.ForgotPasswordRequest;
+import com.example.workouttracker.dto.ResetPasswordRequest;
 import com.example.workouttracker.dto.UserRegistrationRequest;
 import com.example.workouttracker.dto.UserResponse;
 import com.example.workouttracker.dto.UpdatePreferencesRequest;
 import com.example.workouttracker.service.UserAccountService;
 import com.example.workouttracker.service.UserSessionService;
+import com.example.workouttracker.service.PasswordRecoveryService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -41,18 +45,21 @@ public class AuthController {
 	private final SecurityContextRepository securityContextRepository;
 	private final SessionAuthenticationStrategy sessionAuthenticationStrategy;
 	private final UserSessionService userSessionService;
+	private final PasswordRecoveryService passwordRecoveryService;
 
 	public AuthController(
 			UserAccountService userAccountService,
 			AuthenticationManager authenticationManager,
 			SecurityContextRepository securityContextRepository,
 			SessionAuthenticationStrategy sessionAuthenticationStrategy,
-			UserSessionService userSessionService) {
+			UserSessionService userSessionService,
+			PasswordRecoveryService passwordRecoveryService) {
 		this.userAccountService = userAccountService;
 		this.authenticationManager = authenticationManager;
 		this.securityContextRepository = securityContextRepository;
 		this.sessionAuthenticationStrategy = sessionAuthenticationStrategy;
 		this.userSessionService = userSessionService;
+		this.passwordRecoveryService = passwordRecoveryService;
 	}
 
 	@PostMapping("/register")
@@ -90,6 +97,24 @@ public class AuthController {
 	@PutMapping("/preferences")
 	public UserResponse updatePreferences(@Valid @RequestBody UpdatePreferencesRequest request) {
 		return userAccountService.updatePreferences(request);
+	}
+
+	@PutMapping("/email")
+	public UserResponse changeRecoveryEmail(@Valid @RequestBody ChangeEmailRequest request) {
+		return userAccountService.changeRecoveryEmail(request);
+	}
+
+	@PostMapping("/password/forgot")
+	public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+		passwordRecoveryService.requestReset(request);
+		return ResponseEntity.noContent().build();
+	}
+
+	@PostMapping("/password/reset")
+	public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+		String username = passwordRecoveryService.resetPassword(request);
+		userSessionService.expireAllSessions(username);
+		return ResponseEntity.noContent().build();
 	}
 
 	@PutMapping("/password")
