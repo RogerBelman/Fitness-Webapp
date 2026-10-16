@@ -11,6 +11,7 @@ import com.example.workouttracker.dto.UserRegistrationRequest;
 import com.example.workouttracker.dto.UserResponse;
 import com.example.workouttracker.dto.ChangePasswordRequest;
 import com.example.workouttracker.dto.DeleteAccountRequest;
+import com.example.workouttracker.dto.UpdatePreferencesRequest;
 import com.example.workouttracker.entity.AppUser;
 import com.example.workouttracker.exception.BadRequestException;
 import com.example.workouttracker.exception.DuplicateResourceException;
@@ -49,14 +50,21 @@ public class UserAccountService {
 		}
 
 		AppUser user = userRepository.save(new AppUser(username, passwordEncoder.encode(request.password())));
-		return new UserResponse(user.getId(), user.getUsername(), user.getCreatedAt());
+		return toResponse(user);
 	}
 
 	@Transactional(readOnly = true)
 	public UserResponse findByUsername(String username) {
 		AppUser user = userRepository.findByUsernameIgnoreCase(username)
 				.orElseThrow(() -> new ResourceNotFoundException("User account not found."));
-		return new UserResponse(user.getId(), user.getUsername(), user.getCreatedAt());
+		return toResponse(user);
+	}
+
+	@Transactional
+	public UserResponse updatePreferences(UpdatePreferencesRequest request) {
+		AppUser user = currentUserService.requireCurrentUser();
+		user.changeWeightUnit(request.weightUnit());
+		return toResponse(user);
 	}
 
 	@Transactional
@@ -88,5 +96,13 @@ public class UserAccountService {
 		if (password.getBytes(StandardCharsets.UTF_8).length > BCRYPT_MAX_PASSWORD_BYTES) {
 			throw new BadRequestException("new password must be 72 UTF-8 bytes or less.");
 		}
+	}
+
+	private UserResponse toResponse(AppUser user) {
+		return new UserResponse(
+				user.getId(),
+				user.getUsername(),
+				user.getWeightUnit(),
+				user.getCreatedAt());
 	}
 }

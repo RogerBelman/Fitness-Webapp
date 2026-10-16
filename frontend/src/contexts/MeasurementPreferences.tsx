@@ -1,29 +1,27 @@
 import {
   useMemo,
-  useState,
   type ReactNode,
 } from 'react'
 import { MeasurementPreferencesContext } from './measurementPreferencesContext'
+import { useAuth } from '../hooks/useAuth'
 import type { WeightUnit } from '../utils/weightMeasurement'
-
-const STORAGE_KEY = 'workout-tracker-weight-unit'
 
 export function MeasurementPreferencesProvider({
   children,
 }: {
   children: ReactNode
 }) {
-  const [weightUnit, setWeightUnitState] = useState<WeightUnit>(readWeightUnit)
+  const { user, updatePreferences } = useAuth()
+  const weightUnit = user?.weightUnit ?? 'lb'
 
   const value = useMemo(
     () => ({
       weightUnit,
-      setWeightUnit(unit: WeightUnit) {
-        setWeightUnitState(unit)
-        window.localStorage.setItem(STORAGE_KEY, unit)
+      async setWeightUnit(unit: WeightUnit) {
+        await updatePreferences({ weightUnit: unit })
       },
     }),
-    [weightUnit],
+    [updatePreferences, weightUnit],
   )
 
   return (
@@ -31,8 +29,4 @@ export function MeasurementPreferencesProvider({
       {children}
     </MeasurementPreferencesContext.Provider>
   )
-}
-
-function readWeightUnit(): WeightUnit {
-  return window.localStorage.getItem(STORAGE_KEY) === 'kg' ? 'kg' : 'lb'
 }

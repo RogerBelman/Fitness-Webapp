@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { ActionFeedback } from '../components/ActionFeedback'
+import { PasswordInput } from '../components/PasswordInput'
 import { useAuth } from '../hooks/useAuth'
 
 type AuthMode = 'login' | 'register'
@@ -107,14 +108,14 @@ export function Login() {
 
           <div className="AuthField">
             <label htmlFor="auth-password">Password</label>
-            <input
+            <PasswordInput
               id="auth-password"
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               aria-describedby={mode === 'register' ? 'password-hint' : undefined}
               maxLength={72}
               minLength={mode === 'register' ? 8 : undefined}
               required
-              type="password"
+              toggleLabel="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
@@ -126,13 +127,13 @@ export function Login() {
           {mode === 'register' ? (
             <div className="AuthField">
               <label htmlFor="auth-confirm-password">Confirm Password</label>
-              <input
+              <PasswordInput
                 id="auth-confirm-password"
                 autoComplete="new-password"
                 maxLength={72}
                 minLength={8}
                 required
-                type="password"
+                toggleLabel="password confirmation"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
               />

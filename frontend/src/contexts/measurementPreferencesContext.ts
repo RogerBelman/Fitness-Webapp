@@ -3,7 +3,7 @@ import type { WeightUnit } from '../utils/weightMeasurement'
 
 export type MeasurementPreferencesValue = {
   weightUnit: WeightUnit
-  setWeightUnit: (unit: WeightUnit) => void
+  setWeightUnit: (unit: WeightUnit) => Promise<void>
 }
 
 export const MeasurementPreferencesContext =

@@ -64,10 +64,9 @@ describe('workout history filters', () => {
 
 describe('measurement preferences', () => {
   it('shows kilograms and converts entered set weight back to stored pounds', async () => {
-    window.localStorage.setItem('workout-tracker-weight-unit', 'kg')
     const user = userEvent.setup()
     const onAdd = vi.fn().mockResolvedValue(true)
-    renderWithPreferences(<AddSetForm isSaving={false} onAdd={onAdd} />)
+    renderWithPreferences(<AddSetForm isSaving={false} onAdd={onAdd} />, 'kg')
 
     await user.type(screen.getByRole('spinbutton', { name: 'Reps' }), '5')
     await user.type(
@@ -83,17 +82,19 @@ describe('measurement preferences', () => {
     })
   })
 
-  it('changes and persists the weight unit from settings', async () => {
+  it('saves a weight-unit change to the account', async () => {
     const user = userEvent.setup()
+    const updatePreferences = vi.fn().mockResolvedValue(undefined)
     render(
       <MemoryRouter>
         <AuthContext.Provider
           value={{
-            user: { id: 1, username: 'test_user', createdAt: timestamp },
+            user: { id: 1, username: 'test_user', weightUnit: 'lb', createdAt: timestamp },
             isLoading: false,
             login: async () => undefined,
             register: async () => undefined,
             logout: async () => undefined,
+            updatePreferences,
             changePassword: async () => undefined,
             deleteAccount: async () => undefined,
           }}
@@ -111,8 +112,7 @@ describe('measurement preferences', () => {
     expect(kilograms).toHaveAttribute('aria-pressed', 'false')
     await user.click(kilograms)
 
-    expect(kilograms).toHaveAttribute('aria-pressed', 'true')
-    expect(window.localStorage.getItem('workout-tracker-weight-unit')).toBe('kg')
+    expect(updatePreferences).toHaveBeenCalledWith({ weightUnit: 'kg' })
   })
 })
 
@@ -279,10 +279,23 @@ describe('template workflows', () => {
   })
 })
 
-function renderWithPreferences(ui: ReactNode) {
+function renderWithPreferences(ui: ReactNode, weightUnit: 'lb' | 'kg' = 'lb') {
   return render(
     <MemoryRouter>
-      <MeasurementPreferencesProvider>{ui}</MeasurementPreferencesProvider>
+      <AuthContext.Provider
+        value={{
+          user: { id: 1, username: 'test_user', weightUnit, createdAt: timestamp },
+          isLoading: false,
+          login: async () => undefined,
+          register: async () => undefined,
+          logout: async () => undefined,
+          updatePreferences: async () => undefined,
+          changePassword: async () => undefined,
+          deleteAccount: async () => undefined,
+        }}
+      >
+        <MeasurementPreferencesProvider>{ui}</MeasurementPreferencesProvider>
+      </AuthContext.Provider>
     </MemoryRouter>,
   )
 }

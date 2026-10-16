@@ -1,4 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
+export const AUTH_REQUIRED_EVENT = 'workout-tracker:auth-required'
 
 type CsrfToken = {
   headerName: string
@@ -35,6 +36,10 @@ export async function apiRequest<T>(
   }
 
   if (!response.ok) {
+    if (response.status === 401) {
+      resetCsrfToken()
+      window.dispatchEvent(new Event(AUTH_REQUIRED_EVENT))
+    }
     const details = await readJson(response)
     throw new ApiError(response.status, response.statusText, details)
   }

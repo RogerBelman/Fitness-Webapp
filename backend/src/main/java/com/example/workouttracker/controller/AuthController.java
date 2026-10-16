@@ -24,7 +24,9 @@ import com.example.workouttracker.dto.DeleteAccountRequest;
 import com.example.workouttracker.dto.LoginRequest;
 import com.example.workouttracker.dto.UserRegistrationRequest;
 import com.example.workouttracker.dto.UserResponse;
+import com.example.workouttracker.dto.UpdatePreferencesRequest;
 import com.example.workouttracker.service.UserAccountService;
+import com.example.workouttracker.service.UserSessionService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -38,16 +40,19 @@ public class AuthController {
 	private final AuthenticationManager authenticationManager;
 	private final SecurityContextRepository securityContextRepository;
 	private final SessionAuthenticationStrategy sessionAuthenticationStrategy;
+	private final UserSessionService userSessionService;
 
 	public AuthController(
 			UserAccountService userAccountService,
 			AuthenticationManager authenticationManager,
 			SecurityContextRepository securityContextRepository,
-			SessionAuthenticationStrategy sessionAuthenticationStrategy) {
+			SessionAuthenticationStrategy sessionAuthenticationStrategy,
+			UserSessionService userSessionService) {
 		this.userAccountService = userAccountService;
 		this.authenticationManager = authenticationManager;
 		this.securityContextRepository = securityContextRepository;
 		this.sessionAuthenticationStrategy = sessionAuthenticationStrategy;
+		this.userSessionService = userSessionService;
 	}
 
 	@PostMapping("/register")
@@ -82,11 +87,18 @@ public class AuthController {
 		return userAccountService.findByUsername(authentication.getName());
 	}
 
+	@PutMapping("/preferences")
+	public UserResponse updatePreferences(@Valid @RequestBody UpdatePreferencesRequest request) {
+		return userAccountService.updatePreferences(request);
+	}
+
 	@PutMapping("/password")
 	public ResponseEntity<Void> changePassword(
 			@Valid @RequestBody ChangePasswordRequest request,
+			Authentication authentication,
 			HttpServletRequest httpRequest) {
 		userAccountService.changePassword(request);
+		userSessionService.expireAllSessions(authentication.getName());
 		endSession(httpRequest);
 		return ResponseEntity.noContent().build();
 	}
@@ -94,8 +106,10 @@ public class AuthController {
 	@DeleteMapping("/account")
 	public ResponseEntity<Void> deleteAccount(
 			@Valid @RequestBody DeleteAccountRequest request,
+			Authentication authentication,
 			HttpServletRequest httpRequest) {
 		userAccountService.deleteCurrentAccount(request);
+		userSessionService.expireAllSessions(authentication.getName());
 		endSession(httpRequest);
 		return ResponseEntity.noContent().build();
 	}

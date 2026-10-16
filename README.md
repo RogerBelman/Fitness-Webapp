@@ -22,7 +22,7 @@ This repository contains a full-stack workout tracking application built with a 
 - Export all training data to a portable JSON backup and validate imported backups before replacing current data.
 - Register accounts and use server-managed login sessions with BCrypt-hashed passwords.
 - Keep each account's exercises, workouts, templates, goals, progress, and backups separate.
-- Manage weight units, backups, password changes, and account deletion from one Settings page.
+- Sync weight-unit preferences with each account and manage backups, password changes, and account deletion from one Settings page.
 - Validate API requests and return consistent error responses.
 - Run PostgreSQL locally with Docker or connect Spring Boot to Neon.
 - Apply versioned schema changes automatically with Flyway.
@@ -70,11 +70,11 @@ Routes:
 
 The Dashboard shows a Monday–Sunday calendar with previous/next week controls and a Today shortcut. Its Month Overview dialog marks days with workouts and selecting a date returns to that day on the Dashboard. Select a day to see its workouts, exercises, strength sets and volume, and cardio minutes. Add Workout opens the creation form on the combined Workouts page and preselects the chosen date for today or a past day. Workout history can be searched by workout or exercise name and filtered by Strength, Cardio, Mixed, and date range. New Workout opens the same form above workout history without leaving the Workouts page; Cancel returns to browsing. Creating a workout opens it immediately for exercise entry. Each exercise shows either sets/reps/weight or cardio duration/level according to its training type. Existing `/workouts/new` links redirect to this form and preserve the selected date. Strength charts, goals, maximum volume, and exercise history live on the separate Progress page.
 
-The Weight units control on the Settings page switches strength entry, totals, goals, history, and charts between pounds and kilograms. PostgreSQL stores pounds as the canonical value; the frontend converts values when reading and submitting them. The selected display unit is saved in browser local storage.
+The Weight units control on the Settings page switches strength entry, totals, goals, history, and charts between pounds and kilograms. PostgreSQL stores pounds as the canonical value; the frontend converts values when reading and submitting them. The selected display unit is saved to the signed-in account so it follows the user across browsers and devices.
 
 The browser restores the signed-in account from its server session when the app loads. Signed-out visitors are sent to the Login page, and a successful login returns them to the page they originally requested. Registration creates the account and signs in immediately. The footer displays the current account alongside clearly labeled Settings and Sign Out controls, keeping the application header focused on navigation.
 
-The Settings page downloads exercises, workouts, strength sets, cardio entries, templates, and goals as a versioned JSON snapshot. Import validates the complete snapshot first and then replaces the current dataset in one database transaction. Invalid files leave existing data unchanged. Password changes and account deletion require the current password and end the active session. Account deletion removes that account and its owned training data in one transaction.
+The Settings page downloads exercises, workouts, strength sets, cardio entries, templates, and goals as a versioned JSON snapshot. Import validates the complete snapshot first and then replaces the current dataset in one database transaction. Invalid files leave existing data unchanged. Password changes and account deletion require the current password and end every active session for the account. Account deletion removes that account and its owned training data in one transaction. Password fields include an explicit Show or Hide control.
 
 The Workout Templates page can create a reusable routine directly or save one from an existing workout. After creating a template, add exercises from the library, arrange their order, and start a workout with empty performance entries.
 
@@ -261,6 +261,7 @@ Authentication uses server-managed HTTP sessions. The browser receives a `JSESSI
 | `POST` | `/api/auth/login` | Verify credentials and create a session | `200 OK` |
 | `GET` | `/api/auth/me` | Restore the current account from the session | `200 OK` |
 | `POST` | `/api/auth/logout` | Invalidate the session and delete its cookie | `204 No Content` |
+| `PUT` | `/api/auth/preferences` | Save account-level measurement preferences | `200 OK` |
 | `PUT` | `/api/auth/password` | Verify the current password, save a new hash, and end the session | `204 No Content` |
 | `DELETE` | `/api/auth/account` | Verify the current password and delete the account and its owned data | `204 No Content` |
 

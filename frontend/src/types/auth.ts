@@ -1,7 +1,12 @@
 export type AuthUser = {
   id: number
   username: string
+  weightUnit: 'lb' | 'kg'
   createdAt: string
+}
+
+export type AccountPreferencesInput = {
+  weightUnit: 'lb' | 'kg'
 }
 
 export type Credentials = {

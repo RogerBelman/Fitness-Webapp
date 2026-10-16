@@ -6,6 +6,7 @@ import { AuthProvider } from '../src/contexts/AuthProvider'
 import { AppLayout } from '../src/components/AppLayout'
 import { Login } from '../src/pages/Login'
 import { ProtectedRoute } from '../src/routes/ProtectedRoute'
+import { AUTH_REQUIRED_EVENT } from '../src/api/client'
 
 const authApi = vi.hoisted(() => ({
   currentAccount: vi.fn(),
@@ -14,6 +15,7 @@ const authApi = vi.hoisted(() => ({
   registerAccount: vi.fn(),
   changeAccountPassword: vi.fn(),
   deleteCurrentAccount: vi.fn(),
+  updateAccountPreferences: vi.fn(),
 }))
 
 vi.mock('../src/api/auth', () => authApi)
@@ -21,6 +23,7 @@ vi.mock('../src/api/auth', () => authApi)
 const account = {
   id: 7,
   username: 'learning_user',
+  weightUnit: 'lb' as const,
   createdAt: '2026-10-14T00:00:00Z',
 }
 
@@ -30,6 +33,7 @@ describe('authentication workflow', () => {
     authApi.loginAccount.mockReset().mockResolvedValue(account)
     authApi.logoutAccount.mockReset().mockResolvedValue(undefined)
     authApi.registerAccount.mockReset().mockResolvedValue(account)
+    authApi.updateAccountPreferences.mockReset().mockResolvedValue(account)
   })
 
   it('returns to the requested protected page after login', async () => {
@@ -38,7 +42,11 @@ describe('authentication workflow', () => {
 
     expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
     await user.type(screen.getByLabelText('Username'), 'Learning_User')
-    await user.type(screen.getByLabelText('Password'), 'session-password')
+    const password = screen.getByLabelText('Password')
+    await user.type(password, 'session-password')
+    expect(password).toHaveAttribute('type', 'password')
+    await user.click(screen.getByRole('button', { name: 'Show password' }))
+    expect(password).toHaveAttribute('type', 'text')
     await user.click(screen.getByRole('button', { name: 'Sign In' }))
 
     expect(await screen.findByText('Protected workouts')).toBeInTheDocument()
@@ -99,6 +107,16 @@ describe('authentication workflow', () => {
 
     await waitFor(() => expect(authApi.logoutAccount).toHaveBeenCalledOnce())
     expect(await screen.findByText('Signed out')).toBeInTheDocument()
+  })
+
+  it('returns to login when the active session expires', async () => {
+    authApi.currentAccount.mockResolvedValue(account)
+    renderAuthRoutes('/workouts')
+
+    expect(await screen.findByText('Protected workouts')).toBeInTheDocument()
+    window.dispatchEvent(new Event(AUTH_REQUIRED_EVENT))
+
+    expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
   })
 })
 

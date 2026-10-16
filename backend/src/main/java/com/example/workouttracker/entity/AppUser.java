@@ -25,6 +25,9 @@ public class AppUser {
 	@Column(name = "password_hash", nullable = false, length = 100)
 	private String passwordHash;
 
+	@Column(name = "weight_unit", nullable = false, length = 2)
+	private String weightUnit = "lb";
+
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
@@ -53,6 +56,14 @@ public class AppUser {
 
 	public void changePasswordHash(String passwordHash) {
 		this.passwordHash = passwordHash;
+	}
+
+	public String getWeightUnit() {
+		return weightUnit;
+	}
+
+	public void changeWeightUnit(String weightUnit) {
+		this.weightUnit = weightUnit;
 	}
 
 	public Instant getCreatedAt() {

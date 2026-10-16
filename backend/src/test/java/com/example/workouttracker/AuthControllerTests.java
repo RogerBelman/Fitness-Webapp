@@ -47,6 +47,7 @@ class AuthControllerTests {
 				.content("{\"username\":\"Learning_User\",\"password\":\"correct horse battery staple\"}"))
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.username").value("learning_user"))
+				.andExpect(jsonPath("$.weightUnit").value("lb"))
 				.andExpect(jsonPath("$", not(hasKey("password"))))
 				.andExpect(jsonPath("$", not(hasKey("passwordHash"))));
 
@@ -165,6 +166,52 @@ class AuthControllerTests {
 		assertThat(session.isInvalid()).isTrue();
 		login("password_user", "current-password").andExpect(status().isUnauthorized());
 		login("password_user", "updated-password").andExpect(status().isOk());
+	}
+
+	@Test
+	void changingThePasswordExpiresEverySessionForTheUser() throws Exception {
+		register("multi_session_user", "current-password").andExpect(status().isCreated());
+		MockHttpSession firstSession = (MockHttpSession) login("multi_session_user", "current-password")
+				.andExpect(status().isOk())
+				.andReturn().getRequest().getSession(false);
+		MockHttpSession secondSession = (MockHttpSession) login("multi_session_user", "current-password")
+				.andExpect(status().isOk())
+				.andReturn().getRequest().getSession(false);
+
+		mvc.perform(put("/api/auth/password")
+				.session(firstSession)
+				.contentType("application/json")
+				.content("{\"currentPassword\":\"current-password\",\"newPassword\":\"updated-password\"}"))
+				.andExpect(status().isNoContent());
+
+		mvc.perform(get("/api/auth/me").session(secondSession))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void updatesAndRestoresAccountPreferences() throws Exception {
+		register("preference_user", "preference-password").andExpect(status().isCreated());
+		MockHttpSession session = (MockHttpSession) login("preference_user", "preference-password")
+				.andExpect(status().isOk())
+				.andReturn().getRequest().getSession(false);
+
+		mvc.perform(put("/api/auth/preferences")
+				.session(session)
+				.contentType("application/json")
+				.content("{\"weightUnit\":\"kg\"}"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.weightUnit").value("kg"));
+
+		mvc.perform(get("/api/auth/me").session(session))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.weightUnit").value("kg"));
+
+		mvc.perform(put("/api/auth/preferences")
+				.session(session)
+				.contentType("application/json")
+				.content("{\"weightUnit\":\"stone\"}"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.fieldErrors.weightUnit").exists());
 	}
 
 	@Test

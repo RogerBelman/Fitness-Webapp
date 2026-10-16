@@ -6,9 +6,12 @@ import {
   loginAccount,
   logoutAccount,
   registerAccount,
+  updateAccountPreferences,
 } from '../api/auth'
+import { AUTH_REQUIRED_EVENT } from '../api/client'
 import type {
   AuthUser,
+  AccountPreferencesInput,
   ChangePasswordInput,
   Credentials,
   DeleteAccountInput,
@@ -21,6 +24,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true
+    const requireAuthentication = () => setUser(null)
+    window.addEventListener(AUTH_REQUIRED_EVENT, requireAuthentication)
     currentAccount()
       .then((account) => {
         if (active) setUser(account)
@@ -33,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
     return () => {
       active = false
+      window.removeEventListener(AUTH_REQUIRED_EVENT, requireAuthentication)
     }
   }, [])
 
@@ -50,6 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async logout() {
         await logoutAccount()
         setUser(null)
+      },
+      async updatePreferences(input: AccountPreferencesInput) {
+        setUser(await updateAccountPreferences(input))
       },
       async changePassword(input: ChangePasswordInput) {
         await changeAccountPassword(input)

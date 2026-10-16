@@ -8,12 +8,20 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
+
+import java.util.List;
 
 import com.example.workouttracker.security.RestAccessDeniedHandler;
 import com.example.workouttracker.security.RestAuthenticationEntryPoint;
@@ -29,8 +37,20 @@ public class SecurityConfig {
 	}
 
 	@Bean
-	SessionAuthenticationStrategy sessionAuthenticationStrategy() {
-		return new ChangeSessionIdAuthenticationStrategy();
+	SessionRegistry sessionRegistry() {
+		return new SessionRegistryImpl();
+	}
+
+	@Bean
+	HttpSessionEventPublisher httpSessionEventPublisher() {
+		return new HttpSessionEventPublisher();
+	}
+
+	@Bean
+	SessionAuthenticationStrategy sessionAuthenticationStrategy(SessionRegistry sessionRegistry) {
+		return new CompositeSessionAuthenticationStrategy(List.of(
+				new ChangeSessionIdAuthenticationStrategy(),
+				new RegisterSessionAuthenticationStrategy(sessionRegistry)));
 	}
 
 	@Bean
@@ -47,13 +67,23 @@ public class SecurityConfig {
 			HttpSecurity http,
 			SecurityContextRepository securityContextRepository,
 			RestAuthenticationEntryPoint authenticationEntryPoint,
-			RestAccessDeniedHandler accessDeniedHandler) throws Exception {
+			RestAccessDeniedHandler accessDeniedHandler,
+			SessionAuthenticationStrategy sessionAuthenticationStrategy,
+			SessionRegistry sessionRegistry) throws Exception {
 		http
 				.cors(Customizer.withDefaults())
 				.csrf(Customizer.withDefaults())
 				.securityContext(context -> context
 						.securityContextRepository(securityContextRepository)
 						.requireExplicitSave(true))
+				.sessionManagement(session -> session
+						.sessionAuthenticationStrategy(sessionAuthenticationStrategy)
+						.maximumSessions(-1)
+						.sessionRegistry(sessionRegistry)
+						.expiredSessionStrategy(event -> authenticationEntryPoint.commence(
+								event.getRequest(),
+								event.getResponse(),
+								new InsufficientAuthenticationException("Session expired."))))
 				.authorizeHttpRequests(authorize -> authorize
 						.requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/csrf").permitAll()
 						.requestMatchers("/api/**").authenticated()

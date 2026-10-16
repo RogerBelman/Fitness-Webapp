@@ -11,6 +11,7 @@ const api = vi.hoisted(() => ({
 }))
 
 const account = vi.hoisted(() => ({
+  updatePreferences: vi.fn(),
   changePassword: vi.fn(),
   deleteAccount: vi.fn(),
 }))
@@ -18,6 +19,8 @@ const account = vi.hoisted(() => ({
 vi.mock('../src/api/dataBackup', () => api)
 vi.mock('../src/hooks/useAuth', () => ({
   useAuth: () => ({
+    user: { id: 1, username: 'settings_user', weightUnit: 'lb', createdAt: '2026-10-14T00:00:00Z' },
+    updatePreferences: account.updatePreferences,
     changePassword: account.changePassword,
     deleteAccount: account.deleteAccount,
   }),
@@ -27,6 +30,7 @@ describe('data backup workflow', () => {
   beforeEach(() => {
     api.exportDataBackup.mockReset()
     api.importDataBackup.mockReset()
+    account.updatePreferences.mockReset()
     account.changePassword.mockReset()
     account.deleteAccount.mockReset()
   })

@@ -1,6 +1,7 @@
 import { ApiError, apiRequest, resetCsrfToken } from './client'
 import type {
   AuthUser,
+  AccountPreferencesInput,
   ChangePasswordInput,
   Credentials,
   DeleteAccountInput,
@@ -32,6 +33,13 @@ export async function currentAccount() {
 export async function logoutAccount() {
   await apiRequest<void>('/api/auth/logout', { method: 'POST' })
   resetCsrfToken()
+}
+
+export function updateAccountPreferences(input: AccountPreferencesInput) {
+  return apiRequest<AuthUser>('/api/auth/preferences', {
+    method: 'PUT',
+    body: input,
+  })
 }
 
 export async function changeAccountPassword(input: ChangePasswordInput) {

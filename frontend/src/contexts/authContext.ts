@@ -1,6 +1,7 @@
 import { createContext } from 'react'
 import type {
   AuthUser,
+  AccountPreferencesInput,
   ChangePasswordInput,
   Credentials,
   DeleteAccountInput,
@@ -12,6 +13,7 @@ export type AuthContextValue = {
   login: (credentials: Credentials) => Promise<void>
   register: (credentials: Credentials) => Promise<void>
   logout: () => Promise<void>
+  updatePreferences: (input: AccountPreferencesInput) => Promise<void>
   changePassword: (input: ChangePasswordInput) => Promise<void>
   deleteAccount: (input: DeleteAccountInput) => Promise<void>
 }

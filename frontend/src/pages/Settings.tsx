@@ -11,6 +11,7 @@ import { ApiError } from '../api/client'
 import { exportDataBackup, importDataBackup } from '../api/dataBackup'
 import { ActionFeedback } from '../components/ActionFeedback'
 import { PageHeader } from '../components/PageHeader'
+import { PasswordInput } from '../components/PasswordInput'
 import { useAuth } from '../hooks/useAuth'
 import { useMeasurementPreferences } from '../hooks/useMeasurementPreferences'
 
@@ -127,6 +128,20 @@ export function Settings() {
     setSuccessMessage(null)
   }
 
+  async function changeWeightUnit(unit: 'lb' | 'kg') {
+    if (unit === weightUnit) return
+    setBusyAction('preferences')
+    clearFeedback()
+    try {
+      await setWeightUnit(unit)
+      setSuccessMessage(`Weight units changed to ${unit}.`)
+    } catch (error) {
+      setErrorMessage(readError(error, 'Could not update weight units.'))
+    } finally {
+      setBusyAction(null)
+    }
+  }
+
   return (
     <section className="PageStack">
       <PageHeader
@@ -151,7 +166,7 @@ export function Settings() {
           <div className="SettingRow">
             <div>
               <strong>Weight units</strong>
-              <span>Saved on this device.</span>
+              <span>Saved to your account.</span>
             </div>
             <div className="WeightUnitControl" role="group" aria-label="Weight unit">
               <div className="WeightUnitToggle">
@@ -159,8 +174,9 @@ export function Settings() {
                   <button
                     aria-pressed={weightUnit === unit}
                     className={weightUnit === unit ? 'WeightUnitOption active' : 'WeightUnitOption'}
+                    disabled={busyAction !== null}
                     key={unit}
-                    onClick={() => setWeightUnit(unit)}
+                    onClick={() => void changeWeightUnit(unit)}
                     type="button"
                   >
                     {unit}
@@ -180,42 +196,45 @@ export function Settings() {
             </p>
           </div>
           <form className="SettingsForm" onSubmit={(event) => void submitPasswordChange(event)}>
-            <label>
-              Current Password
-              <input
+            <div className="SettingsField">
+              <label htmlFor="current-password">Current Password</label>
+              <PasswordInput
+                id="current-password"
                 autoComplete="current-password"
                 maxLength={72}
                 required
-                type="password"
+                toggleLabel="current password"
                 value={currentPassword}
                 onChange={(event) => setCurrentPassword(event.target.value)}
               />
-            </label>
-            <label>
-              New Password
-              <input
+            </div>
+            <div className="SettingsField">
+              <label htmlFor="new-password">New Password</label>
+              <PasswordInput
+                id="new-password"
                 autoComplete="new-password"
                 maxLength={72}
                 minLength={8}
                 required
-                type="password"
+                toggleLabel="new password"
                 value={newPassword}
                 onChange={(event) => setNewPassword(event.target.value)}
               />
               <span className="FieldHint">Use at least 8 characters.</span>
-            </label>
-            <label>
-              Confirm New Password
-              <input
+            </div>
+            <div className="SettingsField">
+              <label htmlFor="confirm-new-password">Confirm New Password</label>
+              <PasswordInput
+                id="confirm-new-password"
                 autoComplete="new-password"
                 maxLength={72}
                 minLength={8}
                 required
-                type="password"
+                toggleLabel="new password confirmation"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
               />
-            </label>
+            </div>
             <button
               className="Button ButtonPrimary"
               disabled={busyAction !== null}
@@ -334,17 +353,18 @@ export function Settings() {
         <p id="delete-account-description">
           This deletes your exercises, workouts, templates, goals, and account. This action cannot be undone.
         </p>
-        <label className="DialogPasswordField">
-          Current Password
-          <input
+        <div className="DialogPasswordField">
+          <label htmlFor="delete-account-password">Current Password</label>
+          <PasswordInput
+            id="delete-account-password"
             autoComplete="current-password"
             maxLength={72}
             required
-            type="password"
+            toggleLabel="account deletion password"
             value={deletePassword}
             onChange={(event) => setDeletePassword(event.target.value)}
           />
-        </label>
+        </div>
         <div className="FormActions">
           <button
             autoFocus

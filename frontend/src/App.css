@@ -268,13 +268,45 @@
   gap: 14px;
 }
 
-.SettingsForm label,
+.SettingsField,
 .DialogPasswordField {
   display: grid;
   gap: 6px;
+}
+
+.SettingsField > label,
+.DialogPasswordField > label {
   color: var(--text);
   font-size: 13px;
   font-weight: 700;
+}
+
+.PasswordInput {
+  position: relative;
+}
+
+.PasswordInput input {
+  padding-right: 64px;
+}
+
+.PasswordVisibilityToggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  min-height: 30px;
+  padding: 4px 8px;
+  color: var(--accent);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.PasswordVisibilityToggle:hover {
+  background: var(--accent-soft);
 }
 
 .SettingsForm .Button,
