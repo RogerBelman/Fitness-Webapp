@@ -7,4 +7,10 @@ public record LoginRequest(
 		String username,
 
 		@NotBlank(message = "password is required.")
-		String password) { }
+		String password) {
+
+	@Override
+	public String toString() {
+		return "LoginRequest[username=" + username + ", password=[REDACTED]]";
+	}
+}

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { useMeasurementPreferences } from '../hooks/useMeasurementPreferences'
 import { useAuth } from '../hooks/useAuth'
 import { ActionFeedback } from './ActionFeedback'
 
@@ -12,7 +11,6 @@ const navItems = [
 ]
 
 export function AppLayout() {
-  const { weightUnit, setWeightUnit } = useMeasurementPreferences()
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [logoutError, setLogoutError] = useState<string | null>(null)
@@ -50,10 +48,6 @@ export function AppLayout() {
               </NavLink>
             ))}
           </nav>
-          <div className="AccountControl">
-            <span title={user?.username}>{user?.username}</span>
-            <button type="button" onClick={() => void signOut()}>Sign Out</button>
-          </div>
         </div>
       </header>
 
@@ -65,26 +59,19 @@ export function AppLayout() {
 
       <footer className="AppFooter">
         <div className="AppFooterContent">
-          <NavLink className="FooterLink" to="/data">
-            Data &amp; Backup
-          </NavLink>
-          <div className="FooterPreferences">
-            <span className="PreferenceLabel">Weight units</span>
-            <div className="WeightUnitControl" role="group" aria-label="Weight unit">
-              <div className="WeightUnitToggle">
-                {(['lb', 'kg'] as const).map((unit) => (
-                  <button
-                    aria-pressed={weightUnit === unit}
-                    className={weightUnit === unit ? 'WeightUnitOption active' : 'WeightUnitOption'}
-                    key={unit}
-                    onClick={() => setWeightUnit(unit)}
-                    type="button"
-                  >
-                    {unit}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="FooterAccount" aria-label={`Signed in as ${user?.username}`}>
+            <span className="FooterAccountIcon" aria-hidden="true">
+              {user?.username.charAt(0).toUpperCase()}
+            </span>
+            <span className="FooterAccountName">{user?.username}</span>
+          </div>
+          <div className="FooterActions">
+            <NavLink className="FooterLink" to="/settings">
+              Settings
+            </NavLink>
+            <button className="FooterSignOut" type="button" onClick={() => void signOut()}>
+              Sign Out
+            </button>
           </div>
         </div>
       </footer>

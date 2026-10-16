@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from '../src/contexts/AuthProvider'
+import { AppLayout } from '../src/components/AppLayout'
 import { Login } from '../src/pages/Login'
 import { ProtectedRoute } from '../src/routes/ProtectedRoute'
 
@@ -11,6 +12,8 @@ const authApi = vi.hoisted(() => ({
   loginAccount: vi.fn(),
   logoutAccount: vi.fn(),
   registerAccount: vi.fn(),
+  changeAccountPassword: vi.fn(),
+  deleteCurrentAccount: vi.fn(),
 }))
 
 vi.mock('../src/api/auth', () => authApi)
@@ -66,6 +69,36 @@ describe('authentication workflow', () => {
         password: 'new-password',
       })
     })
+  })
+
+  it('shows account controls in the footer and signs out', async () => {
+    const user = userEvent.setup()
+    authApi.currentAccount.mockResolvedValue(account)
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <AuthProvider>
+          <Routes>
+            <Route path="login" element={<p>Signed out</p>} />
+            <Route element={<AppLayout />}>
+              <Route index element={<p>Dashboard content</p>} />
+            </Route>
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    )
+
+    const footer = await screen.findByRole('contentinfo')
+    expect(within(footer).getByLabelText('Signed in as learning_user')).toBeInTheDocument()
+    expect(within(footer).getByRole('link', { name: 'Settings' })).toHaveAttribute(
+      'href',
+      '/settings',
+    )
+
+    await user.click(within(footer).getByRole('button', { name: 'Sign Out' }))
+
+    await waitFor(() => expect(authApi.logoutAccount).toHaveBeenCalledOnce())
+    expect(await screen.findByText('Signed out')).toBeInTheDocument()
   })
 })
 

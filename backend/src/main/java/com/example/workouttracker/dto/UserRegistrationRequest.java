@@ -12,4 +12,10 @@ public record UserRegistrationRequest(
 
 		@NotBlank(message = "password is required.")
 		@Size(min = 8, max = 72, message = "password must be between 8 and 72 characters.")
-		String password) { }
+		String password) {
+
+	@Override
+	public String toString() {
+		return "UserRegistrationRequest[username=" + username + ", password=[REDACTED]]";
+	}
+}

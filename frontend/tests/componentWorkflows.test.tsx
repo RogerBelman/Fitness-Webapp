@@ -9,7 +9,7 @@ import { AddSetForm } from '../src/components/workouts/AddSetForm'
 import { WorkoutDetails } from '../src/components/workouts/WorkoutDetails'
 import { WorkoutList } from '../src/components/workouts/WorkoutList'
 import { WorkoutTemplateList } from '../src/components/workouts/WorkoutTemplateList'
-import { AppLayout } from '../src/components/AppLayout'
+import { Settings } from '../src/pages/Settings'
 import { GoalPanel } from '../src/components/progress/GoalPanel'
 import type { Exercise } from '../src/types/exercise'
 import type { Workout, WorkoutDetail } from '../src/types/workout'
@@ -83,7 +83,7 @@ describe('measurement preferences', () => {
     })
   })
 
-  it('changes and persists the weight unit from the app footer', async () => {
+  it('changes and persists the weight unit from settings', async () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
@@ -94,13 +94,13 @@ describe('measurement preferences', () => {
             login: async () => undefined,
             register: async () => undefined,
             logout: async () => undefined,
+            changePassword: async () => undefined,
+            deleteAccount: async () => undefined,
           }}
         >
           <MeasurementPreferencesProvider>
             <Routes>
-              <Route element={<AppLayout />}>
-                <Route index element={<p>Dashboard content</p>} />
-              </Route>
+              <Route index element={<Settings />} />
             </Routes>
           </MeasurementPreferencesProvider>
         </AuthContext.Provider>

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
+import { ActionFeedback } from '../components/ActionFeedback'
 import { useAuth } from '../hooks/useAuth'
 
 type AuthMode = 'login' | 'register'
@@ -15,6 +16,7 @@ export function Login() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const notice = noticeFrom(location.state)
 
   if (user) return <Navigate to={destinationFrom(location.state)} replace />
 
@@ -62,6 +64,8 @@ export function Login() {
               : 'Create an account to start building your workout history.'}
           </p>
         </div>
+
+        <ActionFeedback successMessage={notice} />
 
         <div className="AuthModeToggle" role="tablist" aria-label="Account action">
           <button
@@ -179,4 +183,16 @@ function readAuthError(error: unknown) {
     return error.details.message
   }
   return 'Could not reach the server. Please try again.'
+}
+
+function noticeFrom(state: unknown) {
+  if (
+    typeof state === 'object' &&
+    state !== null &&
+    'notice' in state &&
+    typeof state.notice === 'string'
+  ) {
+    return state.notice
+  }
+  return null
 }

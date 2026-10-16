@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.workouttracker.dto.UserRegistrationRequest;
 import com.example.workouttracker.dto.UserResponse;
+import com.example.workouttracker.dto.ChangePasswordRequest;
+import com.example.workouttracker.dto.DeleteAccountRequest;
 import com.example.workouttracker.entity.AppUser;
 import com.example.workouttracker.exception.BadRequestException;
 import com.example.workouttracker.exception.DuplicateResourceException;
@@ -22,10 +24,18 @@ public class UserAccountService {
 
 	private final AppUserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final CurrentUserService currentUserService;
+	private final DataBackupService dataBackupService;
 
-	public UserAccountService(AppUserRepository userRepository, PasswordEncoder passwordEncoder) {
+	public UserAccountService(
+			AppUserRepository userRepository,
+			PasswordEncoder passwordEncoder,
+			CurrentUserService currentUserService,
+			DataBackupService dataBackupService) {
 		this.userRepository = userRepository;
 		this.passwordEncoder = passwordEncoder;
+		this.currentUserService = currentUserService;
+		this.dataBackupService = dataBackupService;
 	}
 
 	@Transactional
@@ -47,5 +57,36 @@ public class UserAccountService {
 		AppUser user = userRepository.findByUsernameIgnoreCase(username)
 				.orElseThrow(() -> new ResourceNotFoundException("User account not found."));
 		return new UserResponse(user.getId(), user.getUsername(), user.getCreatedAt());
+	}
+
+	@Transactional
+	public void changePassword(ChangePasswordRequest request) {
+		AppUser user = currentUserService.requireCurrentUser();
+		requireMatchingPassword(user, request.currentPassword());
+		validatePasswordLength(request.newPassword());
+		if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+			throw new BadRequestException("New password must be different from the current password.");
+		}
+		user.changePasswordHash(passwordEncoder.encode(request.newPassword()));
+	}
+
+	@Transactional
+	public void deleteCurrentAccount(DeleteAccountRequest request) {
+		AppUser user = currentUserService.requireCurrentUser();
+		requireMatchingPassword(user, request.currentPassword());
+		dataBackupService.deleteDataForUser(user.getId());
+		userRepository.delete(user);
+	}
+
+	private void requireMatchingPassword(AppUser user, String password) {
+		if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+			throw new BadRequestException("Current password is incorrect.");
+		}
+	}
+
+	private void validatePasswordLength(String password) {
+		if (password.getBytes(StandardCharsets.UTF_8).length > BCRYPT_MAX_PASSWORD_BYTES) {
+			throw new BadRequestException("new password must be 72 UTF-8 bytes or less.");
+		}
 	}
 }

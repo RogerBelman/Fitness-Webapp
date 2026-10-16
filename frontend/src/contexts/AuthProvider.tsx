@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
+  changeAccountPassword,
   currentAccount,
+  deleteCurrentAccount,
   loginAccount,
   logoutAccount,
   registerAccount,
 } from '../api/auth'
-import type { AuthUser, Credentials } from '../types/auth'
+import type {
+  AuthUser,
+  ChangePasswordInput,
+  Credentials,
+  DeleteAccountInput,
+} from '../types/auth'
 import { AuthContext } from './authContext'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -42,6 +49,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       async logout() {
         await logoutAccount()
+        setUser(null)
+      },
+      async changePassword(input: ChangePasswordInput) {
+        await changeAccountPassword(input)
+        setUser(null)
+      },
+      async deleteAccount(input: DeleteAccountInput) {
+        await deleteCurrentAccount(input)
         setUser(null)
       },
     }),

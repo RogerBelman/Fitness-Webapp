@@ -6,8 +6,10 @@ import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.anonymous;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -23,7 +25,10 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.workouttracker.entity.AppUser;
+import com.example.workouttracker.entity.Exercise;
+import com.example.workouttracker.entity.TrainingType;
 import com.example.workouttracker.repository.AppUserRepository;
+import com.example.workouttracker.repository.ExerciseRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -32,6 +37,7 @@ class AuthControllerTests {
 
 	@Autowired private MockMvc mvc;
 	@Autowired private AppUserRepository users;
+	@Autowired private ExerciseRepository exercises;
 	@Autowired private PasswordEncoder passwordEncoder;
 
 	@Test
@@ -140,6 +146,66 @@ class AuthControllerTests {
 		mvc.perform(post("/api/auth/logout").session(session))
 				.andExpect(status().isNoContent());
 		assertThat(session.isInvalid()).isTrue();
+	}
+
+	@Test
+	void changesThePasswordAndEndsTheCurrentSession() throws Exception {
+		register("password_user", "current-password").andExpect(status().isCreated());
+		MvcResult loginResult = login("password_user", "current-password")
+				.andExpect(status().isOk())
+				.andReturn();
+		MockHttpSession session = (MockHttpSession) loginResult.getRequest().getSession(false);
+
+		mvc.perform(put("/api/auth/password")
+				.session(session)
+				.contentType("application/json")
+				.content("{\"currentPassword\":\"current-password\",\"newPassword\":\"updated-password\"}"))
+				.andExpect(status().isNoContent());
+
+		assertThat(session.isInvalid()).isTrue();
+		login("password_user", "current-password").andExpect(status().isUnauthorized());
+		login("password_user", "updated-password").andExpect(status().isOk());
+	}
+
+	@Test
+	void rejectsAPasswordChangeWhenTheCurrentPasswordIsWrong() throws Exception {
+		register("unchanged_user", "current-password").andExpect(status().isCreated());
+		MvcResult loginResult = login("unchanged_user", "current-password")
+				.andExpect(status().isOk())
+				.andReturn();
+		MockHttpSession session = (MockHttpSession) loginResult.getRequest().getSession(false);
+
+		mvc.perform(put("/api/auth/password")
+				.session(session)
+				.contentType("application/json")
+				.content("{\"currentPassword\":\"wrong-password\",\"newPassword\":\"updated-password\"}"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value("Current password is incorrect."));
+
+		assertThat(session.isInvalid()).isFalse();
+		login("unchanged_user", "current-password").andExpect(status().isOk());
+	}
+
+	@Test
+	void deletesTheAccountAndItsOwnedData() throws Exception {
+		register("delete_user", "delete-password").andExpect(status().isCreated());
+		AppUser account = users.findByUsernameIgnoreCase("delete_user").orElseThrow();
+		exercises.save(new Exercise(
+				account, "Temporary Exercise", "Chest", "Strength", "Test", TrainingType.STRENGTH));
+		MvcResult loginResult = login("delete_user", "delete-password")
+				.andExpect(status().isOk())
+				.andReturn();
+		MockHttpSession session = (MockHttpSession) loginResult.getRequest().getSession(false);
+
+		mvc.perform(delete("/api/auth/account")
+				.session(session)
+				.contentType("application/json")
+				.content("{\"currentPassword\":\"delete-password\"}"))
+				.andExpect(status().isNoContent());
+
+		assertThat(session.isInvalid()).isTrue();
+		assertThat(users.findByUsernameIgnoreCase("delete_user")).isEmpty();
+		assertThat(exercises.findByUserId(account.getId())).isEmpty();
 	}
 
 	@Test

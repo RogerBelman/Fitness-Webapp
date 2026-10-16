@@ -103,12 +103,7 @@ public class DataBackupService {
 		AppUser user = currentUserService.requireCurrentUser();
 		Long userId = user.getId();
 
-		goalRepository.deleteAll(goalRepository.findByExerciseUserIdOrderByCreatedAtDescIdDesc(userId));
-		templateRepository.deleteAll(templateRepository.findByUserIdOrderByNameAscIdAsc(userId));
-		workoutRepository.deleteAll(workoutRepository.findByUserIdOrderByWorkoutDateDescIdDesc(userId));
-		exerciseRepository.deleteAll(exerciseRepository.findByUserId(userId));
-		entityManager.flush();
-		entityManager.clear();
+		deleteDataForUser(userId);
 
 		Map<String, Exercise> exercisesByName = new HashMap<>();
 		for (DataBackup.ExerciseData item : exerciseData.values()) {
@@ -151,6 +146,16 @@ public class DataBackupService {
 		return new DataImportResponse(
 				backup.exercises().size(), backup.workouts().size(),
 				backup.templates().size(), backup.goals().size());
+	}
+
+	@Transactional
+	public void deleteDataForUser(Long userId) {
+		goalRepository.deleteAll(goalRepository.findByExerciseUserIdOrderByCreatedAtDescIdDesc(userId));
+		templateRepository.deleteAll(templateRepository.findByUserIdOrderByNameAscIdAsc(userId));
+		workoutRepository.deleteAll(workoutRepository.findByUserIdOrderByWorkoutDateDescIdDesc(userId));
+		exerciseRepository.deleteAll(exerciseRepository.findByUserId(userId));
+		entityManager.flush();
+		entityManager.clear();
 	}
 
 	private Map<String, DataBackup.ExerciseData> validate(DataBackup backup) {

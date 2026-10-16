@@ -52,43 +52,6 @@
   width: 100%;
 }
 
-.AccountControl {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 7px 8px 7px 12px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-.AccountControl span {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 800;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.AccountControl button {
-  flex: 0 0 auto;
-  padding: 5px 8px;
-  color: var(--accent);
-  background: transparent;
-  border: 0;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.AccountControl button:hover {
-  background: var(--accent-soft);
-}
-
 .WeightUnitControl {
   display: flex;
   align-items: center;
@@ -178,8 +141,48 @@
   padding: 14px 0;
 }
 
+.FooterAccount,
+.FooterActions {
+  display: flex;
+  align-items: center;
+}
+
+.FooterAccount {
+  min-width: 0;
+  gap: 8px;
+}
+
+.FooterAccountIcon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: var(--on-accent);
+  background: var(--accent);
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.FooterAccountName {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.FooterActions {
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
 .FooterLink {
+  padding: 6px 8px;
   color: var(--muted);
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
@@ -188,12 +191,22 @@
 .FooterLink:hover,
 .FooterLink.active {
   color: var(--accent);
+  background: var(--accent-soft);
 }
 
-.FooterPreferences {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.FooterSignOut {
+  padding: 6px 8px;
+  color: var(--accent);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.FooterSignOut:hover {
+  background: var(--accent-soft);
 }
 
 .DataBackupGrid {
@@ -201,17 +214,100 @@
   gap: 16px;
 }
 
-.DataBackupCard {
-  align-content: start;
+.SettingsGrid {
+  display: grid;
+  gap: 16px;
+}
+
+.SettingsCard,
+.SettingsSection,
+.DangerZone {
+  min-height: 0;
+}
+
+.SettingsCard h2,
+.SettingsSection h2,
+.DangerZone h2,
+.SettingsInsetCard h3 {
+  margin: 0;
+}
+
+.SectionEyebrow {
+  margin: 0 0 5px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.SettingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 18px;
+  padding: 14px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 
-.DataBackupCard h2 {
-  margin: 0 0 6px;
+.SettingRow > div:first-child {
+  display: grid;
+  gap: 3px;
 }
 
-.DataBackupCard .Button {
+.SettingRow span,
+.SettingsInsetCard p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.SettingsForm {
+  display: grid;
+  gap: 14px;
+}
+
+.SettingsForm label,
+.DialogPasswordField {
+  display: grid;
+  gap: 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.SettingsForm .Button,
+.SettingsInsetCard .Button,
+.DangerZone .Button {
   width: fit-content;
+}
+
+.SettingsInsetCard {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  padding: 16px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.SettingsInsetCard p {
+  margin: 6px 0 0;
+  line-height: 1.55;
+}
+
+.DangerZone {
+  border-color: var(--danger-border);
+}
+
+.DangerZone .SectionEyebrow {
+  color: var(--danger);
+}
+
+.DialogPasswordField {
+  margin-top: 18px;
 }
 
 .BackupFileField {
@@ -459,10 +555,6 @@ textarea:disabled {
     width: auto;
   }
 
-  .AccountControl {
-    max-width: 220px;
-  }
-
   .PageShell {
     width: min(1120px, calc(100% - 48px));
     padding-top: 36px;
@@ -480,6 +572,11 @@ textarea:disabled {
 
   .DataBackupGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .SettingsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
   }
 
   .ExerciseFilterBar {

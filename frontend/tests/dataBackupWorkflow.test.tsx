@@ -1,20 +1,34 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { DataBackup } from '../src/pages/DataBackup'
+import { Settings } from '../src/pages/Settings'
+import { MeasurementPreferencesProvider } from '../src/contexts/MeasurementPreferences'
 
 const api = vi.hoisted(() => ({
   exportDataBackup: vi.fn(),
   importDataBackup: vi.fn(),
 }))
 
+const account = vi.hoisted(() => ({
+  changePassword: vi.fn(),
+  deleteAccount: vi.fn(),
+}))
+
 vi.mock('../src/api/dataBackup', () => api)
+vi.mock('../src/hooks/useAuth', () => ({
+  useAuth: () => ({
+    changePassword: account.changePassword,
+    deleteAccount: account.deleteAccount,
+  }),
+}))
 
 describe('data backup workflow', () => {
   beforeEach(() => {
     api.exportDataBackup.mockReset()
     api.importDataBackup.mockReset()
+    account.changePassword.mockReset()
+    account.deleteAccount.mockReset()
   })
 
   it('requires confirmation before replacing data from a selected backup', async () => {
@@ -34,11 +48,7 @@ describe('data backup workflow', () => {
       goals: 0,
     })
 
-    render(
-      <MemoryRouter>
-        <DataBackup />
-      </MemoryRouter>,
-    )
+    renderSettings()
 
     const file = new File([JSON.stringify(backup)], 'training-backup.json', {
       type: 'application/json',
@@ -62,4 +72,49 @@ describe('data backup workflow', () => {
       ),
     ).toBeInTheDocument()
   })
+
+  it('validates and submits a password change', async () => {
+    const user = userEvent.setup()
+    account.changePassword.mockResolvedValue(undefined)
+    renderSettings()
+
+    const security = screen.getByRole('region', { name: 'Password' })
+    await user.type(within(security).getByLabelText('Current Password'), 'current-password')
+    await user.type(within(security).getByLabelText(/^New Password/), 'updated-password')
+    await user.type(within(security).getByLabelText('Confirm New Password'), 'updated-password')
+    await user.click(within(security).getByRole('button', { name: 'Change Password' }))
+
+    await waitFor(() => expect(account.changePassword).toHaveBeenCalledWith({
+      currentPassword: 'current-password',
+      newPassword: 'updated-password',
+    }))
+  })
+
+  it('requires password confirmation before deleting the account', async () => {
+    const user = userEvent.setup()
+    account.deleteAccount.mockResolvedValue(undefined)
+    renderSettings()
+
+    await user.click(screen.getByRole('button', { name: 'Delete Account' }))
+    expect(screen.getByRole('heading', { name: 'Permanently delete your account?' })).toBeInTheDocument()
+    expect(account.deleteAccount).not.toHaveBeenCalled()
+
+    const dialog = screen.getByRole('dialog')
+    await user.type(within(dialog).getByLabelText('Current Password'), 'current-password')
+    await user.click(within(dialog).getByRole('button', { name: 'Delete My Account' }))
+
+    await waitFor(() => expect(account.deleteAccount).toHaveBeenCalledWith({
+      currentPassword: 'current-password',
+    }))
+  })
 })
+
+function renderSettings() {
+  return render(
+    <MemoryRouter>
+      <MeasurementPreferencesProvider>
+        <Settings />
+      </MeasurementPreferencesProvider>
+    </MemoryRouter>,
+  )
+}

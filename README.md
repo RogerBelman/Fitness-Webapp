@@ -22,6 +22,7 @@ This repository contains a full-stack workout tracking application built with a 
 - Export all training data to a portable JSON backup and validate imported backups before replacing current data.
 - Register accounts and use server-managed login sessions with BCrypt-hashed passwords.
 - Keep each account's exercises, workouts, templates, goals, progress, and backups separate.
+- Manage weight units, backups, password changes, and account deletion from one Settings page.
 - Validate API requests and return consistent error responses.
 - Run PostgreSQL locally with Docker or connect Spring Boot to Neon.
 - Apply versioned schema changes automatically with Flyway.
@@ -65,15 +66,15 @@ Routes:
 | `/workouts?new=1` | Workouts with the new-workout form open |
 | `/workouts/templates` | Workout template management |
 | `/workouts/{id}` | Workout Detail |
-| `/data` | Data export and backup restore |
+| `/settings` | Measurement preferences, password, data backup, and account management |
 
 The Dashboard shows a Monday–Sunday calendar with previous/next week controls and a Today shortcut. Its Month Overview dialog marks days with workouts and selecting a date returns to that day on the Dashboard. Select a day to see its workouts, exercises, strength sets and volume, and cardio minutes. Add Workout opens the creation form on the combined Workouts page and preselects the chosen date for today or a past day. Workout history can be searched by workout or exercise name and filtered by Strength, Cardio, Mixed, and date range. New Workout opens the same form above workout history without leaving the Workouts page; Cancel returns to browsing. Creating a workout opens it immediately for exercise entry. Each exercise shows either sets/reps/weight or cardio duration/level according to its training type. Existing `/workouts/new` links redirect to this form and preserve the selected date. Strength charts, goals, maximum volume, and exercise history live on the separate Progress page.
 
-The Weight units control in the footer switches strength entry, totals, goals, history, and charts between pounds and kilograms. PostgreSQL stores pounds as the canonical value; the frontend converts values when reading and submitting them. The selected display unit is saved in browser local storage.
+The Weight units control on the Settings page switches strength entry, totals, goals, history, and charts between pounds and kilograms. PostgreSQL stores pounds as the canonical value; the frontend converts values when reading and submitting them. The selected display unit is saved in browser local storage.
 
-The browser restores the signed-in account from its server session when the app loads. Signed-out visitors are sent to the Login page, and a successful login returns them to the page they originally requested. Registration creates the account and signs in immediately. The current username and Sign Out control appear in the application header.
+The browser restores the signed-in account from its server session when the app loads. Signed-out visitors are sent to the Login page, and a successful login returns them to the page they originally requested. Registration creates the account and signs in immediately. The footer displays the current account alongside clearly labeled Settings and Sign Out controls, keeping the application header focused on navigation.
 
-The Data & Backup page downloads exercises, workouts, strength sets, cardio entries, templates, and goals as a versioned JSON snapshot. Import validates the complete snapshot first and then replaces the current dataset in one database transaction. Invalid files leave existing data unchanged.
+The Settings page downloads exercises, workouts, strength sets, cardio entries, templates, and goals as a versioned JSON snapshot. Import validates the complete snapshot first and then replaces the current dataset in one database transaction. Invalid files leave existing data unchanged. Password changes and account deletion require the current password and end the active session. Account deletion removes that account and its owned training data in one transaction.
 
 The Workout Templates page can create a reusable routine directly or save one from an existing workout. After creating a template, add exercises from the library, arrange their order, and start a workout with empty performance entries.
 
@@ -84,7 +85,7 @@ Frontend API files:
 | File | Purpose |
 | --- | --- |
 | `src/api/client.ts` | Shared `fetch` wrapper with credentials, CSRF protection, base URL, and API error handling |
-| `src/api/auth.ts` | Registration, login, current-account, and logout functions |
+| `src/api/auth.ts` | Registration, login, current-account, logout, password-change, and account-deletion functions |
 | `src/api/exercises.ts` | Exercise endpoint functions |
 | `src/api/workouts.ts` | Workout endpoint functions |
 | `src/api/progress.ts` | Personal-record and exercise-history endpoint functions |
@@ -260,6 +261,8 @@ Authentication uses server-managed HTTP sessions. The browser receives a `JSESSI
 | `POST` | `/api/auth/login` | Verify credentials and create a session | `200 OK` |
 | `GET` | `/api/auth/me` | Restore the current account from the session | `200 OK` |
 | `POST` | `/api/auth/logout` | Invalidate the session and delete its cookie | `204 No Content` |
+| `PUT` | `/api/auth/password` | Verify the current password, save a new hash, and end the session | `204 No Content` |
+| `DELETE` | `/api/auth/account` | Verify the current password and delete the account and its owned data | `204 No Content` |
 
 Registration and login request bodies use the same credential shape:
 
@@ -536,7 +539,7 @@ Current test focus:
 
 | Test file | Purpose |
 | --- | --- |
-| `AuthControllerTests` | Registration, password hashing, login sessions, current-user restoration, logout, CSRF enforcement, and generic credential failures |
+| `AuthControllerTests` | Registration, password hashing and changes, login sessions, current-user restoration, logout, account deletion, CSRF enforcement, and generic credential failures |
 | `ExerciseControllerTests` | Exercise API endpoint behavior |
 | `ExerciseInstructionsTests` | Permanent instructions, session-note independence, clearing, and length validation |
 | `CardioTrackingTests` | Mixed totals, duration/level validation, entry updates/deletes, training-type protection, and deletion cascades |
@@ -558,7 +561,7 @@ npm run lint
 npm run build
 ```
 
-The frontend suite retains seven calendar utility tests and adds interaction coverage for workout history filtering, pounds/kilograms conversion and preference persistence, focused exercise reordering, goal creation and editing, explicit template-detail saving, immediate template exercise changes, starting a workout from a template, and confirmed backup replacement.
+The frontend suite retains seven calendar utility tests and adds interaction coverage for workout history filtering, pounds/kilograms conversion and preference persistence, focused exercise reordering, goal creation and editing, explicit template-detail saving, immediate template exercise changes, starting a workout from a template, confirmed backup replacement, password changes, and account-deletion confirmation.
 
 ## Local Sample Data
 

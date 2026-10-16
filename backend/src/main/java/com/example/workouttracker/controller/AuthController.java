@@ -11,12 +11,16 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.workouttracker.dto.CsrfTokenResponse;
+import com.example.workouttracker.dto.ChangePasswordRequest;
+import com.example.workouttracker.dto.DeleteAccountRequest;
 import com.example.workouttracker.dto.LoginRequest;
 import com.example.workouttracker.dto.UserRegistrationRequest;
 import com.example.workouttracker.dto.UserResponse;
@@ -76,5 +80,30 @@ public class AuthController {
 	@GetMapping("/me")
 	public UserResponse currentUser(Authentication authentication) {
 		return userAccountService.findByUsername(authentication.getName());
+	}
+
+	@PutMapping("/password")
+	public ResponseEntity<Void> changePassword(
+			@Valid @RequestBody ChangePasswordRequest request,
+			HttpServletRequest httpRequest) {
+		userAccountService.changePassword(request);
+		endSession(httpRequest);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/account")
+	public ResponseEntity<Void> deleteAccount(
+			@Valid @RequestBody DeleteAccountRequest request,
+			HttpServletRequest httpRequest) {
+		userAccountService.deleteCurrentAccount(request);
+		endSession(httpRequest);
+		return ResponseEntity.noContent().build();
+	}
+
+	private void endSession(HttpServletRequest request) {
+		if (request.getSession(false) != null) {
+			request.getSession(false).invalidate();
+		}
+		SecurityContextHolder.clearContext();
 	}
 }
