@@ -90,7 +90,7 @@ describe('authentication workflow', () => {
     })
   })
 
-  it('shows account controls in the footer and signs out', async () => {
+  it('opens the account menu and signs out', async () => {
     const user = userEvent.setup()
     authApi.currentAccount.mockResolvedValue(account)
 
@@ -107,14 +107,19 @@ describe('authentication workflow', () => {
       </MemoryRouter>,
     )
 
-    const footer = await screen.findByRole('contentinfo')
-    expect(within(footer).getByLabelText('Signed in as learning_user')).toBeInTheDocument()
-    expect(within(footer).getByRole('link', { name: 'Settings' })).toHaveAttribute(
+    const accountButton = await screen.findByRole('button', {
+      name: 'Open account menu for learning_user',
+    })
+    await user.click(accountButton)
+
+    const accountMenu = screen.getByRole('menu')
+    expect(within(accountMenu).getByText('learning_user')).toBeInTheDocument()
+    expect(within(accountMenu).getByRole('menuitem', { name: 'Settings' })).toHaveAttribute(
       'href',
       '/settings',
     )
 
-    await user.click(within(footer).getByRole('button', { name: 'Sign Out' }))
+    await user.click(within(accountMenu).getByRole('menuitem', { name: 'Sign Out' }))
 
     await waitFor(() => expect(authApi.logoutAccount).toHaveBeenCalledOnce())
     expect(await screen.findByText('Signed out')).toBeInTheDocument()

@@ -27,7 +27,7 @@ export function CardioEntries({
         <p className="EmptyState">No cardio logged.</p>
       ) : (
         <div className="TableScroll">
-          <table className="SetTable">
+          <table className="SetTable ResponsiveTable">
             <thead>
               <tr>
                 <th scope="col">Duration</th>
@@ -39,9 +39,9 @@ export function CardioEntries({
               {entries.map((entry, index) => (
                 <Fragment key={entry.id}>
                   <tr>
-                    <td>{entry.durationMinutes} min</td>
-                    <td>{entry.level ?? '—'}</td>
-                    <td>
+                    <td data-label="Duration">{entry.durationMinutes} min</td>
+                    <td data-label="Level">{entry.level ?? '—'}</td>
+                    <td data-label="Actions">
                       <div className="RowActions">
                         <button
                           className="Button ButtonSecondary"
@@ -62,7 +62,7 @@ export function CardioEntries({
                     </td>
                   </tr>
                   {editingId === entry.id ? (
-                    <tr>
+                    <tr className="TableEditorRow">
                       <td colSpan={3}>
                         <CardioEntryForm
                           initialValues={entry}

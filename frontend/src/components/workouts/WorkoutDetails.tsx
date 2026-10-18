@@ -302,7 +302,7 @@ function SetTable({
   const [editingId, setEditingId] = useState<number | null>(null)
   return (
     <div className="TableScroll">
-      <table className="SetTable">
+      <table className="SetTable ResponsiveTable">
         <thead>
           <tr>
             <th scope="col">Set</th>
@@ -315,12 +315,12 @@ function SetTable({
           {sets.map((set) => (
             <Fragment key={set.id}>
               <tr>
-                <td>{set.setNumber}</td>
-                <td>{set.reps}</td>
-                <td>
+                <td data-label="Set">{set.setNumber}</td>
+                <td data-label="Reps">{set.reps}</td>
+                <td data-label="Weight">
                   {formatWeight(set.weight, weightUnit)} {weightUnit}
                 </td>
-                <td>
+                <td data-label="Actions">
                   <div className="RowActions">
                     <button
                       className="Button ButtonSecondary"
@@ -341,7 +341,7 @@ function SetTable({
                 </td>
               </tr>
               {editingId === set.id ? (
-                <tr>
+                <tr className="TableEditorRow">
                   <td colSpan={4}>
                     <AddSetForm
                       initialValues={set}

@@ -131,7 +131,7 @@ function WorkoutProgressHistory({
         </p>
       ) : (
         <div className="TableScroll">
-          <table className="ProgressTable">
+          <table className="ProgressTable ResponsiveTable">
             <thead>
               <tr>
                 <th scope="col">Date</th>
@@ -146,15 +146,15 @@ function WorkoutProgressHistory({
             <tbody>
               {progress.history.map((point) => (
                 <tr key={point.workoutId}>
-                  <td>{formatWorkoutDate(point.workoutDate)}</td>
-                  <td>{point.totalSets}</td>
-                  <td>
+                  <td data-label="Date">{formatWorkoutDate(point.workoutDate)}</td>
+                  <td data-label="Sets">{point.totalSets}</td>
+                  <td data-label="Max Weight">
                     {formatWeight(point.maxWeight, weightUnit)} {weightUnit}
                   </td>
-                  <td>
+                  <td data-label="Volume">
                     {formatWeight(point.totalVolume, weightUnit)} {weightUnit}
                   </td>
-                  <td>
+                  <td data-label="Workout">
                     <Link to={`/workouts/${point.workoutId}`}>Details</Link>
                   </td>
                 </tr>

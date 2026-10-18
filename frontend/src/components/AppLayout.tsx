@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { ActionFeedback } from './ActionFeedback'
@@ -14,8 +14,39 @@ export function AppLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [logoutError, setLogoutError] = useState<string | null>(null)
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  const accountMenuRef = useRef<HTMLDivElement>(null)
+  const accountMenuButtonRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!accountMenuOpen) {
+      return
+    }
+
+    function closeOnOutsideClick(event: PointerEvent) {
+      if (!accountMenuRef.current?.contains(event.target as Node)) {
+        setAccountMenuOpen(false)
+      }
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setAccountMenuOpen(false)
+        accountMenuButtonRef.current?.focus()
+      }
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [accountMenuOpen])
 
   async function signOut() {
+    setAccountMenuOpen(false)
     setLogoutError(null)
     try {
       await logout()
@@ -49,6 +80,45 @@ export function AppLayout() {
             ))}
           </nav>
         </div>
+
+        <div className="AccountMenu" ref={accountMenuRef}>
+          <button
+            aria-expanded={accountMenuOpen}
+            aria-haspopup="menu"
+            aria-label={`Open account menu for ${user?.username}`}
+            className="AccountMenuButton"
+            onClick={() => setAccountMenuOpen((isOpen) => !isOpen)}
+            ref={accountMenuButtonRef}
+            type="button"
+          >
+            {user?.username.charAt(0).toUpperCase()}
+          </button>
+
+          {accountMenuOpen && (
+            <div className="AccountMenuPopover" role="menu">
+              <div className="AccountMenuIdentity">
+                <span>Signed in as</span>
+                <strong>{user?.username}</strong>
+              </div>
+              <NavLink
+                className="AccountMenuLink"
+                onClick={() => setAccountMenuOpen(false)}
+                role="menuitem"
+                to="/settings"
+              >
+                Settings
+              </NavLink>
+              <button
+                className="AccountMenuSignOut"
+                onClick={() => void signOut()}
+                role="menuitem"
+                type="button"
+              >
+                Sign Out
+              </button>
+            </div>
+          )}
+        </div>
       </header>
 
       <ActionFeedback errorMessage={logoutError} />
@@ -56,25 +126,6 @@ export function AppLayout() {
       <main className="PageShell">
         <Outlet />
       </main>
-
-      <footer className="AppFooter">
-        <div className="AppFooterContent">
-          <div className="FooterAccount" aria-label={`Signed in as ${user?.username}`}>
-            <span className="FooterAccountIcon" aria-hidden="true">
-              {user?.username.charAt(0).toUpperCase()}
-            </span>
-            <span className="FooterAccountName">{user?.username}</span>
-          </div>
-          <div className="FooterActions">
-            <NavLink className="FooterLink" to="/settings">
-              Settings
-            </NavLink>
-            <button className="FooterSignOut" type="button" onClick={() => void signOut()}>
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }

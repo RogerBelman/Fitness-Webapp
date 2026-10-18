@@ -118,7 +118,7 @@ function CardioProgressHistory({
         </p>
       ) : (
         <div className="TableScroll">
-          <table className="ProgressTable">
+          <table className="ProgressTable ResponsiveTable">
             <thead>
               <tr>
                 <th scope="col">Date</th>
@@ -133,7 +133,7 @@ function CardioProgressHistory({
             <tbody>
               {history.map((point) => (
                 <tr key={point.workoutId}>
-                  <td>
+                  <td data-label="Date">
                     {new Intl.DateTimeFormat('en-US', {
                       month: 'short',
                       day: 'numeric',
@@ -141,14 +141,14 @@ function CardioProgressHistory({
                       timeZone: 'UTC',
                     }).format(new Date(`${point.workoutDate}T00:00:00Z`))}
                   </td>
-                  <td>{point.totalEntries}</td>
-                  <td>{formatNumber(point.totalDurationMinutes)} min</td>
-                  <td>
+                  <td data-label="Entries">{point.totalEntries}</td>
+                  <td data-label="Duration">{formatNumber(point.totalDurationMinutes)} min</td>
+                  <td data-label="Highest Level">
                     {point.maxLevel === null
                       ? 'Not recorded'
                       : formatNumber(point.maxLevel)}
                   </td>
-                  <td>
+                  <td data-label="Workout">
                     <Link to={`/workouts/${point.workoutId}`}>Details</Link>
                   </td>
                 </tr>
