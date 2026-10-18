@@ -22,6 +22,7 @@ This repository contains a full-stack workout tracking application built with a 
 - Export all training data to a portable JSON backup and validate imported backups before replacing current data.
 - Register accounts and use server-managed login sessions with BCrypt-hashed passwords.
 - Recover forgotten passwords through neutral email requests and expiring one-time reset links.
+- Limit repeated login, registration, and password-recovery requests per client.
 - Keep each account's exercises, workouts, templates, goals, progress, and backups separate.
 - Sync weight-unit preferences with each account and manage backups, password changes, and account deletion from one Settings page.
 - Validate API requests and return consistent error responses.
@@ -224,6 +225,30 @@ order by installed_rank;
 
 Never commit the real connection string or password. The root `.gitignore` excludes `.env` files while keeping `.env.example` as documentation.
 
+## Production Backend Profile
+
+Activate the strict production configuration with `SPRING_PROFILES_ACTIVE=prod`. The profile requires deployment-provided database, public frontend, CORS, and SMTP settings. Startup fails when a required value is missing, a public URL is not HTTPS, a production service points to localhost, or secure session cookies are disabled.
+
+Required deployment variables:
+
+```text
+SPRING_PROFILES_ACTIVE=prod
+SPRING_DATASOURCE_URL=jdbc:postgresql://<host>/<database>?sslmode=require
+SPRING_DATASOURCE_USERNAME=<database-user>
+SPRING_DATASOURCE_PASSWORD=<database-password>
+APP_CORS_ALLOWED_ORIGINS=https://app.example.com
+APP_FRONTEND_BASE_URL=https://app.example.com
+APP_MAIL_FROM=no-reply@example.com
+SPRING_MAIL_HOST=<smtp-host>
+SPRING_MAIL_PORT=587
+SPRING_MAIL_USERNAME=<smtp-user>
+SPRING_MAIL_PASSWORD=<smtp-password>
+```
+
+The production profile trusts standard forwarded headers and always marks the session cookie Secure. Configure the hosting proxy to replace client-supplied forwarding headers and forward HTTPS requests to the backend. The database connection pool defaults to five connections and can be adjusted with `SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE`.
+
+`GET /actuator/health` is the only exposed Actuator endpoint. It returns overall health without component details and can be used by the hosting platform for health checks.
+
 Useful database commands:
 
 ```powershell
@@ -282,7 +307,9 @@ Registration includes the private recovery email:
 }
 ```
 
-Usernames and emails are trimmed and stored in lowercase. Usernames may contain letters, numbers, and underscores. Passwords are never stored or returned as plain text. The service stores a one-way BCrypt hash. Password-reset tokens use 32 random bytes; PostgreSQL stores only each token's SHA-256 hash. Tokens expire after 30 minutes, can be used once, and are invalidated when the password or recovery email changes. Invalid login attempts and recovery requests use neutral responses so callers cannot determine whether an account exists.
+Usernames and emails are trimmed and stored in lowercase. Usernames may contain letters, numbers, and underscores. Passwords are never stored or returned as plain text. The service stores a one-way BCrypt hash. Password-reset tokens use 32 random bytes; PostgreSQL stores only each token's SHA-256 hash. Tokens expire after 30 minutes, can be used once, and are invalidated when the password or recovery email changes. Expired tokens are deleted when rejected. Invalid login attempts and recovery requests use neutral responses so callers cannot determine whether an account exists.
+
+Authentication writes are rate-limited per client address. Login permits 10 requests per minute, registration permits 5 per hour, forgot-password permits 5 per 15 minutes, and password reset permits 10 per 15 minutes. A blocked request returns `429 Too Many Requests` with a `Retry-After` header. The limiter is stored in one backend process; use a shared store before running multiple backend instances.
 
 For production recovery email, set `APP_MAIL_ENABLED=true`, `APP_FRONTEND_BASE_URL`, `APP_MAIL_FROM`, and the `SPRING_MAIL_*` SMTP variables in the deployment environment. Keep SMTP credentials out of source control.
 
@@ -529,6 +556,7 @@ Common status codes:
 | `400 Bad Request` | Invalid request body | Negative reps |
 | `404 Not Found` | Requested record does not exist | Missing exercise id |
 | `409 Conflict` | Request conflicts with existing data | Duplicate exercise name |
+| `429 Too Many Requests` | Authentication request limit reached | Repeated login attempts |
 | `500 Internal Server Error` | Unexpected backend failure | Unhandled exception |
 
 ## Backend Tests
@@ -551,7 +579,10 @@ Current test focus:
 | Test file | Purpose |
 | --- | --- |
 | `AuthControllerTests` | Registration, password hashing and changes, login sessions, current-user restoration, logout, account deletion, CSRF enforcement, and generic credential failures |
-| `PasswordRecoveryTests` | Neutral recovery requests, one-time reset links, password replacement, and active-session expiry |
+| `PasswordRecoveryTests` | Neutral recovery requests, one-time reset links, expired-token cleanup, password replacement, and active-session expiry |
+| `AuthRateLimitFilterTests` | Per-client authentication request limits and retry responses |
+| `HealthEndpointTests` | Unauthenticated deployment health check |
+| `ProductionConfigurationValidatorTests` | Strict production URL, service, and cookie requirements |
 | `ExerciseControllerTests` | Exercise API endpoint behavior |
 | `ExerciseInstructionsTests` | Permanent instructions, session-note independence, clearing, and length validation |
 | `CardioTrackingTests` | Mixed totals, duration/level validation, entry updates/deletes, training-type protection, and deletion cascades |

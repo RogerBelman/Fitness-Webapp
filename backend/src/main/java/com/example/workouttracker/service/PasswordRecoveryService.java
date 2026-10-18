@@ -56,7 +56,7 @@ public class PasswordRecoveryService {
 		userRepository.findByEmailIgnoreCase(email).ifPresent(user -> createAndSendToken(user, email));
 	}
 
-	@Transactional
+	@Transactional(noRollbackFor = BadRequestException.class)
 	public String resetPassword(ResetPasswordRequest request) {
 		PasswordResetToken resetToken = tokenRepository.findByTokenHash(hash(request.token()))
 				.orElseThrow(() -> new BadRequestException("This password reset link is invalid or expired."));
