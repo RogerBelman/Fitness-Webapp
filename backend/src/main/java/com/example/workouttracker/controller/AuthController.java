@@ -28,6 +28,9 @@ import com.example.workouttracker.dto.ResetPasswordRequest;
 import com.example.workouttracker.dto.UserRegistrationRequest;
 import com.example.workouttracker.dto.UserResponse;
 import com.example.workouttracker.dto.UpdatePreferencesRequest;
+import com.example.workouttracker.dto.EmailVerificationRequest;
+import com.example.workouttracker.service.EmailVerificationService;
+import com.example.workouttracker.service.CurrentUserService;
 import com.example.workouttracker.service.UserAccountService;
 import com.example.workouttracker.service.UserSessionService;
 import com.example.workouttracker.service.PasswordRecoveryService;
@@ -46,6 +49,8 @@ public class AuthController {
 	private final SessionAuthenticationStrategy sessionAuthenticationStrategy;
 	private final UserSessionService userSessionService;
 	private final PasswordRecoveryService passwordRecoveryService;
+	private final EmailVerificationService emailVerificationService;
+	private final CurrentUserService currentUserService;
 
 	public AuthController(
 			UserAccountService userAccountService,
@@ -53,13 +58,17 @@ public class AuthController {
 			SecurityContextRepository securityContextRepository,
 			SessionAuthenticationStrategy sessionAuthenticationStrategy,
 			UserSessionService userSessionService,
-			PasswordRecoveryService passwordRecoveryService) {
+			PasswordRecoveryService passwordRecoveryService,
+			EmailVerificationService emailVerificationService,
+			CurrentUserService currentUserService) {
 		this.userAccountService = userAccountService;
 		this.authenticationManager = authenticationManager;
 		this.securityContextRepository = securityContextRepository;
 		this.sessionAuthenticationStrategy = sessionAuthenticationStrategy;
 		this.userSessionService = userSessionService;
 		this.passwordRecoveryService = passwordRecoveryService;
+		this.emailVerificationService = emailVerificationService;
+		this.currentUserService = currentUserService;
 	}
 
 	@PostMapping("/register")
@@ -107,6 +116,18 @@ public class AuthController {
 	@PostMapping("/password/forgot")
 	public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
 		passwordRecoveryService.requestReset(request);
+		return ResponseEntity.noContent().build();
+	}
+
+	@PostMapping("/email/verification")
+	public ResponseEntity<Void> resendVerification() {
+		emailVerificationService.sendVerification(currentUserService.requireCurrentUser().getId());
+		return ResponseEntity.noContent().build();
+	}
+
+	@PostMapping("/email/verify")
+	public ResponseEntity<Void> verifyEmail(@Valid @RequestBody EmailVerificationRequest request) {
+		emailVerificationService.verify(request.token());
 		return ResponseEntity.noContent().build();
 	}
 

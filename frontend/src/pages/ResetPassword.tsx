@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { resetAccountPassword } from '../api/auth'
 import { ApiError } from '../api/client'
 import { PasswordInput } from '../components/PasswordInput'
+import { PageMetadata } from '../components/PageMetadata'
 
 export function ResetPassword() {
   const [searchParams] = useSearchParams()
@@ -41,6 +42,10 @@ export function ResetPassword() {
 
   return (
     <main className="AuthShell">
+      <PageMetadata
+        description="Choose a new password for your Workout Tracker account."
+        title="Choose a New Password | Workout Tracker"
+      />
       <section className="AuthCard" aria-labelledby="reset-password-title">
         <div className="AuthBrand" aria-hidden="true">WT</div>
         <div className="AuthHeading">

@@ -11,4 +11,9 @@ public class DisabledPasswordResetMailService implements PasswordResetMailServic
 	public void sendPasswordReset(String email, String resetUrl) {
 		// Mail delivery is intentionally disabled until app.mail.enabled is configured.
 	}
+
+	@Override
+	public void sendEmailVerification(String email, String verificationUrl) {
+		// Email delivery is disabled in this environment.
+	}
 }

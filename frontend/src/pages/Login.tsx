@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { ActionFeedback } from '../components/ActionFeedback'
 import { PasswordInput } from '../components/PasswordInput'
+import { PageMetadata } from '../components/PageMetadata'
 import { useAuth } from '../hooks/useAuth'
 
 type AuthMode = 'login' | 'register'
@@ -11,7 +12,9 @@ export function Login() {
   const { user, login, register } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
-  const [mode, setMode] = useState<AuthMode>('login')
+  const [mode, setMode] = useState<AuthMode>(() =>
+    new URLSearchParams(location.search).get('mode') === 'register' ? 'register' : 'login',
+  )
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -52,6 +55,10 @@ export function Login() {
 
   return (
     <main className="AuthShell">
+      <PageMetadata
+        description="Sign in to Workout Tracker or create an account."
+        title={`${mode === 'login' ? 'Sign In' : 'Create Account'} | Workout Tracker`}
+      />
       <section className="AuthCard" aria-labelledby="auth-title">
         <div className="AuthBrand" aria-hidden="true">WT</div>
         <div className="AuthHeading">
@@ -89,14 +96,16 @@ export function Login() {
 
         <form className="AuthForm" onSubmit={(event) => void submit(event)}>
           <div className="AuthField">
-            <label htmlFor="auth-username">Username</label>
+            <label htmlFor="auth-username">{mode === 'login' ? 'Username or email' : 'Username'}</label>
             <input
               id="auth-username"
               autoComplete="username"
               aria-describedby={mode === 'register' ? 'username-hint' : undefined}
-              maxLength={50}
-              minLength={3}
-              pattern="[A-Za-z0-9_]+"
+              maxLength={mode === 'register' ? 50 : 254}
+              minLength={mode === 'register' ? 3 : undefined}
+              pattern={mode === 'register' ? '[A-Za-z0-9_]+' : undefined}
+              autoCapitalize="none"
+              spellCheck={false}
               required
               value={username}
               onChange={(event) => setUsername(event.target.value)}
@@ -118,7 +127,7 @@ export function Login() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
               />
-              <span className="FieldHint">Used only for account recovery.</span>
+              <span className="FieldHint">Used for sign-in and password recovery. We’ll send a verification link.</span>
             </div>
           ) : null}
 
@@ -191,7 +200,7 @@ function destinationFrom(state: unknown) {
       : ''
     return `${state.from.pathname}${search}`
   }
-  return '/'
+  return '/dashboard'
 }
 
 function readAuthError(error: unknown) {

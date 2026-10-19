@@ -22,6 +22,8 @@ public class ProductionConfigurationValidator {
 	private final String mailUsername;
 	private final String mailPassword;
 	private final boolean secureCookie;
+	private final String mailProvider;
+	private final String resendApiKey;
 
 	public ProductionConfigurationValidator(
 			@Value("${spring.datasource.url}") String datasourceUrl,
@@ -31,7 +33,9 @@ public class ProductionConfigurationValidator {
 			@Value("${app.mail.from}") String mailFrom,
 			@Value("${spring.mail.username}") String mailUsername,
 			@Value("${spring.mail.password}") String mailPassword,
-			@Value("${server.servlet.session.cookie.secure}") boolean secureCookie) {
+			@Value("${server.servlet.session.cookie.secure}") boolean secureCookie,
+			@Value("${app.mail.provider:smtp}") String mailProvider,
+			@Value("${app.mail.resend.api-key:}") String resendApiKey) {
 		this.datasourceUrl = datasourceUrl;
 		this.frontendBaseUrl = frontendBaseUrl;
 		this.allowedOrigins = allowedOrigins;
@@ -40,6 +44,8 @@ public class ProductionConfigurationValidator {
 		this.mailUsername = mailUsername;
 		this.mailPassword = mailPassword;
 		this.secureCookie = secureCookie;
+		this.mailProvider = mailProvider;
+		this.resendApiKey = resendApiKey;
 	}
 
 	@PostConstruct
@@ -56,10 +62,16 @@ public class ProductionConfigurationValidator {
 		for (String origin : origins) {
 			requireHttpsUrl("APP_CORS_ALLOWED_ORIGINS", origin);
 		}
-		requireRemoteValue("SPRING_MAIL_HOST", mailHost);
 		requireText("APP_MAIL_FROM", mailFrom);
-		requireText("SPRING_MAIL_USERNAME", mailUsername);
-		requireText("SPRING_MAIL_PASSWORD", mailPassword);
+		if ("resend".equals(mailProvider)) {
+			requireText("RESEND_API_KEY", resendApiKey);
+		} else if ("smtp".equals(mailProvider)) {
+			requireRemoteValue("SPRING_MAIL_HOST", mailHost);
+			requireText("SPRING_MAIL_USERNAME", mailUsername);
+			requireText("SPRING_MAIL_PASSWORD", mailPassword);
+		} else {
+			throw invalid("APP_MAIL_PROVIDER must be resend or smtp.");
+		}
 		if (!secureCookie) {
 			throw invalid("SESSION_COOKIE_SECURE must be true in production.");
 		}

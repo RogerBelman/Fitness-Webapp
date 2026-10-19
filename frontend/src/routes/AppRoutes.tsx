@@ -10,17 +10,21 @@ import { Settings } from '../pages/Settings'
 import { Login } from '../pages/Login'
 import { ForgotPassword } from '../pages/ForgotPassword'
 import { ResetPassword } from '../pages/ResetPassword'
+import { Landing } from '../pages/Landing'
+import { VerifyEmail } from '../pages/VerifyEmail'
 import { ProtectedRoute } from './ProtectedRoute'
 
 export function AppRoutes() {
   return (
     <Routes>
+      <Route index element={<Landing />} />
       <Route path="login" element={<Login />} />
       <Route path="forgot-password" element={<ForgotPassword />} />
       <Route path="reset-password" element={<ResetPassword />} />
+      <Route path="verify-email" element={<VerifyEmail />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Dashboard />} />
           <Route path="progress" element={<Progress />} />
           <Route path="exercises" element={<ExerciseLibrary />} />
           <Route path="workouts/new" element={<NewWorkoutRedirect />} />

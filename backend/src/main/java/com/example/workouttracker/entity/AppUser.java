@@ -31,6 +31,9 @@ public class AppUser {
 	@Column(length = 254, unique = true)
 	private String email;
 
+	@Column(name = "email_verified", nullable = false)
+	private boolean emailVerified;
+
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
@@ -80,6 +83,15 @@ public class AppUser {
 
 	public void changeRecoveryEmail(String email) {
 		this.email = email;
+		this.emailVerified = false;
+	}
+
+	public boolean isEmailVerified() {
+		return emailVerified;
+	}
+
+	public void verifyEmail() {
+		this.emailVerified = true;
 	}
 
 	public Instant getCreatedAt() {

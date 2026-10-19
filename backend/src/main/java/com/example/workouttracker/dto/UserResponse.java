@@ -6,5 +6,6 @@ public record UserResponse(
 		Long id,
 		String username,
 		String email,
+		boolean emailVerified,
 		String weightUnit,
 		Instant createdAt) { }

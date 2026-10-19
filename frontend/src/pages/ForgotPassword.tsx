@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { requestPasswordReset } from '../api/auth'
+import { PageMetadata } from '../components/PageMetadata'
 
 export function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -24,6 +25,10 @@ export function ForgotPassword() {
 
   return (
     <main className="AuthShell">
+      <PageMetadata
+        description="Request a password reset for your Workout Tracker account."
+        title="Reset Password | Workout Tracker"
+      />
       <section className="AuthCard" aria-labelledby="forgot-password-title">
         <div className="AuthBrand" aria-hidden="true">WT</div>
         <div className="AuthHeading">

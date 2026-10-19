@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { ActionFeedback } from './ActionFeedback'
+import { PageMetadata } from './PageMetadata'
+import { EmailVerificationNotice } from './EmailVerificationNotice'
 
 const navItems = [
-  { to: '/', label: 'Dashboard', end: true },
+  { to: '/dashboard', label: 'Dashboard', end: true },
   { to: '/progress', label: 'Progress' },
   { to: '/workouts', label: 'Workouts' },
   { to: '/exercises', label: 'Exercises' },
@@ -58,8 +60,12 @@ export function AppLayout() {
 
   return (
     <div className="AppShell">
+      <PageMetadata
+        description="Your private Workout Tracker account."
+        title="Workout Tracker"
+      />
       <header className="TopBar">
-        <NavLink to="/" className="Brand" aria-label="Workout Tracker home">
+        <NavLink to="/dashboard" className="Brand" aria-label="Workout Tracker dashboard">
           <span className="BrandMark">WT</span>
           <span>Workout Tracker</span>
         </NavLink>
@@ -124,6 +130,7 @@ export function AppLayout() {
       <ActionFeedback errorMessage={logoutError} />
 
       <main className="PageShell">
+        <EmailVerificationNotice />
         <Outlet />
       </main>
     </div>

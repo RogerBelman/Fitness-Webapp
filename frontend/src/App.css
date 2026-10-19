@@ -4,6 +4,272 @@
   min-height: 100svh;
 }
 
+.EmailVerificationNotice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--surface-raised);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+}
+
+.EmailVerificationNotice p,
+.EmailVerificationStatus p {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.EmailVerificationStatus {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+
+.EmailVerified {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.LandingPage {
+  min-height: 100svh;
+  background:
+    radial-gradient(circle at 75% 8%, #244a7c 0, transparent 28%),
+    radial-gradient(circle at 12% 34%, #172f52 0, transparent 25%),
+    var(--background);
+}
+
+.LandingHeader,
+.LandingHero,
+.LandingFeatures {
+  width: min(1120px, calc(100% - 32px));
+  margin-inline: auto;
+}
+
+.LandingHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 76px;
+}
+
+.LandingHero {
+  display: grid;
+  gap: 40px;
+  align-items: center;
+  padding: 64px 0 76px;
+}
+
+.LandingHeroCopy {
+  display: grid;
+  gap: 20px;
+  max-width: 660px;
+}
+
+.LandingEyebrow {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.LandingHero h1 {
+  margin: 0;
+  font-size: clamp(40px, 8vw, 68px);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+}
+
+.LandingIntro {
+  max-width: 600px;
+  color: var(--muted);
+  font-size: clamp(18px, 2.4vw, 21px);
+}
+
+.LandingActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.LandingPreview {
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+  background: #141e30e6;
+  border: 1px solid var(--dialog-border);
+  border-radius: 16px;
+  box-shadow: var(--popup-shadow);
+}
+
+.LandingPreviewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.LandingPreviewHeader span,
+.LandingPreviewWorkout span {
+  color: var(--muted);
+}
+
+.LandingWeek {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.LandingWeek span {
+  display: grid;
+  min-height: 38px;
+  place-items: center;
+  color: var(--muted);
+  background: var(--input-background);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.LandingWeek span.active {
+  color: var(--accent-hover);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.LandingPreviewWorkout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.LandingPreviewWorkout > div {
+  display: grid;
+  gap: 2px;
+}
+
+.LandingPreviewWorkout > div span {
+  font-size: 13px;
+}
+
+.LandingPreviewIcon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--cardio-text) !important;
+  background: var(--cardio-background);
+  border: 1px solid var(--cardio-border);
+  border-radius: 8px;
+  font-size: 18px;
+}
+
+.LandingFeatures {
+  display: grid;
+  gap: 28px;
+  padding: 36px 0 76px;
+}
+
+.LandingSectionHeading {
+  display: grid;
+  gap: 8px;
+  max-width: 660px;
+}
+
+.LandingSectionHeading h2 {
+  margin: 0;
+  font-size: clamp(28px, 5vw, 40px);
+  line-height: 1.1;
+}
+
+.LandingFeatureGrid {
+  display: grid;
+  gap: 14px;
+}
+
+.LandingFeatureCard {
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.LandingFeatureIcon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  background: var(--surface-raised);
+  border: 1px solid var(--control-border);
+  border-radius: 9px;
+  font-size: 20px;
+}
+
+.LandingFeatureCard h3 {
+  margin: 4px 0 0;
+  font-size: 19px;
+}
+
+.LandingFeatureCard p {
+  color: var(--muted);
+}
+
+@media (min-width: 760px) {
+  .LandingHeader,
+  .LandingHero,
+  .LandingFeatures {
+    width: min(1120px, calc(100% - 64px));
+  }
+
+  .LandingHero {
+    grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+    min-height: 620px;
+    padding: 80px 0;
+  }
+
+  .LandingFeatureGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 479px) {
+  .LandingHeader {
+    min-height: 68px;
+  }
+
+  .LandingHeader .Brand > span:last-child {
+    display: none;
+  }
+
+  .LandingHeader .Button {
+    min-height: 38px;
+    padding: 8px 12px;
+  }
+
+  .LandingHero {
+    gap: 32px;
+    padding: 44px 0 56px;
+  }
+
+  .LandingActions,
+  .LandingActions .Button {
+    width: 100%;
+  }
+}
+
 .TopBar {
   position: sticky;
   top: 0;

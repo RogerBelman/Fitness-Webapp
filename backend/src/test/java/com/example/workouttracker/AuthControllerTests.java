@@ -105,10 +105,10 @@ class AuthControllerTests {
 
 		login("known_user", "wrong-password")
 				.andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.message").value("Invalid username or password."));
+				.andExpect(jsonPath("$.message").value("Invalid username/email or password."));
 		login("missing_user", "wrong-password")
 				.andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.message").value("Invalid username or password."));
+				.andExpect(jsonPath("$.message").value("Invalid username/email or password."));
 	}
 
 	@Test

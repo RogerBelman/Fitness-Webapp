@@ -47,6 +47,30 @@ class ProductionConfigurationValidatorTests {
 				"no-reply@example.com",
 				"smtp-user",
 				"smtp-password",
-				secureCookie);
+				secureCookie, "smtp", "");
+	}
+
+	@Test
+	void acceptsResendWithoutSmtpCredentials() {
+		assertThatCode(() -> resendValidator("resend", "test-api-key").validate()).doesNotThrowAnyException();
+	}
+
+	@Test
+	void requiresResendApiKey() {
+		assertThatThrownBy(() -> resendValidator("resend", "").validate())
+				.isInstanceOf(IllegalStateException.class).hasMessageContaining("RESEND_API_KEY");
+	}
+
+	@Test
+	void rejectsUnknownMailProvider() {
+		assertThatThrownBy(() -> resendValidator("invalid", "test-api-key").validate())
+				.isInstanceOf(IllegalStateException.class).hasMessageContaining("APP_MAIL_PROVIDER");
+	}
+
+	private ProductionConfigurationValidator resendValidator(String provider, String apiKey) {
+		return new ProductionConfigurationValidator(
+				"jdbc:postgresql://database.example.com/workouts?sslmode=require",
+				"https://workouts.example.com", "https://workouts.example.com",
+				"localhost", "no-reply@example.com", "", "", true, provider, apiKey);
 	}
 }

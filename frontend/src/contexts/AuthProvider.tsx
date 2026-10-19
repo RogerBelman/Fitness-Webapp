@@ -49,6 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       user,
       isLoading,
+      async refreshUser() {
+        setUser(await currentAccount())
+      },
       async login(credentials: Credentials) {
         setUser(await loginAccount(credentials))
       },

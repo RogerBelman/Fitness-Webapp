@@ -29,7 +29,7 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ApiErrorResponse> handleAuthentication(
 			AuthenticationException exception,
 			HttpServletRequest request) {
-		return buildResponse(HttpStatus.UNAUTHORIZED, "Invalid username or password.", request);
+		return buildResponse(HttpStatus.UNAUTHORIZED, "Invalid username/email or password.", request);
 	}
 
 	@ExceptionHandler(ResourceNotFoundException.class)

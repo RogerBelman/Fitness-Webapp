@@ -7,6 +7,9 @@ import { AppLayout } from '../src/components/AppLayout'
 import { Login } from '../src/pages/Login'
 import { ForgotPassword } from '../src/pages/ForgotPassword'
 import { ResetPassword } from '../src/pages/ResetPassword'
+import { Landing } from '../src/pages/Landing'
+import { VerifyEmail } from '../src/pages/VerifyEmail'
+import { EmailVerificationStatus } from '../src/components/EmailVerificationStatus'
 import { ProtectedRoute } from '../src/routes/ProtectedRoute'
 import { AUTH_REQUIRED_EVENT } from '../src/api/client'
 
@@ -21,6 +24,8 @@ const authApi = vi.hoisted(() => ({
   updateAccountPreferences: vi.fn(),
   requestPasswordReset: vi.fn(),
   resetAccountPassword: vi.fn(),
+  requestEmailVerification: vi.fn(),
+  verifyAccountEmail: vi.fn(),
 }))
 
 vi.mock('../src/api/auth', () => authApi)
@@ -29,6 +34,7 @@ const account = {
   id: 7,
   username: 'learning_user',
   email: 'learning@example.com',
+  emailVerified: true,
   weightUnit: 'lb' as const,
   createdAt: '2026-10-14T00:00:00Z',
 }
@@ -43,6 +49,30 @@ describe('authentication workflow', () => {
     authApi.changeAccountEmail.mockReset().mockResolvedValue(account)
     authApi.requestPasswordReset.mockReset().mockResolvedValue(undefined)
     authApi.resetAccountPassword.mockReset().mockResolvedValue(undefined)
+    authApi.requestEmailVerification.mockReset().mockResolvedValue(undefined)
+    authApi.verifyAccountEmail.mockReset().mockResolvedValue(undefined)
+  })
+
+  it('opens registration from the public landing page', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <AuthProvider>
+          <Routes>
+            <Route index element={<Landing />} />
+            <Route path="login" element={<Login />} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('heading', {
+      name: 'Keep your workouts and progress in one place.',
+    })).toBeInTheDocument()
+    await user.click(screen.getByRole('link', { name: 'Create an Account' }))
+
+    expect(await screen.findByRole('heading', { name: 'Create your account' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Email')).toBeInTheDocument()
   })
 
   it('returns to the requested protected page after login', async () => {
@@ -50,7 +80,7 @@ describe('authentication workflow', () => {
     renderAuthRoutes('/workouts')
 
     expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
-    await user.type(screen.getByLabelText('Username'), 'Learning_User')
+    await user.type(screen.getByLabelText('Username or email'), 'Learning_User')
     const password = screen.getByLabelText('Password')
     await user.type(password, 'session-password')
     expect(password).toHaveAttribute('type', 'password')
@@ -63,6 +93,44 @@ describe('authentication workflow', () => {
       username: 'Learning_User',
       password: 'session-password',
     })
+  })
+
+  it('accepts an email in the sign-in field without the registration username pattern', async () => {
+    const user = userEvent.setup()
+    renderAuthRoutes('/login')
+    const input = await screen.findByLabelText('Username or email')
+    expect(input).not.toHaveAttribute('pattern')
+    await user.type(input, 'learning@example.com')
+    await user.type(screen.getByLabelText('Password'), 'session-password')
+    await user.click(screen.getByRole('button', { name: 'Sign In' }))
+    expect(await screen.findByText('Protected dashboard')).toBeInTheDocument()
+    expect(authApi.loginAccount).toHaveBeenCalledWith({ username: 'learning@example.com', password: 'session-password' })
+  })
+
+  it('verifies a link only after explicit confirmation', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={['/verify-email?token=test-verification-token']}>
+        <AuthProvider><VerifyEmail /></AuthProvider>
+      </MemoryRouter>,
+    )
+    expect(authApi.verifyAccountEmail).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Verify Email' }))
+    expect(await screen.findByRole('heading', { name: 'Email verified' })).toBeInTheDocument()
+    expect(authApi.verifyAccountEmail).toHaveBeenCalledWith('test-verification-token')
+  })
+
+  it('shows resend feedback next to the recovery-email controls', async () => {
+    const user = userEvent.setup()
+    authApi.currentAccount.mockResolvedValue({ ...account, emailVerified: false })
+    render(
+      <MemoryRouter><AuthProvider><EmailVerificationStatus /></AuthProvider></MemoryRouter>,
+    )
+    await screen.findByText(/Your email has not been verified/)
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Resend Verification Email' })).toBeInTheDocument())
+    await user.click(screen.getByRole('button', { name: 'Resend Verification Email' }))
+    expect(authApi.requestEmailVerification).toHaveBeenCalledOnce()
+    expect(await screen.findByRole('status')).toHaveTextContent('Check learning@example.com')
   })
 
   it('registers and signs in a new account', async () => {
@@ -181,7 +249,7 @@ function renderAuthRoutes(initialEntry: string) {
           <Route path="login" element={<Login />} />
           <Route element={<ProtectedRoute />}>
             <Route path="workouts" element={<p>Protected workouts</p>} />
-            <Route index element={<p>Protected dashboard</p>} />
+            <Route path="dashboard" element={<p>Protected dashboard</p>} />
           </Route>
         </Routes>
       </AuthProvider>

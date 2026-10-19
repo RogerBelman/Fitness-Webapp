@@ -32,6 +32,14 @@ export async function resetAccountPassword(input: ResetPasswordInput) {
   resetCsrfToken()
 }
 
+export async function requestEmailVerification() {
+  await apiRequest<void>('/api/auth/email/verification', { method: 'POST' })
+}
+
+export async function verifyAccountEmail(token: string) {
+  await apiRequest<void>('/api/auth/email/verify', { method: 'POST', body: { token } })
+}
+
 export function loginAccount(credentials: Credentials) {
   return apiRequest<AuthUser>('/api/auth/login', {
     method: 'POST',

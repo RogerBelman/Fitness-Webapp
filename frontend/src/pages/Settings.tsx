@@ -12,6 +12,7 @@ import { exportDataBackup, importDataBackup } from '../api/dataBackup'
 import { ActionFeedback } from '../components/ActionFeedback'
 import { PageHeader } from '../components/PageHeader'
 import { PasswordInput } from '../components/PasswordInput'
+import { EmailVerificationStatus } from '../components/EmailVerificationStatus'
 import { useAuth } from '../hooks/useAuth'
 import { useMeasurementPreferences } from '../hooks/useMeasurementPreferences'
 
@@ -67,7 +68,7 @@ export function Settings() {
     try {
       await changeEmail({ email: recoveryEmail, currentPassword: emailPassword })
       setEmailPassword('')
-      setSuccessMessage('Recovery email updated.')
+      setSuccessMessage('Recovery email saved.')
     } catch (error) {
       setErrorMessage(readError(error, 'Could not update your recovery email.'))
     } finally {
@@ -209,9 +210,10 @@ export function Settings() {
             <p className="SectionEyebrow">Account</p>
             <h2 id="recovery-email-heading">Recovery Email</h2>
             <p className="SectionDescription">
-              Password reset links are sent only to this address.
+              Use this address to sign in and receive password reset links. Changing it requires verification again.
             </p>
           </div>
+          <EmailVerificationStatus key={user?.email} />
           <form className="SettingsForm" onSubmit={(event) => void submitEmailChange(event)}>
             <div className="SettingsField">
               <label htmlFor="settings-recovery-email">Email</label>

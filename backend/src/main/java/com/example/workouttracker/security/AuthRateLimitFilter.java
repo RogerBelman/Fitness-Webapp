@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.core.annotation.Order;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -23,7 +23,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import tools.jackson.databind.json.JsonMapper;
 
 @Component
-@Order(-99) // Immediately after Spring Security so blocked responses retain CORS headers.
 @ConditionalOnProperty(name = "app.auth.rate-limit.enabled", havingValue = "true", matchIfMissing = true)
 public class AuthRateLimitFilter extends OncePerRequestFilter {
 
@@ -31,13 +30,16 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
 			"POST /api/auth/login", new Limit(10, Duration.ofMinutes(1)),
 			"POST /api/auth/register", new Limit(5, Duration.ofHours(1)),
 			"POST /api/auth/password/forgot", new Limit(5, Duration.ofMinutes(15)),
-			"POST /api/auth/password/reset", new Limit(10, Duration.ofMinutes(15)));
+			"POST /api/auth/password/reset", new Limit(10, Duration.ofMinutes(15)),
+			"POST /api/auth/email/verify", new Limit(10, Duration.ofMinutes(15)),
+			"POST /api/auth/email/verification", new Limit(5, Duration.ofMinutes(15)));
 	private static final int CLEANUP_THRESHOLD = 10_000;
 
 	private final JsonMapper jsonMapper;
 	private final Clock clock;
 	private final ConcurrentHashMap<String, AttemptWindow> attempts = new ConcurrentHashMap<>();
 
+	@Autowired
 	public AuthRateLimitFilter(JsonMapper jsonMapper) {
 		this(jsonMapper, Clock.systemUTC());
 	}

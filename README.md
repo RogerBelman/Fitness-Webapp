@@ -227,7 +227,7 @@ Never commit the real connection string or password. The root `.gitignore` exclu
 
 ## Production Backend Profile
 
-Activate the strict production configuration with `SPRING_PROFILES_ACTIVE=prod`. The profile requires deployment-provided database, public frontend, CORS, and SMTP settings. Startup fails when a required value is missing, a public URL is not HTTPS, a production service points to localhost, or secure session cookies are disabled.
+Activate the strict production configuration with `SPRING_PROFILES_ACTIVE=prod`. The profile requires deployment-provided database, public frontend, CORS, and email settings. Production defaults to Resend over HTTPS: configure `APP_MAIL_FROM` with a verified sender and `RESEND_API_KEY` with a sending API key. Startup fails when a required value is missing, a public URL is not HTTPS, a production service points to localhost, or secure session cookies are disabled.
 
 Required deployment variables:
 
@@ -239,10 +239,8 @@ SPRING_DATASOURCE_PASSWORD=<database-password>
 APP_CORS_ALLOWED_ORIGINS=https://app.example.com
 APP_FRONTEND_BASE_URL=https://app.example.com
 APP_MAIL_FROM=no-reply@example.com
-SPRING_MAIL_HOST=<smtp-host>
-SPRING_MAIL_PORT=587
-SPRING_MAIL_USERNAME=<smtp-user>
-SPRING_MAIL_PASSWORD=<smtp-password>
+APP_MAIL_PROVIDER=resend
+RESEND_API_KEY=<resend-sending-api-key>
 ```
 
 The production profile trusts standard forwarded headers and always marks the session cookie Secure. Configure the hosting proxy to replace client-supplied forwarding headers and forward HTTPS requests to the backend. The database connection pool defaults to five connections and can be adjusted with `SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE`.
@@ -292,6 +290,8 @@ Authentication uses server-managed HTTP sessions. The browser receives a `JSESSI
 | `POST` | `/api/auth/logout` | Invalidate the session and delete its cookie | `204 No Content` |
 | `PUT` | `/api/auth/preferences` | Save account-level measurement preferences | `200 OK` |
 | `PUT` | `/api/auth/email` | Confirm the current password and update the recovery email | `200 OK` |
+| `POST` | `/api/auth/email/verification` | Send a verification link to the signed-in account's email | `204 No Content` |
+| `POST` | `/api/auth/email/verify` | Consume a one-time email verification token | `204 No Content` |
 | `PUT` | `/api/auth/password` | Verify the current password, save a new hash, and end the session | `204 No Content` |
 | `POST` | `/api/auth/password/forgot` | Request a reset email without revealing whether the account exists | `204 No Content` |
 | `POST` | `/api/auth/password/reset` | Consume a one-time token, change the password, and expire all sessions | `204 No Content` |
@@ -309,9 +309,15 @@ Registration includes the private recovery email:
 
 Usernames and emails are trimmed and stored in lowercase. Usernames may contain letters, numbers, and underscores. Passwords are never stored or returned as plain text. The service stores a one-way BCrypt hash. Password-reset tokens use 32 random bytes; PostgreSQL stores only each token's SHA-256 hash. Tokens expire after 30 minutes, can be used once, and are invalidated when the password or recovery email changes. Expired tokens are deleted when rejected. Invalid login attempts and recovery requests use neutral responses so callers cannot determine whether an account exists.
 
-Authentication writes are rate-limited per client address. Login permits 10 requests per minute, registration permits 5 per hour, forgot-password permits 5 per 15 minutes, and password reset permits 10 per 15 minutes. A blocked request returns `429 Too Many Requests` with a `Retry-After` header. The limiter is stored in one backend process; use a shared store before running multiple backend instances.
+The login request's `username` field accepts either a username or an email, ignoring case and surrounding whitespace. Sessions always retain the canonical username so ownership and existing sessions continue to work consistently.
 
-For production recovery email, set `APP_MAIL_ENABLED=true`, `APP_FRONTEND_BASE_URL`, `APP_MAIL_FROM`, and the `SPRING_MAIL_*` SMTP variables in the deployment environment. Keep SMTP credentials out of source control.
+New accounts and changed email addresses receive a verification link after the account transaction commits. Verification is optional for signing in and using the app. User responses include `emailVerified`; existing accounts start unverified and can request a link from Settings. Verification tokens are stored as SHA-256 hashes, expire after 24 hours, and can be used once. Resending replaces the previous link and has a two-minute cooldown per account. Changing the email requires the current password, clears verification, and invalidates old verification and reset links. Delivery failures do not roll back registration or email correction; Settings provides a resend action. The public `/verify-email` page asks for confirmation before consuming the link and is marked `noindex`.
+
+Authentication writes are rate-limited per client address. Login permits 10 requests per minute, registration permits 5 per hour, forgot-password and verification-email requests permit 5 per 15 minutes, and password reset and email verification permit 10 per 15 minutes. A blocked request returns `429 Too Many Requests` with a `Retry-After` header. The limiter is stored in one backend process; use a shared store before running multiple backend instances.
+
+For production recovery email, set `APP_FRONTEND_BASE_URL`, `APP_MAIL_FROM`, `APP_MAIL_PROVIDER=resend`, and `RESEND_API_KEY` in the deployment environment. Verify the sending domain in Resend before sending to users. Requests use HTTPS with connection and read timeouts; provider failures do not log the reset link or provider response body. The production profile disables SMTP health probes because they do not apply to Resend.
+
+Local development defaults to `APP_MAIL_PROVIDER=smtp` and uses Mailpit. SMTP is also available in production by setting `APP_MAIL_PROVIDER=smtp` and the `SPRING_MAIL_*` variables; set `APP_SMTP_HEALTH_ENABLED=true` if you want SMTP connectivity included in production health checks. Keep API keys and SMTP credentials out of source control.
 
 Cross-origin browser requests use `credentials: "include"` so the browser sends the session cookie to the API. Local CORS configuration permits credentials from the configured React origins. Before each `POST`, `PUT`, or `DELETE`, the shared frontend client obtains a token from `/api/auth/csrf` and sends it in the header named by that response. Spring Security compares the token with the value stored in the browser session before allowing the request. Set `SESSION_COOKIE_SECURE=true` when the backend is served over HTTPS.
 

@@ -2,6 +2,7 @@ export type AuthUser = {
   id: number
   username: string
   email: string | null
+  emailVerified: boolean
   weightUnit: 'lb' | 'kg'
   createdAt: string
 }

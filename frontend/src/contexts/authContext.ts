@@ -12,6 +12,7 @@ import type {
 export type AuthContextValue = {
   user: AuthUser | null
   isLoading: boolean
+  refreshUser: () => Promise<void>
   login: (credentials: Credentials) => Promise<void>
   register: (credentials: RegistrationInput) => Promise<void>
   logout: () => Promise<void>

@@ -3,7 +3,7 @@ package com.example.workouttracker.dto;
 import jakarta.validation.constraints.NotBlank;
 
 public record LoginRequest(
-		@NotBlank(message = "username is required.")
+		@NotBlank(message = "username or email is required.")
 		String username,
 
 		@NotBlank(message = "password is required.")

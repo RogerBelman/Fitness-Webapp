@@ -2,6 +2,9 @@ package com.example.workouttracker.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -20,11 +23,13 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
+import org.springframework.web.filter.CorsFilter;
 
 import java.util.List;
 
 import com.example.workouttracker.security.RestAccessDeniedHandler;
 import com.example.workouttracker.security.RestAuthenticationEntryPoint;
+import com.example.workouttracker.security.AuthRateLimitFilter;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -63,8 +68,17 @@ public class SecurityConfig {
 	}
 
 	@Bean
+	@ConditionalOnProperty(name = "app.auth.rate-limit.enabled", havingValue = "true", matchIfMissing = true)
+	FilterRegistrationBean<AuthRateLimitFilter> authRateLimitFilterRegistration(AuthRateLimitFilter filter) {
+		FilterRegistrationBean<AuthRateLimitFilter> registration = new FilterRegistrationBean<>(filter);
+		registration.setEnabled(false);
+		return registration;
+	}
+
+	@Bean
 	SecurityFilterChain securityFilterChain(
 			HttpSecurity http,
+			ObjectProvider<AuthRateLimitFilter> authRateLimitFilterProvider,
 			SecurityContextRepository securityContextRepository,
 			RestAuthenticationEntryPoint authenticationEntryPoint,
 			RestAccessDeniedHandler accessDeniedHandler,
@@ -89,6 +103,7 @@ public class SecurityConfig {
 								"/api/auth/register",
 								"/api/auth/login",
 								"/api/auth/csrf",
+								"/api/auth/email/verify",
 								"/api/auth/password/forgot",
 								"/api/auth/password/reset").permitAll()
 						.requestMatchers("/api/**").authenticated()
@@ -103,6 +118,9 @@ public class SecurityConfig {
 						.deleteCookies("JSESSIONID")
 						.logoutSuccessHandler((request, response, authentication) ->
 								response.setStatus(HttpServletResponse.SC_NO_CONTENT)));
+
+		authRateLimitFilterProvider.ifAvailable(
+				filter -> http.addFilterAfter(filter, CorsFilter.class));
 
 		return http.build();
 	}

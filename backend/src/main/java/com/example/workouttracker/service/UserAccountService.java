@@ -5,6 +5,7 @@ import java.util.Locale;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.workouttracker.dto.UserRegistrationRequest;
@@ -19,6 +20,7 @@ import com.example.workouttracker.exception.DuplicateResourceException;
 import com.example.workouttracker.exception.ResourceNotFoundException;
 import com.example.workouttracker.repository.AppUserRepository;
 import com.example.workouttracker.repository.PasswordResetTokenRepository;
+import com.example.workouttracker.repository.EmailVerificationTokenRepository;
 
 @Service
 public class UserAccountService {
@@ -30,18 +32,24 @@ public class UserAccountService {
 	private final CurrentUserService currentUserService;
 	private final DataBackupService dataBackupService;
 	private final PasswordResetTokenRepository passwordResetTokenRepository;
+	private final ApplicationEventPublisher events;
+	private final EmailVerificationTokenRepository emailVerificationTokens;
 
 	public UserAccountService(
 			AppUserRepository userRepository,
 			PasswordEncoder passwordEncoder,
 			CurrentUserService currentUserService,
 			DataBackupService dataBackupService,
-			PasswordResetTokenRepository passwordResetTokenRepository) {
+			PasswordResetTokenRepository passwordResetTokenRepository,
+			ApplicationEventPublisher events,
+			EmailVerificationTokenRepository emailVerificationTokens) {
 		this.userRepository = userRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.currentUserService = currentUserService;
 		this.dataBackupService = dataBackupService;
 		this.passwordResetTokenRepository = passwordResetTokenRepository;
+		this.events = events;
+		this.emailVerificationTokens = emailVerificationTokens;
 	}
 
 	@Transactional
@@ -60,6 +68,7 @@ public class UserAccountService {
 
 		AppUser user = userRepository.save(new AppUser(
 				username, email, passwordEncoder.encode(request.password())));
+		events.publishEvent(new EmailVerificationRequested(user.getId()));
 		return toResponse(user);
 	}
 
@@ -79,9 +88,11 @@ public class UserAccountService {
 
 	@Transactional
 	public UserResponse changeRecoveryEmail(ChangeEmailRequest request) {
-		AppUser user = currentUserService.requireCurrentUser();
+		AppUser current = currentUserService.requireCurrentUser();
+		AppUser user = userRepository.findLockedById(current.getId()).orElseThrow();
 		requireMatchingPassword(user, request.currentPassword());
 		String email = normalizeEmail(request.email());
+		if (email.equals(user.getEmail())) return toResponse(user);
 		userRepository.findByEmailIgnoreCase(email)
 				.filter(existing -> !existing.getId().equals(user.getId()))
 				.ifPresent(existing -> {
@@ -89,6 +100,8 @@ public class UserAccountService {
 				});
 		user.changeRecoveryEmail(email);
 		passwordResetTokenRepository.deleteByUserId(user.getId());
+		emailVerificationTokens.deleteByUserId(user.getId());
+		events.publishEvent(new EmailVerificationRequested(user.getId()));
 		return toResponse(user);
 	}
 
@@ -129,6 +142,7 @@ public class UserAccountService {
 				user.getId(),
 				user.getUsername(),
 				user.getEmail(),
+				user.isEmailVerified(),
 				user.getWeightUnit(),
 				user.getCreatedAt());
 	}
