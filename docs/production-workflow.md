@@ -6,7 +6,8 @@
 2. Push the branch and open a pull request against `main`.
 3. Review the diff and wait for the **CI** checks to pass.
 4. Merge the reviewed pull request.
-5. Deploy an approved release and verify the live site. Production deployment is the next setup phase; the current workflow only tests the application.
+5. After CI passes for the push to `main`, the **Publish images** workflow builds and stores the frontend and backend images in GitHub Container Registry.
+6. Deploy an approved release and verify the live site. Connecting deployment to the VPS is the next setup phase; publishing alone does not update the live website.
 
 ## Phase 1: application images and CI
 
@@ -51,12 +52,39 @@ docker compose -f docker-compose.preview.yml down --volumes
 
 The CI job uses the latter command to clean up its disposable data. Neither command targets the normal development database or Neon.
 
-## Next checkpoint: publish images and connect production
+## Phase 2: publish versioned images
 
-After the first pull request passes CI, configure GitHub Container Registry, a restricted deployment identity, and the production environment. Add a manual release workflow that publishes images tagged with the tested commit, transfers only deployment configuration, and tells the VPS to pull those images.
+The [Publish images workflow](../.github/workflows/publish-images.yml) starts after the **CI** workflow completes successfully for a push to this repository's `main` branch. Pull request checks do not publish images. The workflow checks out the exact commit that passed CI rather than whichever commit happens to be latest when publishing begins.
+
+The workflow builds two Linux AMD64 images for the current VPS:
+
+```text
+ghcr.io/<lowercase-github-owner>/workout-tracker-frontend:sha-<full-commit-id>
+ghcr.io/<lowercase-github-owner>/workout-tracker-backend:sha-<full-commit-id>
+```
+
+It uses GitHub's automatically supplied `GITHUB_TOKEN` with `packages: write` permission. Do not create a personal access token or add database, email, or SSH secrets for publishing. Third-party actions in this workflow are pinned to specific commits.
+
+### First publication - GitHub
+
+1. Push this feature branch, open a pull request, and wait for CI to pass.
+2. Merge the pull request into `main`.
+3. Open **Actions**, then watch **CI** for the new merge commit.
+4. Once it passes, open **Publish images** and confirm both component jobs succeed.
+5. Read the workflow summary for the tags and exact digest references. Find the packages under your GitHub profile's **Packages** section; the source labels also associate them with this repository.
+
+The new workflow must be merged before it can receive the completed CI event on the default branch. Manually starting CI using **Run workflow** does not publish images; the publishing gate accepts push events only. To retry a failed publication, re-run its failed jobs. If publication never started, re-run the original CI run for the push to `main`.
+
+New container packages are private by default. Leave them private for now; VPS read access will be configured in the next phase. If an existing package with the same name rejects publishing, inspect its **Manage Actions access** settings and grant this repository write access.
+
+There is no moving `latest` tag. A commit tag identifies the source version; the summary's `@sha256:...` digest identifies the exact built image. Rebuilding the same commit can produce different bytes when base images or build dependencies change, so the later deployment workflow should record both image digests as a release pair. If one component fails to publish, that pair is incomplete and must not be deployed.
+
+## Next checkpoint: connect production
+
+Configure a restricted deployment identity and the GitHub production environment. Add a manually approved deployment workflow that selects a successfully published image pair, transfers only deployment configuration, and tells the VPS to pull those images.
 
 Production will keep its existing host Nginx and HTTPS certificates. The host proxy must replace forwarded headers and route `/api/` directly to the backend's loopback port, preserving the original HTTPS scheme. The frontend container's API proxy is for the local HTTP rehearsal; do not put it between the HTTPS proxy and backend without configuring trusted forwarding correctly.
 
-Before switching traffic, back up the current frontend, backend JAR, proxy configuration, and confirm a Neon restore option. Keep the existing systemd deployment available for the first rollback. The current CI workflow does not publish images, change GitHub settings, connect to the VPS, or deploy anything.
+Before switching traffic, back up the current frontend, backend JAR, proxy configuration, and confirm a Neon restore option. Keep the existing systemd deployment available for the first rollback. The workflows do not change GitHub settings, connect to the VPS, or deploy anything yet.
 
 Flyway runs pending migrations when the backend starts. Use new versioned migrations and prefer changes compatible with the previous application version. Returning to an old image does not undo a database migration. Backend restarts also end the current in-memory login sessions.
