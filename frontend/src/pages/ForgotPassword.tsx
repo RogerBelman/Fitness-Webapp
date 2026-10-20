@@ -30,7 +30,7 @@ export function ForgotPassword() {
         title="Reset Password | Workout Tracker"
       />
       <section className="AuthCard" aria-labelledby="forgot-password-title">
-        <div className="AuthBrand" aria-hidden="true">WT</div>
+        <div className="AuthBrand" aria-hidden="true"><img src="/logo.svg" alt="" /></div>
         <div className="AuthHeading">
           <p className="AuthEyebrow">Account Recovery</p>
           <h1 id="forgot-password-title">Reset your password</h1>

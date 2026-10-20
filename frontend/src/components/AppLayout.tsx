@@ -66,7 +66,7 @@ export function AppLayout() {
       />
       <header className="TopBar">
         <NavLink to="/dashboard" className="Brand" aria-label="Workout Tracker dashboard">
-          <span className="BrandMark">WT</span>
+          <span className="BrandMark" aria-hidden="true"><img src="/logo.svg" alt="" /></span>
           <span>Workout Tracker</span>
         </NavLink>
 

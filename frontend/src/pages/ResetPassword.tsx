@@ -47,7 +47,7 @@ export function ResetPassword() {
         title="Choose a New Password | Workout Tracker"
       />
       <section className="AuthCard" aria-labelledby="reset-password-title">
-        <div className="AuthBrand" aria-hidden="true">WT</div>
+        <div className="AuthBrand" aria-hidden="true"><img src="/logo.svg" alt="" /></div>
         <div className="AuthHeading">
           <p className="AuthEyebrow">Account Recovery</p>
           <h1 id="reset-password-title">Choose a new password</h1>

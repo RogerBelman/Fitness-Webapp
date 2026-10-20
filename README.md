@@ -4,6 +4,8 @@ This repository contains a full-stack workout tracking application built with a 
 
 ## Features
 
+For the Docker rehearsal and pull-request checks, see [Production workflow](docs/production-workflow.md).
+
 - Create, list, filter, update, and delete exercises through the REST API.
 - Save permanent exercise instructions for setup and technique, visible in the library and workout details.
 - Create workouts and add ordered exercises and sets.

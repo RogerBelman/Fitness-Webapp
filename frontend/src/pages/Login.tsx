@@ -60,7 +60,7 @@ export function Login() {
         title={`${mode === 'login' ? 'Sign In' : 'Create Account'} | Workout Tracker`}
       />
       <section className="AuthCard" aria-labelledby="auth-title">
-        <div className="AuthBrand" aria-hidden="true">WT</div>
+        <div className="AuthBrand" aria-hidden="true"><img src="/logo.svg" alt="" /></div>
         <div className="AuthHeading">
           <p className="AuthEyebrow">Workout Tracker</p>
           <h1 id="auth-title">

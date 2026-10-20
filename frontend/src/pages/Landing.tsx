@@ -34,7 +34,7 @@ export function Landing() {
 
       <header className="LandingHeader">
         <Link className="Brand" to="/" aria-label="Workout Tracker home">
-          <span className="BrandMark">WT</span>
+          <span className="BrandMark" aria-hidden="true"><img src="/logo.svg" alt="" /></span>
           <span>Workout Tracker</span>
         </Link>
         <Link className="Button ButtonSecondary" to={user ? '/dashboard' : '/login'}>

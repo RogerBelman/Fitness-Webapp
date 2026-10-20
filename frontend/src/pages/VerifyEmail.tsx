@@ -37,7 +37,7 @@ export function VerifyEmail() {
     <main className="AuthShell">
       <PageMetadata title="Verify Email | Workout Tracker" description="Confirm your Workout Tracker email address." />
       <section className="AuthCard" aria-labelledby="verify-email-title">
-        <div className="AuthBrand" aria-hidden="true">WT</div>
+        <div className="AuthBrand" aria-hidden="true"><img src="/logo.svg" alt="" /></div>
         <div className="AuthHeading">
           <p className="AuthEyebrow">Workout Tracker</p>
           <h1 id="verify-email-title">{verified ? 'Email verified' : 'Confirm your email'}</h1>
