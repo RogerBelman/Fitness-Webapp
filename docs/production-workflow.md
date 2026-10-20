@@ -7,7 +7,8 @@
 3. Review the diff and wait for the **CI** checks to pass.
 4. Merge the reviewed pull request.
 5. After CI passes for the push to `main`, the **Publish images** workflow builds and stores the frontend and backend images in GitHub Container Registry.
-6. Deploy an approved release and verify the live site. Connecting deployment to the VPS is the next setup phase; publishing alone does not update the live website.
+6. Start **Deploy production**, select the full tested commit ID, review the resolved image versions, and approve the `production` job.
+7. Verify the changed screens after the automatic public health checks finish.
 
 ## Phase 1: application images and CI
 
@@ -112,7 +113,7 @@ GitHub's required-reviewer availability depends on repository visibility and pla
 
 Use a separate Ed25519 key for GitHub Actions. The private key stays in your local SSH folder and GitHub environment secrets. Only its public key belongs on the VPS. Never reuse your personal SSH key or paste either private key into chat, source files, or pull requests.
 
-The `workout-deploy` account currently has a root-owned forced command, [workout-deploy-access.sh](../scripts/workout-deploy-access.sh). Its SSH key is restricted: no shell, port forwarding, uploads, or arbitrary commands. Only `status` is accepted. The account is not a sudoer or a Docker-group member. Granting actual release permissions is a separate checkpoint.
+The `workout-deploy` account has a root-owned forced command, [workout-deploy-access.sh](../scripts/workout-deploy-access.sh). Its SSH key is restricted: no shell, port forwarding, uploads, or arbitrary commands. It accepts only `status`, `deploy`, and `rollback`. The account is not a Docker-group member. A narrow sudo rule permits only those three operations through the root-owned release helper; it cannot run other administrator commands.
 
 ### GitHub - environment secrets
 
@@ -155,12 +156,51 @@ The [connection workflow](../.github/workflows/check-deployment-access.yml) uses
 
 If GitHub refuses to start the job, confirm that the `production` environment allows the branch `main`. If it waits for approval, use **Review deployments**. A public Git repository does not make environment secrets public.
 
-## Next checkpoint: release permissions and deployment
+## Phase 5: approved releases and rollback
 
-Configure a restricted deployment identity and the GitHub production environment. Add a manually approved deployment workflow that selects a successfully published image pair, transfers only deployment configuration, and tells the VPS to pull those images.
+The [Deploy production workflow](../.github/workflows/deploy-production.yml) is manually started from `main`. Its preparation job checks that the requested full commit ID belongs to `main` and has a successful push-triggered CI run. It resolves both published tags to immutable image digests before the production approval job starts. Wait for **Publish images** to finish successfully before selecting a commit.
 
-Production will keep its existing host Nginx and HTTPS certificates. The host proxy must replace forwarded headers and route `/api/` directly to the backend's loopback port, preserving the original HTTPS scheme. The frontend container's API proxy is for the local HTTP rehearsal; do not put it between the HTTPS proxy and backend without configuring trusted forwarding correctly.
+### GitHub - deploy a release
 
-Before switching traffic, back up the current frontend, backend JAR, proxy configuration, and confirm a Neon restore option. Keep the existing systemd deployment available for the first rollback. The connection workflow only checks SSH access; no workflow deploys a release yet.
+1. Open the merged commit on `main` and copy its full 40-character commit ID.
+2. Confirm its **CI** and **Publish images** runs succeeded. Confirm a Neon restore option before a release containing database migrations.
+3. Open **Actions → Deploy production → Run workflow** and select branch `main`.
+4. Choose operation `deploy` and paste the commit ID into `release_commit`.
+5. Wait for **Verify release before approval** to finish. Review its commit and both image digest references in the summary.
+6. Use **Review deployments**, select `production`, and approve.
+7. Wait for the release job to succeed, then check sign-in and the screens changed by the release on the live site.
 
-Flyway runs pending migrations when the backend starts. Use new versioned migrations and prefer changes compatible with the previous application version. Returning to an old image does not undo a database migration. Backend restarts also end the current in-memory login sessions.
+The workflow uses the existing four environment secrets and a temporary GitHub token with package-read permission. There is no persistent registry password on the VPS. The server helper accepts a small JSON request over SSH stdin, validates image digests, pulls only this project's images, and checks both repository and commit labels before changing the running app. Credentials are not stored in release manifests or command arguments.
+
+### Server release behavior
+
+The root-owned [release helper](../scripts/workout-release.py) and production Compose/Nginx files are installed by an administrator using [install-release-tools.sh](../scripts/install-release-tools.sh). The workflow cannot upload or replace these privileged files. Updates to these files require administrator installation from reviewed source; merging changes to them alone does not update the server helper.
+
+On the first deployment, the helper saves the original JAR, frontend archive, systemd unit, and Nginx site under `/opt/workout-tracker/container-releases/legacy-.../`. The original application files and protected environment file remain in place. It then:
+
+1. Pulls and validates both images before stopping the current application.
+2. Stops the systemd backend to free memory on the small VPS.
+3. Starts the application containers and waits for health checks.
+4. Switches only the workout Nginx site to the container ports, preserving HTTPS and forwarding the original scheme directly to the backend.
+5. Checks the public landing page, release-ID header, logo, private-route indexing header, CSRF endpoint, and unauthenticated account response.
+6. Records the current and previous release, then leaves the legacy systemd service disabled so it does not also start on reboot. Docker starts the application containers after reboot.
+
+The first cutover and later backend replacements have a short interruption; this is not a zero-downtime setup. Restarting the backend ends the current in-memory login sessions. The portfolio's Nginx site is unchanged. Docker logs rotate, but image/release retention is manual for now: monitor disk usage and do not delete current/previous release directories or images.
+
+If activation or public verification fails, the helper attempts to restore the prior application release and marks the workflow failed. For the first release, that means returning to systemd and the original Nginx configuration. If recovery also fails, it reports that manual recovery is needed; inspect the saved backup, service logs, and Docker logs through the administrator SSH account. A server-side lock and GitHub concurrency group prevent overlapping releases. Avoid canceling an active release.
+
+### GitHub - restore the previous application release
+
+Start **Deploy production** on `main`, choose operation `rollback`, and leave `release_commit` blank. Approve the production job. The helper restores the previous recorded release, verifies it, and exchanges the current/previous records. Rollback uses the saved image digests and Compose configuration, not a moving tag. The first rollback can return to the original systemd release.
+
+Flyway runs pending migrations when the backend starts. Use new versioned migrations and prefer changes compatible with the previous application version. Restoring an application image does not undo a database migration or restore data. If a migration prevents the previous app from running, application rollback may fail: use a planned database recovery or forward fix. The helper backs up application files/configuration, not Neon data.
+
+### Administrator - install reviewed release tools
+
+The initial setup installs these files while the legacy service remains active. To update them later, transfer a reviewed checkout's `scripts/` release files and `docker-compose.production.yml` into a root-owned staging directory on the VPS, preserving their relative paths, and run:
+
+```bash
+sudo sh scripts/install-release-tools.sh
+```
+
+The installer validates Python/shell syntax, tests the candidate Nginx configuration against the existing certificate, validates sudoers, and checks the active app. It does not deploy a release or change the active Nginx site. Backups of previous helper/access scripts are saved under `/etc/workout-tracker/release-tool-backups/`.

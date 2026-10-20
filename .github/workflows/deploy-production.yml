@@ -1,0 +1,131 @@
+name: Deploy production
+run-name: Production ${{ inputs.operation }} ${{ inputs.release_commit }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Deploy a tested commit or restore the previous application release
+        type: choice
+        options: [deploy, rollback]
+        default: deploy
+        required: true
+      release_commit:
+        description: Full 40-character commit ID; leave blank for rollback
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Verify release before approval
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+      packages: read
+    outputs:
+      frontend_digest: ${{ steps.images.outputs.frontend_digest }}
+      backend_digest: ${{ steps.images.outputs.backend_digest }}
+    steps:
+      - name: Verify commit ancestry and CI
+        if: inputs.operation == 'deploy'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_SHA: ${{ inputs.release_commit }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo 'Enter a full lowercase commit ID.'; exit 1; }
+          ancestry=$(gh api "repos/$REPOSITORY/compare/$RELEASE_SHA...main" --jq '.status')
+          [[ "$ancestry" == ahead || "$ancestry" == identical ]] || { echo 'Commit must be on main.'; exit 1; }
+          passed=$(gh api "repos/$REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$RELEASE_SHA&event=push&branch=main&status=success" --jq '.total_count')
+          ((passed > 0)) || { echo 'No successful main-branch CI run exists for this commit.'; exit 1; }
+
+      - name: Set up registry inspection
+        if: inputs.operation == 'deploy'
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+
+      - name: Sign in for private image reads
+        if: inputs.operation == 'deploy'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Resolve both image digests
+        if: inputs.operation == 'deploy'
+        id: images
+        env:
+          OWNER: ${{ github.repository_owner }}
+          RELEASE_SHA: ${{ inputs.release_commit }}
+        run: |
+          set -euo pipefail
+          for component in frontend backend; do
+            image="ghcr.io/${OWNER,,}/workout-tracker-$component:sha-$RELEASE_SHA"
+            digest=$(docker buildx imagetools inspect "$image" --format '{{.Manifest.Digest}}')
+            [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "Invalid $component digest."; exit 1; }
+            echo "${component}_digest=$digest" >> "$GITHUB_OUTPUT"
+            echo "$component: \`$image@$digest\`" >> "$GITHUB_STEP_SUMMARY"
+          done
+          echo "Approve only after confirming release commit \`$RELEASE_SHA\`." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Describe rollback
+        if: inputs.operation == 'rollback'
+        run: echo 'Approval will restore the previous application release recorded on the VPS. Database migrations will not be reversed.' >> "$GITHUB_STEP_SUMMARY"
+
+  release:
+    name: Approve and run production release
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: read
+    environment:
+      name: production
+      url: https://workouts.rogerbelman.com
+    steps:
+      - name: Run restricted release command
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          OPERATION: ${{ inputs.operation }}
+          RELEASE_SHA: ${{ inputs.release_commit }}
+          FRONTEND_DIGEST: ${{ needs.prepare.outputs.frontend_digest }}
+          BACKEND_DIGEST: ${{ needs.prepare.outputs.backend_digest }}
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          : "${DEPLOY_HOST:?Missing DEPLOY_HOST}"
+          : "${DEPLOY_USER:?Missing DEPLOY_USER}"
+          : "${DEPLOY_SSH_KEY:?Missing DEPLOY_SSH_KEY}"
+          : "${DEPLOY_KNOWN_HOSTS:?Missing DEPLOY_KNOWN_HOSTS}"
+          [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9][a-zA-Z0-9.-]*$ ]]
+          [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          [[ "$OPERATION" == deploy || "$OPERATION" == rollback ]]
+          release_dir=$(mktemp -d)
+          trap 'rm -rf -- "$release_dir"' EXIT
+          chmod 700 "$release_dir"
+          umask 077
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$release_dir/key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$release_dir/known_hosts"
+          python3 -c 'import json,os; print(json.dumps({"commit":os.environ["RELEASE_SHA"], "frontend_digest":os.environ["FRONTEND_DIGEST"], "backend_digest":os.environ["BACKEND_DIGEST"], "registry_username":os.environ["REGISTRY_USER"], "registry_token":os.environ["REGISTRY_TOKEN"]}))' |
+            ssh -F /dev/null -i "$release_dir/key" \
+              -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+              -o UserKnownHostsFile="$release_dir/known_hosts" \
+              -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 \
+              "$DEPLOY_USER@$DEPLOY_HOST" "$OPERATION"
+          echo "Production $OPERATION completed and public health checks passed." >> "$GITHUB_STEP_SUMMARY"
