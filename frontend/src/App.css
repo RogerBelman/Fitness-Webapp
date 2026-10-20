@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100svh;
+  background: var(--page-background);
 }
 
 .EmailVerificationNotice {
@@ -12,9 +13,9 @@
   gap: 14px;
   margin-bottom: 24px;
   padding: 16px;
-  background: var(--surface-raised);
-  border: 1px solid var(--accent);
-  border-radius: 10px;
+  background: var(--surface-panel);
+  border: 1px solid #58769d;
+  border-radius: var(--radius-panel);
 }
 
 .EmailVerificationNotice p,
@@ -279,7 +280,8 @@
   gap: 14px;
   padding: 16px;
   background: var(--header-background);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #34445d99;
+  box-shadow: 0 4px 24px #02061726;
   backdrop-filter: blur(16px);
 }
 
@@ -290,6 +292,7 @@
   width: fit-content;
   color: var(--text);
   font-weight: 800;
+  letter-spacing: -0.025em;
   text-decoration: none;
 }
 
@@ -298,16 +301,23 @@
   place-items: center;
   width: 36px;
   height: 36px;
-  color: var(--on-accent);
-  background: var(--accent);
-  border-radius: 8px;
+  flex-shrink: 0;
+  background: var(--background);
+  border-radius: var(--radius-control);
   font-size: 12px;
   letter-spacing: 0;
 }
 
+.BrandMark img,
+.AuthBrand img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .MainNav {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   overflow-x: auto;
   padding-bottom: 2px;
 }
@@ -359,7 +369,7 @@
   padding: 8px;
   background: var(--surface-raised);
   border: 1px solid var(--control-border);
-  border-radius: 12px;
+  border-radius: var(--radius-panel);
   box-shadow: 0 18px 44px #00000066;
 }
 
@@ -471,11 +481,11 @@
 
 .NavLink {
   flex: 0 0 auto;
-  min-height: 38px;
-  padding: 8px 12px;
+  min-height: 42px;
+  padding: 10px 14px;
   color: var(--muted);
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
@@ -484,7 +494,7 @@
 .NavLinkActive {
   color: var(--accent);
   background: var(--accent-soft);
-  border-color: var(--accent);
+  border-color: #5177a8;
 }
 
 .NavLink:hover:not(.NavLinkActive) {
@@ -496,17 +506,17 @@
   flex: 1 0 auto;
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 24px 0 56px;
+  padding: 32px 0 64px;
 }
 
 .DataBackupGrid {
   display: grid;
-  gap: 16px;
+  gap: 20px;
 }
 
 .SettingsGrid {
   display: grid;
-  gap: 16px;
+  gap: 20px;
 }
 
 .SettingsCard,
@@ -520,6 +530,7 @@
 .DangerZone h2,
 .SettingsInsetCard h3 {
   margin: 0;
+  letter-spacing: -0.025em;
 }
 
 .SectionEyebrow {
@@ -536,10 +547,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  padding: 14px;
-  background: var(--surface-raised);
+  padding: 16px;
+  background: var(--surface-inset);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
 }
 
 .SettingRow > div:first-child {
@@ -555,7 +566,7 @@
 
 .SettingsForm {
   display: grid;
-  gap: 14px;
+  gap: 18px;
 }
 
 .SettingsField,
@@ -609,10 +620,10 @@
   display: grid;
   align-content: start;
   gap: 16px;
-  padding: 16px;
-  background: var(--surface-raised);
+  padding: 20px;
+  background: var(--surface-inset);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
 }
 
 .SettingsInsetCard p {
@@ -654,14 +665,33 @@
 
 .PageStack {
   display: grid;
-  gap: 20px;
+  gap: clamp(22px, 3vw, 32px);
+}
+
+:where(.PageStack, .ProgressWorkspace, .ContentBand, .FormSurface, .FilterBar) > * {
+  min-width: 0;
 }
 
 .PageHeader {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 8px 0;
+  gap: 22px;
+  padding: 8px 0 12px;
+}
+
+.PageHeader > div:first-child {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.PageHeader > div:first-child::before {
+  content: '';
+  width: 36px;
+  height: 4px;
+  margin-bottom: 4px;
+  background: var(--accent);
+  border-radius: 999px;
 }
 
 .PageHeader h1,
@@ -672,13 +702,16 @@
 }
 
 .PageHeader h1 {
-  font-size: 32px;
-  line-height: 1.1;
+  font-size: clamp(32px, 3.8vw, 46px);
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
 }
 
 .PageHeader p {
-  max-width: 680px;
+  max-width: 56ch;
   color: var(--muted);
+  line-height: 1.65;
 }
 
 .PageActions,
@@ -692,12 +725,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 42px;
-  padding: 10px 14px;
+  min-height: 44px;
+  padding: 10px 16px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font: inherit;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.4;
   text-decoration: none;
   cursor: pointer;
 }
@@ -705,6 +740,7 @@
 .ButtonPrimary {
   color: var(--on-accent);
   background: var(--accent);
+  box-shadow: 0 4px 16px #244a7c40;
 }
 
 .ButtonPrimary:hover:not(:disabled) {
@@ -717,8 +753,8 @@
 
 .ButtonSecondary {
   color: var(--text);
-  background: var(--surface-raised);
-  border-color: var(--control-border);
+  background: #1d2e47;
+  border-color: #536c8e;
 }
 
 .ButtonSecondary:hover:not(:disabled) {
@@ -734,25 +770,29 @@
 
 .MetricCard {
   display: grid;
-  gap: 8px;
-  min-height: 112px;
-  padding: 20px;
-  background: var(--surface);
+  gap: 12px;
+  min-height: 138px;
+  padding: clamp(18px, 2.5vw, 26px);
+  background: var(--surface-panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-panel);
+  box-shadow: var(--panel-shadow);
 }
 
 .MetricCard span {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
+  letter-spacing: 0.07em;
 }
 
 .MetricCard strong {
   color: var(--text);
-  font-size: 30px;
-  line-height: 1;
+  font-size: clamp(26px, 2.7vw, 34px);
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
 }
 
 .MetricCard small {
@@ -764,16 +804,17 @@
 .ContentBand,
 .FormSurface,
 .FilterBar {
-  background: var(--surface);
+  background: var(--surface-panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-panel);
+  box-shadow: var(--panel-shadow);
 }
 
 .ContentBand {
   display: grid;
-  gap: 16px;
+  gap: 22px;
   min-height: 180px;
-  padding: 20px;
+  padding: 26px;
 }
 
 .SectionHeader {
@@ -784,8 +825,9 @@
 }
 
 .SectionHeader h2 {
-  font-size: 20px;
+  font-size: 22px;
   line-height: 1.2;
+  letter-spacing: -0.025em;
 }
 
 .SectionHeader a {
@@ -801,8 +843,8 @@
 
 .FilterBar {
   display: grid;
-  gap: 14px;
-  padding: 16px;
+  gap: 16px;
+  padding: 20px;
 }
 
 .FilterAction {
@@ -811,9 +853,9 @@
 
 .FormSurface {
   display: grid;
-  gap: 18px;
+  gap: 22px;
   max-width: 720px;
-  padding: 18px;
+  padding: 24px;
 }
 
 label {
@@ -828,12 +870,12 @@ input,
 select,
 textarea {
   width: 100%;
-  min-height: 42px;
-  padding: 9px 11px;
+  min-height: 44px;
+  padding: 10px 12px;
   color: var(--text);
   background: var(--input-background);
   border: 1px solid var(--control-border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font: inherit;
 }
 
@@ -867,7 +909,7 @@ textarea:disabled {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 24px;
+    padding: 18px max(32px, calc((100% - 1120px) / 2));
   }
 
   .TopBarControls {
@@ -882,8 +924,8 @@ textarea:disabled {
   }
 
   .PageShell {
-    width: min(1120px, calc(100% - 48px));
-    padding-top: 36px;
+    width: min(1120px, calc(100% - 64px));
+    padding-top: 48px;
   }
 
   .PageHeader {
@@ -903,6 +945,10 @@ textarea:disabled {
   .SettingsGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
+  }
+
+  .SettingsGrid > :first-child {
+    grid-column: 1 / -1;
   }
 
   .ExerciseFilterBar {
@@ -946,9 +992,7 @@ textarea:disabled {
   min-height: 100svh;
   place-items: center;
   padding: 24px 16px;
-  background:
-    radial-gradient(circle at top, #1b365c 0, transparent 42%),
-    var(--background);
+  background: var(--page-background);
 }
 
 .AuthCard {
@@ -958,9 +1002,9 @@ textarea:disabled {
   max-width: 440px;
   min-width: 0;
   padding: 28px;
-  background: var(--surface);
+  background: var(--surface-panel);
   border: 1px solid var(--dialog-border);
-  border-radius: 14px;
+  border-radius: 20px;
   box-shadow: var(--popup-shadow);
 }
 
@@ -969,8 +1013,7 @@ textarea:disabled {
   place-items: center;
   width: 48px;
   height: 48px;
-  color: var(--on-accent);
-  background: var(--accent);
+  background: var(--background);
   border-radius: 10px;
   font-size: 14px;
   font-weight: 900;
@@ -985,6 +1028,7 @@ textarea:disabled {
   margin: 0;
   font-size: 30px;
   line-height: 1.15;
+  letter-spacing: -0.035em;
 }
 
 .AuthHeading > p:last-child,
@@ -1167,16 +1211,17 @@ textarea:disabled {
 
 .ProgressControls {
   display: grid;
-  gap: 16px;
-  padding: 18px;
-  background: var(--surface);
+  gap: 20px;
+  padding: 24px;
+  background: var(--surface-panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-panel);
+  box-shadow: var(--panel-shadow);
 }
 
 .ProgressWorkspace {
   display: grid;
-  gap: 20px;
+  gap: 24px;
 }
 
 .ProgressPrompt {
@@ -1193,7 +1238,8 @@ textarea:disabled {
 .ProgressControlsHeader h2 {
   margin: 0;
   color: var(--text);
-  font-size: 20px;
+  font-size: 22px;
+  letter-spacing: -0.025em;
 }
 
 .ProgressControlsHeader a,
@@ -1263,10 +1309,10 @@ textarea:disabled {
 .GoalForm {
   display: grid;
   gap: 16px;
-  padding: 18px;
-  background: var(--surface-raised);
+  padding: 22px;
+  background: var(--surface-inset);
   border: 1px solid var(--control-border);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
 }
 
 .GoalFormHeader h3,
@@ -1299,11 +1345,11 @@ textarea:disabled {
 
 .GoalCard {
   display: grid;
-  gap: 14px;
-  padding: 16px;
-  background: var(--surface-raised);
+  gap: 18px;
+  padding: 20px;
+  background: var(--surface-inset);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
 }
 
 .GoalCardHeader {
@@ -1485,7 +1531,7 @@ textarea:disabled {
 
 .ExerciseList {
   display: grid;
-  gap: 10px;
+  gap: 14px;
 }
 
 .ExerciseCard {
@@ -1493,17 +1539,19 @@ textarea:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px;
+  padding: 20px;
   background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-panel);
+  box-shadow: none;
 }
 
 .ExerciseCard h3 {
   margin: 0;
   color: var(--text);
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .ExerciseCard p {
@@ -1530,7 +1578,7 @@ textarea:disabled {
 
 .WorkoutList {
   display: grid;
-  gap: 10px;
+  gap: 14px;
 }
 
 .SectionDescription {
@@ -1545,16 +1593,17 @@ textarea:disabled {
 
 .TemplateList {
   display: grid;
-  gap: 14px;
+  gap: 18px;
 }
 
 .TemplateCard {
   display: grid;
-  gap: 14px;
-  padding: 18px;
+  gap: 20px;
+  padding: 24px;
   background: var(--surface-raised);
-  border: 1px solid var(--control-border);
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  box-shadow: none;
 }
 
 .TemplateHeader {
@@ -1567,7 +1616,8 @@ textarea:disabled {
 
 .TemplateHeader h3 {
   margin: 0;
-  font-size: 19px;
+  font-size: 21px;
+  letter-spacing: -0.025em;
 }
 
 .TemplateHeader p,
@@ -1597,9 +1647,9 @@ textarea:disabled {
 
 .TemplateStartForm {
   padding: 16px;
-  background: var(--surface);
+  background: var(--surface-inset);
   border: 1px solid var(--accent);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
 }
 
 .TemplateStartFields {
@@ -1621,11 +1671,12 @@ textarea:disabled {
 
 .TemplateEditor {
   display: grid;
-  gap: 18px;
-  padding: 18px;
-  background: var(--surface-raised);
+  gap: 24px;
+  padding: 24px;
+  background: var(--surface-panel);
   border: 1px solid var(--accent);
-  border-radius: 10px;
+  border-radius: var(--radius-panel);
+  box-shadow: var(--panel-shadow);
 }
 
 .TemplateEditorHeader {
@@ -1668,6 +1719,7 @@ textarea:disabled {
   padding: 0;
   background: transparent;
   border: 0;
+  box-shadow: none;
 }
 
 .TemplateExerciseEditor {
@@ -1692,9 +1744,9 @@ textarea:disabled {
   justify-content: space-between;
   gap: 14px;
   padding: 14px;
-  background: var(--surface);
+  background: var(--surface-inset);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
 }
 
 .TemplateExerciseIdentity {
@@ -1745,17 +1797,18 @@ textarea:disabled {
 .WorkoutRow {
   display: grid;
   gap: 16px;
-  padding: 16px;
+  padding: 22px;
   color: inherit;
   background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-panel);
+  box-shadow: none;
   text-decoration: none;
 }
 
 .WorkoutRow:hover {
   border-color: var(--accent);
-  background: var(--surface-raised);
+  background: linear-gradient(145deg, #1d304b, #16243a);
 }
 
 .WorkoutIdentity {
@@ -1852,10 +1905,11 @@ textarea:disabled {
 .AddExercisePanel {
   display: grid;
   gap: 16px;
-  padding: 18px;
-  background: var(--surface-raised);
+  padding: 24px;
+  background: var(--surface-panel);
   border: 1px solid var(--control-border);
-  border-radius: 12px;
+  border-radius: var(--radius-panel);
+  box-shadow: var(--panel-shadow);
 }
 
 .AddExercisePanel .FormSurface {
@@ -1866,6 +1920,7 @@ textarea:disabled {
   padding: 0;
   background: transparent;
   border: 0;
+  box-shadow: none;
 }
 
 .ReorderHint {
@@ -1880,15 +1935,16 @@ textarea:disabled {
   display: grid;
   min-width: 0;
   padding: 16px 20px;
-  background: var(--surface);
-  border: 1px solid var(--control-border);
-  border-top: 3px solid var(--accent);
-  border-radius: 12px;
+  background: var(--surface-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--panel-shadow);
 }
 
 .WorkoutExerciseRowExpanded {
   gap: 18px;
   padding-block: 20px;
+  border-color: #58769d;
 }
 
 .WorkoutExerciseHeader {
@@ -1945,6 +2001,8 @@ textarea:disabled {
 }
 
 .TableScroll {
+  min-width: 0;
+  max-width: 100%;
   overflow-x: auto;
 }
 
@@ -2007,11 +2065,11 @@ textarea:disabled {
   width: min(440px, calc(100% - 32px));
   max-height: calc(100dvh - 48px);
   overflow: auto;
-  padding: 24px;
+  padding: 28px;
   border: 1px solid var(--dialog-border);
-  border-radius: 12px;
+  border-radius: 20px;
   color: var(--text);
-  background: var(--surface-raised);
+  background: linear-gradient(145deg, #253a56, #18283f);
   box-shadow: var(--popup-shadow);
   overflow-wrap: anywhere;
 }
@@ -2023,6 +2081,7 @@ textarea:disabled {
 
 .ConfirmDialog h2 {
   margin-top: 0;
+  letter-spacing: -0.025em;
 }
 
 .ConfirmDialog p {
@@ -2092,8 +2151,8 @@ textarea:disabled {
 }
 
 .WeeklyCalendar {
-  gap: 20px;
-  padding: 16px 12px;
+  gap: 24px;
+  padding: 20px 16px;
   min-height: auto;
 }
 
@@ -2110,14 +2169,17 @@ textarea:disabled {
 .WeekToolbar h2,
 .DayHeader h2 {
   margin: 4px 0 0;
-  font-size: 20px;
+  font-size: 22px;
   line-height: 1.3;
+  letter-spacing: -0.025em;
 }
 
 .WeekEyebrow {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .WeekArrow {
@@ -2139,8 +2201,8 @@ textarea:disabled {
   min-height: 104px;
   padding: 12px 2px;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
+  border-radius: var(--radius-card);
+  background: var(--surface-inset);
   color: var(--text);
   cursor: pointer;
 }
@@ -2219,10 +2281,18 @@ textarea:disabled {
 .WeekTotals {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
   margin: 0;
-  padding-top: 16px;
+  padding-top: 20px;
   border-top: 1px solid var(--border);
+}
+
+.WeekTotals > div {
+  min-width: 0;
+  padding: 16px;
+  background: var(--surface-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
 }
 
 .WeekTotals dt {
@@ -2232,14 +2302,15 @@ textarea:disabled {
 
 .WeekTotals dd {
   margin: 4px 0 0;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 800;
+  letter-spacing: -0.025em;
   overflow-wrap: anywhere;
 }
 
 .DayWorkouts {
   min-height: auto;
-  padding: 20px 16px;
+  padding: 24px;
 }
 
 .DayEmptyState {
@@ -2255,9 +2326,11 @@ textarea:disabled {
 
 .DayWorkout {
   display: grid;
-  gap: 14px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border);
+  gap: 18px;
+  padding: 20px;
+  background: var(--surface-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
 }
 
 .DayWorkoutHeader h3 {
@@ -2289,7 +2362,7 @@ textarea:disabled {
   padding: 12px 14px;
   background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
 }
 
 .DayExerciseList li > div {
@@ -2323,7 +2396,7 @@ textarea:disabled {
   }
   .WeeklyCalendar,
   .DayWorkouts {
-    padding: 24px;
+    padding: 28px;
   }
 
   .WeekDays {
@@ -2396,9 +2469,9 @@ textarea:disabled {
 .EditorPanel {
   width: 100%;
   max-width: none;
-  padding: 24px;
-  border-color: var(--control-border);
-  border-radius: 12px;
+  padding: 28px;
+  border-color: #58769d;
+  border-radius: var(--radius-panel);
 }
 
 .EditorPanel .FormFieldset {
@@ -2407,7 +2480,8 @@ textarea:disabled {
 
 .EditorPanelHeader h2 {
   margin: 0 0 6px;
-  font-size: 22px;
+  font-size: 24px;
+  letter-spacing: -0.025em;
 }
 
 .EditorPanelHeader p,
@@ -2444,7 +2518,7 @@ textarea:disabled {
   gap: 12px;
   padding: 16px;
   border: 1px solid var(--control-border);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   background: var(--input-background);
   cursor: pointer;
 }
@@ -2627,7 +2701,7 @@ textarea:disabled {
 
   .PageShell {
     width: min(680px, calc(100% - 24px));
-    padding: 20px 0 calc(88px + env(safe-area-inset-bottom));
+    padding: 28px 0 calc(96px + env(safe-area-inset-bottom));
   }
 
   .ActionFeedback {
@@ -2651,7 +2725,42 @@ textarea:disabled {
   }
 
   .PageHeader h1 {
-    font-size: 28px;
+    font-size: 32px;
+  }
+
+  .ExerciseCard,
+  .WorkoutRow,
+  .TemplateCard,
+  .TemplateEditor,
+  .AddExercisePanel,
+  .WorkoutExerciseRow,
+  .GoalCard,
+  .GoalForm,
+  .SettingsInsetCard,
+  .DayWorkout {
+    padding: 16px;
+  }
+
+  .WeekTotals > div {
+    padding: 12px;
+  }
+
+  .MetricGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .MetricGrid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .MetricCard {
+    min-height: 112px;
+    gap: 10px;
+    padding: 16px;
+  }
+
+  .MetricCard strong {
+    font-size: 25px;
   }
 
   .WorkoutExerciseList {
@@ -2758,7 +2867,7 @@ textarea:disabled {
 
 @media (max-width: 479px) {
   .PageStack {
-    gap: 16px;
+    gap: 22px;
   }
 
   .PageHeader {
@@ -2808,8 +2917,8 @@ textarea:disabled {
   }
 
   .ExerciseCard {
-    align-items: stretch;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .ExerciseCard > .RowActions,

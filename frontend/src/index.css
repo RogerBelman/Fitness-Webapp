@@ -34,6 +34,16 @@
   --dialog-border: #7d94b5;
   --backdrop: #020617cc;
   --popup-shadow: 0 24px 80px #00000080;
+  --surface-panel: linear-gradient(145deg, #18263b, #121d2f);
+  --surface-inset: #111c2e;
+  --radius-panel: 16px;
+  --radius-card: 12px;
+  --radius-control: 10px;
+  --panel-shadow: 0 14px 40px #02061726, inset 0 1px 0 #ffffff04;
+  --page-background:
+    radial-gradient(ellipse 900px 600px at 90% 0, #1c3d68 0, transparent 72%),
+    radial-gradient(ellipse 700px 600px at 0 500px, #122843 0, transparent 72%),
+    var(--background);
 
   font: 16px/1.5 var(--sans);
   color: var(--text);
