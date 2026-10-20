@@ -1,0 +1,43 @@
+# Run published releases only. Build and test on GitHub, not the small VPS.
+name: workout-tracker-production
+
+services:
+  backend:
+    image: ${BACKEND_IMAGE:?Set BACKEND_IMAGE to the approved backend image digest}
+    env_file:
+      - ${APP_ENV_FILE:-/etc/workout-tracker/workout-tracker.env}
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_ADDRESS: 0.0.0.0
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: 3
+    ports:
+      - '127.0.0.1:18081:8080'
+    mem_limit: 512m
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+  frontend:
+    image: ${FRONTEND_IMAGE:?Set FRONTEND_IMAGE to the approved frontend image digest}
+    ports:
+      - '127.0.0.1:18080:8080'
+    mem_limit: 96m
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    depends_on:
+      backend:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'

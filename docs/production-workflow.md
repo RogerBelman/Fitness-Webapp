@@ -79,12 +79,88 @@ New container packages are private by default. Leave them private for now; VPS r
 
 There is no moving `latest` tag. A commit tag identifies the source version; the summary's `@sha256:...` digest identifies the exact built image. Rebuilding the same commit can produce different bytes when base images or build dependencies change, so the later deployment workflow should record both image digests as a release pair. If one component fails to publish, that pair is incomplete and must not be deployed.
 
-## Next checkpoint: connect production
+## Phase 3: prepare the production runtime
+
+The [production Compose file](../docker-compose.production.yml) runs published image references supplied through `BACKEND_IMAGE` and `FRONTEND_IMAGE`. Use the exact `@sha256:...` references from a successful publication, not a moving tag. Both references must belong to the same approved release.
+
+It contains only the application containers. Neon remains the database, and production email continues through Resend. The backend reads the existing root-owned `/etc/workout-tracker/workout-tracker.env` on the VPS. Its container binding overrides the old `127.0.0.1` server address with `0.0.0.0` inside the container; Docker exposes that port only on the VPS loopback interface.
+
+| VPS loopback port | Service |
+| --- | --- |
+| `127.0.0.1:18080` | Frontend container |
+| `127.0.0.1:18081` | Backend container |
+
+The backend keeps a 256 MB Java heap within a 512 MB container memory limit. The frontend limit is 96 MB. Both containers drop Linux capabilities, prevent gaining privileges, rotate logs, and restart unless explicitly stopped. These limits need monitoring once real traffic is running.
+
+Install Docker Engine and the Compose plugin using [Docker's Ubuntu installation instructions](https://docs.docker.com/engine/install/ubuntu/). Do not add the deployment account to the Docker group: Docker control effectively gives host administrator access. The next phase will install a narrow deployment command instead.
+
+Installing Docker does not migrate the app. Keep the current systemd service enabled until the first container release has been verified. Do not run the production Compose file by hand before the registry authentication, backup, proxy cutover, and rollback steps have been prepared.
+
+### GitHub production environment
+
+Before adding deployment credentials:
+
+1. Open the repository's **Settings → Environments → New environment**.
+2. Name it exactly `production`.
+3. Under **Deployment branches and tags**, select **Selected branches and tags**, and allow the branch `main` only.
+4. Under **Required reviewers**, add your GitHub account. Leave **Prevent self-review** off while working alone, so you can approve your own deployment.
+5. Save the rules. Do not add your personal SSH private key, database password, or Resend API key.
+
+GitHub's required-reviewer availability depends on repository visibility and plan; see [Managing environments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments). If that option is unavailable, the later workflow can still require a manual start, but that is a different control from a separate approval gate.
+
+## Phase 4: dedicated deployment connection
+
+Use a separate Ed25519 key for GitHub Actions. The private key stays in your local SSH folder and GitHub environment secrets. Only its public key belongs on the VPS. Never reuse your personal SSH key or paste either private key into chat, source files, or pull requests.
+
+The `workout-deploy` account currently has a root-owned forced command, [workout-deploy-access.sh](../scripts/workout-deploy-access.sh). Its SSH key is restricted: no shell, port forwarding, uploads, or arbitrary commands. Only `status` is accepted. The account is not a sudoer or a Docker-group member. Granting actual release permissions is a separate checkpoint.
+
+### GitHub - environment secrets
+
+Under **Settings → Environments → production → Environment secrets**, add:
+
+| Secret | Value |
+| --- | --- |
+| `DEPLOY_HOST` | The VPS address used by the existing `Projects` SSH alias, without a username or URL scheme |
+| `DEPLOY_USER` | `workout-deploy` |
+| `DEPLOY_SSH_KEY` | Complete contents of the dedicated `workout_actions_ed25519` private key, including its first and last lines |
+| `DEPLOY_KNOWN_HOSTS` | Complete contents of `workout_actions_known_hosts`, containing the server host key verified over the existing trusted SSH connection |
+
+### Local - PowerShell
+
+Copy the private key to the clipboard for `DEPLOY_SSH_KEY` without displaying it:
+
+```powershell
+Get-Content -Raw "$env:USERPROFILE/.ssh/workout_actions_ed25519" | Set-Clipboard
+```
+
+After saving that secret, copy the verified public host-key entry for `DEPLOY_KNOWN_HOSTS`:
+
+```powershell
+Get-Content -Raw "$env:USERPROFILE/.ssh/workout_actions_known_hosts" | Set-Clipboard
+```
+
+After saving the secrets, clear the clipboard:
+
+```powershell
+Set-Clipboard -Value ''
+```
+
+Host-key checking stays enabled. Do not replace the verified entry with an unchecked `ssh-keyscan` result or disable `StrictHostKeyChecking` to get around a mismatch.
+
+### GitHub - verify the connection
+
+After this feature branch passes CI and is merged, open **Actions → Check deployment access → Run workflow** and select `main`. Approve the pending `production` environment job. It should print `Deployment SSH connection: OK` and report the current workout service as `active`.
+
+The [connection workflow](../.github/workflows/check-deployment-access.yml) uses only a manual trigger, rejects branches other than `main`, writes the key to a temporary runner directory with restrictive permissions, and removes that directory afterward. It does not upload files, restart services, or deploy images.
+
+If GitHub refuses to start the job, confirm that the `production` environment allows the branch `main`. If it waits for approval, use **Review deployments**. A public Git repository does not make environment secrets public.
+
+## Next checkpoint: release permissions and deployment
 
 Configure a restricted deployment identity and the GitHub production environment. Add a manually approved deployment workflow that selects a successfully published image pair, transfers only deployment configuration, and tells the VPS to pull those images.
 
 Production will keep its existing host Nginx and HTTPS certificates. The host proxy must replace forwarded headers and route `/api/` directly to the backend's loopback port, preserving the original HTTPS scheme. The frontend container's API proxy is for the local HTTP rehearsal; do not put it between the HTTPS proxy and backend without configuring trusted forwarding correctly.
 
-Before switching traffic, back up the current frontend, backend JAR, proxy configuration, and confirm a Neon restore option. Keep the existing systemd deployment available for the first rollback. The workflows do not change GitHub settings, connect to the VPS, or deploy anything yet.
+Before switching traffic, back up the current frontend, backend JAR, proxy configuration, and confirm a Neon restore option. Keep the existing systemd deployment available for the first rollback. The connection workflow only checks SSH access; no workflow deploys a release yet.
 
 Flyway runs pending migrations when the backend starts. Use new versioned migrations and prefer changes compatible with the previous application version. Returning to an old image does not undo a database migration. Backend restarts also end the current in-memory login sessions.
