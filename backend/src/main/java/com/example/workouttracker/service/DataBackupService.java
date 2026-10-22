@@ -37,7 +37,7 @@ import jakarta.persistence.EntityManager;
 @Service
 public class DataBackupService {
 
-	private static final int BACKUP_VERSION = 1;
+	private static final int BACKUP_VERSION = 2;
 
 	private final ExerciseRepository exerciseRepository;
 	private final WorkoutRepository workoutRepository;
@@ -68,7 +68,9 @@ public class DataBackupService {
 				.sorted(Comparator.comparing(Exercise::getName, String.CASE_INSENSITIVE_ORDER))
 				.map(exercise -> new DataBackup.ExerciseData(
 						exercise.getName(), exercise.getMuscleGroup(), exercise.getCategory(),
-						exercise.getInstructions(), exercise.getTrainingType()))
+						exercise.getInstructions(), exercise.getTrainingType(),
+                        exercise.getMovementType(), exercise.getRepRangeMin(), exercise.getRepRangeMax(),
+                        exercise.getDurationMinMinutes(), exercise.getDurationMaxMinutes(), exercise.getTargetWorkingSets(), exercise.getMuscleFocus()))
 				.toList();
 
 		List<DataBackup.WorkoutData> workouts = workoutRepository.findByUserIdOrderByWorkoutDateDescIdDesc(userId).stream()
@@ -108,8 +110,11 @@ public class DataBackupService {
 		Map<String, Exercise> exercisesByName = new HashMap<>();
 		for (DataBackup.ExerciseData item : exerciseData.values()) {
 			Exercise exercise = exerciseRepository.save(new Exercise(
-					user, item.name().strip(), nullableText(item.muscleGroup()), item.category().strip(),
+					user, item.name().strip(), ExerciseDefaultsValidation.normalizeMuscleGroup(item.trainingType(), item.muscleGroup()), item.category().strip(),
 					nullableText(item.instructions()), item.trainingType()));
+            exercise.updateMuscleFocus(nullableText(item.muscleFocus()));
+            exercise.updateDefaults(item.movementType(), item.repRangeMin(), item.repRangeMax(),
+                    item.durationMinMinutes(), item.durationMaxMinutes(), item.targetWorkingSets());
 			exercisesByName.put(key(item.name()), exercise);
 		}
 
@@ -159,8 +164,8 @@ public class DataBackupService {
 	}
 
 	private Map<String, DataBackup.ExerciseData> validate(DataBackup backup) {
-		if (backup == null || backup.version() == null || backup.version() != BACKUP_VERSION) {
-			throw invalid("Only backup version 1 is supported.");
+		if (backup == null || backup.version() == null || (backup.version() != 1 && backup.version() != BACKUP_VERSION)) {
+			throw invalid("Only backup versions 1 and 2 are supported.");
 		}
 		if (backup.exercises() == null || backup.workouts() == null
 				|| backup.templates() == null || backup.goals() == null) {
@@ -176,6 +181,10 @@ public class DataBackupService {
 					|| item.trainingType() == TrainingType.STRENGTH && blank(item.muscleGroup())) {
 				throw invalid("Each exercise needs a valid name, category, and training type.");
 			}
+            ExerciseDefaultsValidation.normalizeMuscleGroup(item.trainingType(), item.muscleGroup());
+            ExerciseDefaultsValidation.normalizeMuscleFocus(item.trainingType(), item.muscleFocus());
+            ExerciseDefaultsValidation.validate(item.trainingType(), item.movementType(),
+                    item.repRangeMin(), item.repRangeMax(), item.durationMinMinutes(), item.durationMaxMinutes(), item.targetWorkingSets());
 			if (exercises.putIfAbsent(key(item.name()), item) != null) {
 				throw invalid("Exercise names must be unique.");
 			}

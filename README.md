@@ -8,6 +8,7 @@ For the Docker rehearsal and pull-request checks, see [Production workflow](docs
 
 - Create, list, filter, update, and delete exercises through the REST API.
 - Save permanent exercise instructions for setup and technique, visible in the library and workout details.
+- Add optional Compound/Isolation classification and working-set/rep targets for strength, or minute targets for cardio. Exercise defaults appear in the library, templates, and expanded workout details without restricting actual logged performance.
 - Create workouts and add ordered exercises and sets.
 - Choose Strength or Cardio for each exercise. Log cardio duration and optional machine level, with edit/delete support.
 - Review workout history with strength set counts, strength volume, separate cardio minutes, and search, training-type, and date filters.
@@ -46,7 +47,7 @@ For the Docker rehearsal and pull-request checks, see [Production workflow](docs
 ## Project Structure
 
 ```text
-fitness-webapp/
+workout-tracker-webapp/
   backend/   Spring Boot REST API
   frontend/  React + TypeScript browser app
 ```
@@ -81,6 +82,8 @@ The Weight units control on the Settings page switches strength entry, totals, g
 The browser restores the signed-in account from its server session when the app loads. Signed-out visitors are sent to the Login page, and a successful login returns them to the page they originally requested. Registration creates the account and signs in immediately. The footer displays the current account alongside clearly labeled Settings and Sign Out controls, keeping the application header focused on navigation.
 
 The Settings page manages the recovery email and downloads exercises, workouts, strength sets, cardio entries, templates, and goals as a versioned JSON snapshot. Import validates the complete snapshot first and then replaces the current dataset in one database transaction. Invalid files leave existing data unchanged. Password changes, password resets, and account deletion end every active session for the account. Account deletion removes that account and its owned training data in one transaction. Password fields include an explicit Show or Hide control.
+
+Exercise defaults are shared wherever a library exercise is used. Ranges need both positive bounds (equal bounds are allowed); cardio minutes support two decimal places. Changing defaults also changes the guidance shown in past workouts, while recorded sets and cardio entries remain unchanged. Backup exports use version 2 to preserve these fields; imports accept both version 1 and version 2.
 
 The Workout Templates page can create a reusable routine directly or save one from an existing workout. After creating a template, add exercises from the library, arrange their order, and start a workout with empty performance entries.
 
@@ -374,7 +377,7 @@ Endpoints:
 
 `instructions` is optional and supports up to 500 characters. The Exercise Library create/edit form lets you save it, and clearing the text removes it. Blank, null, or omitted instructions are stored as null. Instructions belong to the reusable exercise and appear everywhere that exercise is used. Session-wide comments belong in the workout's `notes` field. Existing exercises start without instructions after the `V2__add_exercise_instructions.sql` migration runs.
 
-`trainingType` is `STRENGTH` or `CARDIO`. Omitted types default to Strength on creation and preserve the current type on update. Muscle group is required for Strength and optional for Cardio. Equipment details belong in the exercise name or instructions; there is no separate equipment field or filter in the UI. The API still accepts the optional legacy `category` field, defaulting to `None` when omitted. The frontend preserves existing category values during edits. Changing training type returns `409 Conflict` while that exercise has any logged sets or cardio entries, so existing history keeps its meaning.
+`trainingType` is `STRENGTH` or `CARDIO`. Omitted types default to Strength on creation and preserve the current type on update. Strength exercises require one of six muscle groups: Chest, Back, Legs, Shoulders, Arms, or Core. Cardio does not use muscle group or muscle focus. Strength exercises also support an optional muscle focus (up to 80 characters), such as Upper Chest or Rear Delts. Equipment details belong in the exercise name or instructions; there is no separate equipment field or filter in the UI. The API still accepts the optional legacy `category` field, defaulting to `None` when omitted. The frontend preserves existing category values during edits. Cardio duration targets can specify a minimum alone, a maximum alone, or both. Training type is fixed after creation. Attempts to change it return `409 Conflict`, even before any entries are logged. Create a separate exercise for a different training type.
 
 The forward-only `V3__add_cardio_tracking.sql` migration adds the training type and cardio table. Existing exercises default to Strength. Legacy exercises whose category is Cardio are classified as Cardio only when they have no logged sets. Exercises with existing sets keep their Strength type and all their history; category text and permanent instructions are preserved. Restart the backend to apply pending migrations.
 

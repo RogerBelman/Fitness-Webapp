@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { useMeasurementPreferences } from '../../hooks/useMeasurementPreferences'
 import type { Workout } from '../../types/workout'
 import { formatWeight } from '../../utils/weightMeasurement'
+import { getTrainingTypeOptionLabel } from '../../utils/trainingTypeDisplay'
 import {
   filterWorkouts,
   type WorkoutTrainingFilter,
@@ -50,8 +51,8 @@ export function WorkoutList({ workouts, isLoading }: WorkoutListProps) {
             }
           >
             <option value="ALL">All types</option>
-            <option value="STRENGTH">Strength only</option>
-            <option value="CARDIO">Cardio only</option>
+            <option value="STRENGTH">{getTrainingTypeOptionLabel('STRENGTH')} only</option>
+            <option value="CARDIO">{getTrainingTypeOptionLabel('CARDIO')} only</option>
             <option value="MIXED">Mixed</option>
           </select>
         </label>

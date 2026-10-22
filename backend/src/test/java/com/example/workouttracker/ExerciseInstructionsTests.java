@@ -41,18 +41,19 @@ class ExerciseInstructionsTests {
 
 	@Test
 	void createsAndReadsPermanentInstructionsWithLineBreaks() throws Exception {
-		String muscleGroup = "Instructions " + UUID.randomUUID();
-		mockMvc.perform(post("/api/exercises").contentType(MediaType.APPLICATION_JSON)
+		String muscleGroup = "Chest";
+		String location = mockMvc.perform(post("/api/exercises").contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{"name":"Instruction test %s","muscleGroup":"%s","category":"Barbell",
 						 "instructions":"  Set your grip.\\nKeep your shoulders down.  "}
 						""".formatted(UUID.randomUUID(), muscleGroup)))
 				.andExpect(status().isCreated())
-				.andExpect(jsonPath("$.instructions").value("Set your grip.\nKeep your shoulders down."));
+				.andExpect(jsonPath("$.instructions").value("Set your grip.\nKeep your shoulders down."))
+				.andReturn().getResponse().getHeader("Location");
 		flushAndClear();
-		mockMvc.perform(get("/api/exercises").param("muscleGroup", muscleGroup))
+		mockMvc.perform(get(location))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].instructions").value("Set your grip.\nKeep your shoulders down."));
+				.andExpect(jsonPath("$.instructions").value("Set your grip.\nKeep your shoulders down."));
 	}
 
 	@Test
@@ -108,16 +109,16 @@ class ExerciseInstructionsTests {
 
 	@Test
 	void acceptsInstructionsAtTheLimit() throws Exception {
-		String muscleGroup = "Limit " + UUID.randomUUID();
+		String muscleGroup = "Chest";
 		String instructions = "x".repeat(500);
-		mockMvc.perform(post("/api/exercises").contentType(MediaType.APPLICATION_JSON)
+		String location = mockMvc.perform(post("/api/exercises").contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{"name":"Limit test %s","muscleGroup":"%s","category":"Barbell","instructions":"%s"}
 						""".formatted(UUID.randomUUID(), muscleGroup, instructions)))
-				.andExpect(status().isCreated());
+				.andExpect(status().isCreated()).andReturn().getResponse().getHeader("Location");
 		flushAndClear();
-		mockMvc.perform(get("/api/exercises").param("muscleGroup", muscleGroup))
-				.andExpect(jsonPath("$[0].instructions").value(instructions));
+		mockMvc.perform(get(location))
+				.andExpect(jsonPath("$.instructions").value(instructions));
 	}
 
 	private String request(String name, String instructionsField) {

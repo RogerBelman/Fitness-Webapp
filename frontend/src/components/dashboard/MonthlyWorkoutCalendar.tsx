@@ -20,6 +20,8 @@ export function MonthlyWorkoutCalendar({ workouts, selectedDate, today, onSelect
     workouts.forEach((workout) => result.set(workout.workoutDate, (result.get(workout.workoutDate) ?? 0) + 1))
     return result
   }, [workouts])
+  const workoutCount = days.dates.reduce((total, date) => total + (counts.get(date) ?? 0), 0)
+  const activeDays = days.dates.filter((date) => counts.has(date)).length
 
   useEffect(() => {
     const element = dialog.current
@@ -32,6 +34,11 @@ export function MonthlyWorkoutCalendar({ workouts, selectedDate, today, onSelect
       <div><span className="WeekEyebrow">Monthly overview</span><h2 id={titleId}>{formatMonth(month)}</h2></div>
       <button className="Button ButtonSecondary" type="button" onClick={onClose}>Close</button>
     </div>
+    <p className="MonthSummary" role="status" aria-atomic="true">
+      {workoutCount
+        ? `${workoutCount} workout${workoutCount === 1 ? '' : 's'} across ${activeDays} day${activeDays === 1 ? '' : 's'}`
+        : 'No workouts recorded for this month.'}
+    </p>
     <div className="MonthToolbar">
       <button className="Button ButtonSecondary" type="button" aria-label="Previous month" onClick={() => setMonth(changeMonth(month, -1))}>←</button>
       <button className="Button ButtonSecondary" type="button" onClick={() => setMonth(today.slice(0, 7))}>This Month</button>

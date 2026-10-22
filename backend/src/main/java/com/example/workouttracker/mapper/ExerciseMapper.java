@@ -16,6 +16,8 @@ public final class ExerciseMapper {
 				exercise.getCategory(),
 				exercise.getInstructions(),
 				exercise.getTrainingType(),
+                exercise.getMovementType(), exercise.getRepRangeMin(), exercise.getRepRangeMax(),
+                exercise.getDurationMinMinutes(), exercise.getDurationMaxMinutes(), exercise.getTargetWorkingSets(), exercise.getMuscleFocus(),
 				exercise.getCreatedAt(),
 				exercise.getUpdatedAt());
 	}

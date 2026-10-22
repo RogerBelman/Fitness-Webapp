@@ -20,8 +20,6 @@ import com.example.workouttracker.repository.ExerciseRepository;
 import com.example.workouttracker.repository.ExerciseGoalRepository;
 import com.example.workouttracker.repository.WorkoutExerciseRepository;
 import com.example.workouttracker.repository.WorkoutTemplateExerciseRepository;
-import com.example.workouttracker.repository.SetEntryRepository;
-import com.example.workouttracker.repository.CardioEntryRepository;
 
 @Service
 @Transactional
@@ -29,21 +27,16 @@ public class ExerciseService {
 
 	private final ExerciseRepository exerciseRepository;
 	private final WorkoutExerciseRepository workoutExerciseRepository;
-	private final SetEntryRepository setEntryRepository;
-	private final CardioEntryRepository cardioEntryRepository;
 	private final WorkoutTemplateExerciseRepository workoutTemplateExerciseRepository;
 	private final ExerciseGoalRepository exerciseGoalRepository;
 	private final CurrentUserService currentUserService;
 
 	public ExerciseService(ExerciseRepository exerciseRepository, WorkoutExerciseRepository workoutExerciseRepository,
-			SetEntryRepository setEntryRepository, CardioEntryRepository cardioEntryRepository,
 			WorkoutTemplateExerciseRepository workoutTemplateExerciseRepository,
 			ExerciseGoalRepository exerciseGoalRepository,
 			CurrentUserService currentUserService) {
 		this.exerciseRepository = exerciseRepository;
 		this.workoutExerciseRepository = workoutExerciseRepository;
-		this.setEntryRepository = setEntryRepository;
-		this.cardioEntryRepository = cardioEntryRepository;
 		this.workoutTemplateExerciseRepository = workoutTemplateExerciseRepository;
 		this.exerciseGoalRepository = exerciseGoalRepository;
 		this.currentUserService = currentUserService;
@@ -95,17 +88,20 @@ public class ExerciseService {
 		}
 
 		Exercise exercise = new Exercise(user, values.name(), values.muscleGroup(), values.category(), values.instructions(), values.trainingType());
-		return ExerciseMapper.toResponse(exerciseRepository.save(exercise));
+		exercise.updateMuscleFocus(values.muscleFocus());
+		exercise.updateDefaults(request.movementType(), request.repRangeMin(), request.repRangeMax(),
+                request.durationMinMinutes(), request.durationMaxMinutes(), request.targetWorkingSets());
+        return ExerciseMapper.toResponse(exerciseRepository.save(exercise));
 	}
 
 	public ExerciseResponse update(Long id, ExerciseRequest request) {
 		Exercise exercise = getExercise(id);
-		ExerciseValues values = normalize(request, exercise.getTrainingType());
-		if (values.trainingType() != exercise.getTrainingType()
-				&& (setEntryRepository.existsByWorkoutExercise_Exercise_Id(id)
-						|| cardioEntryRepository.existsByWorkoutExercise_Exercise_Id(id))) {
-			throw new DuplicateResourceException("Remove logged entries before changing an exercise's training type.");
+		if (request != null && request.trainingType() != null
+				&& request.trainingType() != exercise.getTrainingType()) {
+			throw new DuplicateResourceException(
+					"Training type cannot be changed after creation. Create a separate exercise for a different type.");
 		}
+		ExerciseValues values = normalize(request, exercise.getTrainingType());
 
 		if (exerciseRepository.existsByUserIdAndNameIgnoreCaseAndIdNot(
 				exercise.getUser().getId(), values.name(), id)) {
@@ -113,6 +109,9 @@ public class ExerciseService {
 		}
 
 		exercise.updateDetails(values.name(), values.muscleGroup(), values.category(), values.instructions(), values.trainingType());
+        exercise.updateMuscleFocus(values.muscleFocus());
+		exercise.updateDefaults(request.movementType(), request.repRangeMin(), request.repRangeMax(),
+                request.durationMinMinutes(), request.durationMaxMinutes(), request.targetWorkingSets());
 		exerciseRepository.flush();
 		return ExerciseMapper.toResponse(exercise);
 	}
@@ -148,12 +147,15 @@ public class ExerciseService {
 		}
 
 		TrainingType type = request.trainingType() == null ? defaultType : request.trainingType();
+        ExerciseDefaultsValidation.validate(type, request.movementType(), request.repRangeMin(), request.repRangeMax(),
+                request.durationMinMinutes(), request.durationMaxMinutes(), request.targetWorkingSets());
 		String equipment = optionalText(request.category());
 		return new ExerciseValues(
 				requiredText(TextFormatting.titleCase(request.name()), "name"),
-				type == TrainingType.STRENGTH ? requiredText(request.muscleGroup(), "muscleGroup") : optionalText(request.muscleGroup()),
+				ExerciseDefaultsValidation.normalizeMuscleGroup(type, request.muscleGroup()),
 				equipment == null ? "None" : equipment,
-				optionalInstructions(request.instructions()), type);
+				optionalInstructions(request.instructions()), type,
+				ExerciseDefaultsValidation.normalizeMuscleFocus(type, request.muscleFocus()));
 	}
 
 	private String optionalText(String value) {
@@ -178,6 +180,6 @@ public class ExerciseService {
 		return value.trim();
 	}
 
-	private record ExerciseValues(String name, String muscleGroup, String category, String instructions, TrainingType trainingType) {
+	private record ExerciseValues(String name, String muscleGroup, String category, String instructions, TrainingType trainingType, String muscleFocus) {
 	}
 }

@@ -1,12 +1,13 @@
 import type { GoalMetric } from './goal'
-import type { TrainingType } from './exercise'
+import type { ExerciseDefaults, TrainingType } from './exercise'
 
 export type DataBackup = {
   version: number
   exportedAt: string
-  exercises: Array<{
+  exercises: Array<ExerciseDefaults & {
     name: string
     muscleGroup: string | null
+    muscleFocus?: string | null
     category: string
     instructions: string | null
     trainingType: TrainingType

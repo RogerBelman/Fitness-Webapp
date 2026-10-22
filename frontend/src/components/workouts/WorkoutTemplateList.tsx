@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DeleteButton } from '../DeleteButton'
-import { TrainingTypeBadge } from '../TrainingTypeBadge'
+import { ExerciseGuidance } from '../ExerciseGuidance'
+import { ExerciseMetadata } from '../ExerciseMetadata'
+import { ExerciseOptions } from '../ExerciseOptions'
 import type { Exercise } from '../../types/exercise'
 import type {
   StartTemplateWorkoutRequest,
@@ -9,7 +11,6 @@ import type {
   WorkoutTemplateRequest,
 } from '../../types/workoutTemplate'
 import { getTodayDate } from '../../utils/workoutCalendar'
-import { compareExercisesByTrainingTypeAndName } from '../../utils/trainingTypeDisplay'
 
 type WorkoutTemplateListProps = {
   templates: WorkoutTemplate[]
@@ -155,8 +156,11 @@ export function WorkoutTemplateList({
                 <ol className="TemplateExercises">
                   {template.exercises.map((item) => (
                     <li key={`${template.id}-${item.exerciseOrder}`}>
-                      <span>{item.exercise.name}</span>
-                      <TrainingTypeBadge trainingType={item.exercise.trainingType} />
+                      <div className="TemplateExerciseLabel">
+                        <span>{item.exercise.name}</span>
+                        <ExerciseMetadata exercise={item.exercise} />
+                        <ExerciseGuidance exercise={item.exercise} />
+                      </div>
                     </li>
                   ))}
                 </ol>
@@ -332,7 +336,7 @@ function TemplateEditor({
             />
           </label>
           <label>
-            Template Notes (optional)
+            <span>Template Notes <span className="OptionalLabel">(optional)</span></span>
             <textarea
               maxLength={500}
               rows={3}
@@ -365,9 +369,8 @@ function TemplateEditor({
                   <strong>
                     {index + 1}. {item.exercise.name}
                   </strong>
-                  <TrainingTypeBadge
-                    trainingType={item.exercise.trainingType}
-                  />
+                  <ExerciseMetadata exercise={item.exercise} />
+                  <ExerciseGuidance exercise={item.exercise} />
                   {item.exercise.instructions ? (
                     <details>
                       <summary>Instructions</summary>
@@ -420,26 +423,21 @@ function TemplateEditor({
 
         <form className="TemplateAddExercise" onSubmit={addExercise}>
           <label>
-            Add Exercise
+            Saved Exercise
             <select
               required
-              disabled={isSaving || isLoadingExercises}
+              disabled={isSaving || isLoadingExercises || exercises.length === 0}
               value={selectedExerciseId}
               onChange={(event) => setSelectedExerciseId(event.target.value)}
             >
               <option value="">
                 {isLoadingExercises
                   ? 'Loading exercises...'
-                  : 'Choose an exercise'}
+                  : exercises.length > 0
+                    ? 'Choose from your library'
+                    : 'No saved exercises yet'}
               </option>
-              {[...exercises]
-                .sort(compareExercisesByTrainingTypeAndName)
-                .map((exercise) => (
-                <option key={exercise.id} value={exercise.id}>
-                  {exercise.name} ·{' '}
-                  {exercise.trainingType === 'CARDIO' ? 'Cardio' : 'Strength'}
-                </option>
-                ))}
+              <ExerciseOptions exercises={exercises} />
             </select>
           </label>
           <button

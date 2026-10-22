@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { Exercise } from '../../types/exercise'
-import { getTrainingTypeOptionLabel } from '../../utils/trainingTypeDisplay'
+import { ExerciseOptions } from '../ExerciseOptions'
 
 type ProgressSelectorProps = {
   exercises: Exercise[]
@@ -38,13 +38,7 @@ export function ProgressSelector({
           <option value="">
             {isLoading ? 'Loading exercises...' : 'Select exercise'}
           </option>
-          {exercises.map((exercise) => (
-            <option key={exercise.id} value={exercise.id}>
-              {getTrainingTypeOptionLabel(exercise.trainingType)} —{' '}
-              {exercise.name}
-              {exercise.muscleGroup ? ` (${exercise.muscleGroup})` : ''}
-            </option>
-          ))}
+          <ExerciseOptions exercises={exercises} />
         </select>
       </label>
     </section>

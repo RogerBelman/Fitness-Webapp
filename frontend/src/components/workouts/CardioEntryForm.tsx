@@ -51,7 +51,7 @@ export function CardioEntryForm({
             />
           </label>
           <label>
-            Machine Level (optional)
+            <span>Machine Level <span className="OptionalLabel">(optional)</span></span>
             <input
               type="number"
               min="0"

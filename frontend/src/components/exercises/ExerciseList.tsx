@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import type { Exercise, ExerciseRequest } from '../../types/exercise'
 import { DeleteButton } from '../DeleteButton'
-import { TrainingTypeBadge } from '../TrainingTypeBadge'
+import { ExerciseMetadata } from '../ExerciseMetadata'
+import { ExerciseGuidance } from '../ExerciseGuidance'
 import { ExerciseForm } from './ExerciseForm'
 
 type ExerciseListProps = {
@@ -40,12 +41,8 @@ export function ExerciseList({
               <article className="ExerciseCard">
                 <div>
                   <h3>{exercise.name}</h3>
-                  <div className="ExerciseTypeLine">
-                    <TrainingTypeBadge trainingType={exercise.trainingType} />
-                    {exercise.muscleGroup ? (
-                      <span>{exercise.muscleGroup}</span>
-                    ) : null}
-                  </div>
+                  <ExerciseMetadata exercise={exercise} />
+                  <ExerciseGuidance exercise={exercise} />
                 </div>
                 <div className="RowActions">
                   <button
@@ -77,9 +74,16 @@ export function ExerciseList({
                   initialValues={{
                     name: exercise.name,
                     muscleGroup: exercise.muscleGroup ?? '',
+                    muscleFocus: exercise.muscleFocus,
                     trainingType: exercise.trainingType,
                     category: exercise.category,
                     instructions: exercise.instructions ?? '',
+                    movementType: exercise.movementType,
+                    targetWorkingSets: exercise.targetWorkingSets,
+                    repRangeMin: exercise.repRangeMin,
+                    repRangeMax: exercise.repRangeMax,
+                    durationMinMinutes: exercise.durationMinMinutes,
+                    durationMaxMinutes: exercise.durationMaxMinutes,
                   }}
                   isSaving={isSaving}
                   onCancel={() => setEditingId(null)}

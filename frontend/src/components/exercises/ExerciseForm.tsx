@@ -1,6 +1,8 @@
 import { useId, useState } from 'react'
 import type { FormEvent } from 'react'
-import type { ExerciseRequest } from '../../types/exercise'
+import type { ExerciseRequest, MovementType } from '../../types/exercise'
+import { TrainingTypeBadge } from '../TrainingTypeBadge'
+import { MUSCLE_GROUPS } from '../../utils/muscleGroups'
 import {
   getTrainingTypeIcon,
   getTrainingTypeLabel,
@@ -34,9 +36,16 @@ export function ExerciseForm({
       ? {
           name: initialValues.name,
           trainingType: initialValues.trainingType,
-          muscleGroup: initialValues.muscleGroup,
+          muscleGroup: MUSCLE_GROUPS.find((group) => group.toLowerCase() === initialValues.muscleGroup?.trim().toLowerCase()) ?? '',
+          muscleFocus: initialValues.muscleFocus ?? '',
           category: initialValues.category,
           instructions: initialValues.instructions ?? '',
+          movementType: initialValues.movementType ?? null,
+          targetWorkingSets: initialValues.targetWorkingSets ?? null,
+          repRangeMin: initialValues.repRangeMin ?? null,
+          repRangeMax: initialValues.repRangeMax ?? null,
+          durationMinMinutes: initialValues.durationMinMinutes ?? null,
+          durationMaxMinutes: initialValues.durationMaxMinutes ?? null,
         }
       : emptyForm,
   )
@@ -45,7 +54,18 @@ export function ExerciseForm({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if ((await onCreate(form)) && !initialValues) {
+    const request: ExerciseRequest = {
+      ...form,
+      muscleGroup: isCardio ? '' : form.muscleGroup,
+      muscleFocus: isCardio ? null : form.muscleFocus?.trim() || null,
+      movementType: isCardio ? null : form.movementType ?? null,
+      targetWorkingSets: isCardio ? null : form.targetWorkingSets ?? null,
+      repRangeMin: isCardio ? null : form.repRangeMin ?? null,
+      repRangeMax: isCardio ? null : form.repRangeMax ?? null,
+      durationMinMinutes: isCardio ? form.durationMinMinutes ?? null : null,
+      durationMaxMinutes: isCardio ? form.durationMaxMinutes ?? null : null,
+    }
+    if ((await onCreate(request)) && !initialValues) {
       setForm(emptyForm)
     }
   }
@@ -62,46 +82,64 @@ export function ExerciseForm({
             {initialValues ? 'Edit Exercise' : 'New Exercise'}
           </h2>
           <p>
-            {createInWorkout
-              ? 'Save to your library and add to this workout.'
-              : 'Set up the exercise once. Log your performance in a workout.'}
+            {initialValues
+              ? 'Library changes appear in past workouts too.'
+              : createInWorkout
+                ? 'Save to your library and add to this workout.'
+                : 'Set up the exercise once. Log your performance in a workout.'}
           </p>
         </header>
 
         <fieldset className="ExerciseTypePicker">
           <legend>Training Type</legend>
-          <div className="ExerciseTypeOptions">
-            {(['STRENGTH', 'CARDIO'] as const).map((type) => (
-              <label className="ExerciseTypeOption" key={type}>
-                <input
-                  type="radio"
-                  name={`${formId}-trainingType`}
-                  value={type}
-                  checked={form.trainingType === type}
-                  onChange={() =>
-                    setForm((current) => ({ ...current, trainingType: type }))
-                  }
-                />
-                <span className="ExerciseTypeOptionIcon" aria-hidden="true">
-                  {getTrainingTypeIcon(type)}
-                </span>
-                <span>
-                  <strong>{getTrainingTypeLabel(type)}</strong>
-                  <small>
-                    {type === 'STRENGTH'
-                      ? 'Sets, reps & weight'
-                      : 'Duration & machine level'}
-                  </small>
-                </span>
-              </label>
-            ))}
-          </div>
+          {initialValues ? (
+            <div className="ExerciseTypeSummary">
+              <TrainingTypeBadge trainingType={form.trainingType} />
+            </div>
+          ) : (
+            <div className="ExerciseTypeOptions">
+              {(['STRENGTH', 'CARDIO'] as const).map((type) => (
+                <label className="ExerciseTypeOption" key={type}>
+                  <input
+                    type="radio"
+                    name={`${formId}-trainingType`}
+                    value={type}
+                    checked={form.trainingType === type}
+                    onChange={() =>
+                      setForm((current) => ({
+                        ...current, trainingType: type,
+                        muscleGroup: type === 'CARDIO' ? '' : current.muscleGroup,
+                        muscleFocus: type === 'CARDIO' ? null : current.muscleFocus,
+                        movementType: type === 'CARDIO' ? null : current.movementType,
+                        targetWorkingSets: type === 'CARDIO' ? null : current.targetWorkingSets,
+                        repRangeMin: type === 'CARDIO' ? null : current.repRangeMin,
+                        repRangeMax: type === 'CARDIO' ? null : current.repRangeMax,
+                        durationMinMinutes: type === 'STRENGTH' ? null : current.durationMinMinutes,
+                        durationMaxMinutes: type === 'STRENGTH' ? null : current.durationMaxMinutes,
+                      }))
+                    }
+                  />
+                  <span className="ExerciseTypeOptionIcon" aria-hidden="true">
+                    {getTrainingTypeIcon(type)}
+                  </span>
+                  <span>
+                    <strong>{getTrainingTypeLabel(type)}</strong>
+                    <small>
+                      {type === 'STRENGTH'
+                        ? 'Sets, reps & weight'
+                        : 'Duration & machine level'}
+                    </small>
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
         </fieldset>
 
         <div
           className={`ExerciseDetailsGrid${isCardio ? ' ExerciseDetailsGridSingle' : ''}`}
         >
-          <label>
+          <label className="ExerciseNameField">
             Exercise Name
             <input
               autoFocus
@@ -120,19 +158,33 @@ export function ExerciseForm({
           {!isCardio ? (
             <label>
               Muscle Group
-              <input
+              <select
                 name="muscleGroup"
-                maxLength={80}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    muscleGroup: event.target.value,
-                  }))
-                }
-                placeholder="Chest"
+                onChange={(event) => setForm((current) => ({
+                  ...current, muscleGroup: event.target.value,
+                }))}
                 required
-                type="text"
                 value={form.muscleGroup}
+              >
+                <option value="">Choose a muscle group</option>
+                {MUSCLE_GROUPS.map((group) => (
+                  <option key={group} value={group}>{group}</option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          {!isCardio ? (
+            <label>
+              <span>Muscle Focus <span className="OptionalLabel">(optional)</span></span>
+              <input
+                name="muscleFocus"
+                maxLength={80}
+                type="text"
+                placeholder="Upper Chest"
+                value={form.muscleFocus ?? ''}
+                onChange={(event) => setForm((current) => ({
+                  ...current, muscleFocus: event.target.value,
+                }))}
               />
             </label>
           ) : null}
@@ -157,17 +209,65 @@ export function ExerciseForm({
           />
         </label>
 
-        <p className="ExerciseTrackingHint" role="status">
-          {isCardio
-            ? 'In a workout, log duration in minutes and an optional machine level.'
-            : 'In a workout, log sets, reps, and weight.'}
-        </p>
-        {initialValues ? (
-          <p className="ExerciseTrackingHint">
-            Library changes appear in past workouts too. Training type can only
-            change before any sets or cardio entries are logged.
-          </p>
-        ) : null}
+        <fieldset className="ExerciseDefaultsFields">
+          <legend>Training Defaults</legend>
+          <p className="ExerciseDefaultsHint">Optional guidance shared across workouts and templates. You can log performance outside these targets.</p>
+          {!isCardio ? (
+            <label>
+              Movement Type
+              <select value={form.movementType ?? ''} onChange={(event) => setForm((current) => ({
+                ...current, movementType: (event.target.value || null) as MovementType | null,
+              }))}>
+                <option value="">Not specified</option>
+                <option value="COMPOUND">Compound</option>
+                <option value="ISOLATION">Isolation</option>
+              </select>
+            </label>
+          ) : null}
+          {!isCardio ? (
+            <label>
+              Target Working Sets
+              <input type="number" min="1" max="2147483647" step="1"
+                value={form.targetWorkingSets ?? ''}
+                onChange={(event) => setForm((current) => ({ ...current,
+                  targetWorkingSets: event.target.value === '' ? null : Number(event.target.value),
+                }))} />
+            </label>
+          ) : null}
+          <div className="ExerciseRangeFields">
+            {isCardio ? <>
+              <label>Minimum minutes
+                <input type="number" min="0.01" max="99999.99" step="0.01"
+                  value={form.durationMinMinutes ?? ''} placeholder="Optional"
+                  onChange={(event) => setForm((current) => ({ ...current,
+                    durationMinMinutes: event.target.value === '' ? null : Number(event.target.value),
+                  }))} />
+              </label>
+              <label>Maximum minutes
+                <input type="number" min={form.durationMinMinutes ?? 0.01} max="99999.99" step="0.01"
+                  value={form.durationMaxMinutes ?? ''} placeholder="Optional"
+                  onChange={(event) => setForm((current) => ({ ...current,
+                    durationMaxMinutes: event.target.value === '' ? null : Number(event.target.value),
+                  }))} />
+              </label>
+            </> : <>
+              <label>Minimum reps
+                <input type="number" min="1" max="2147483647" step="1"
+                  value={form.repRangeMin ?? ''} required={form.repRangeMax != null}
+                  onChange={(event) => setForm((current) => ({ ...current,
+                    repRangeMin: event.target.value === '' ? null : Number(event.target.value),
+                  }))} />
+              </label>
+              <label>Maximum reps
+                <input type="number" min={form.repRangeMin ?? 1} max="2147483647" step="1"
+                  value={form.repRangeMax ?? ''} required={form.repRangeMin != null}
+                  onChange={(event) => setForm((current) => ({ ...current,
+                    repRangeMax: event.target.value === '' ? null : Number(event.target.value),
+                  }))} />
+              </label>
+            </>}
+          </div>
+        </fieldset>
 
         <div className="FormActions EditorPanelActions ExerciseEditorActions">
           {onCancel ? (
