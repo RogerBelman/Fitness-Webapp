@@ -16,6 +16,12 @@ class ReleaseTests(unittest.TestCase):
                 'backend_digest': 'sha256:' + 'c' * 64,
                 'registry_username': 'test-user', 'registry_token': 'temporary-test-token'}
 
+    def test_trusted_source_uses_current_repository_name(self):
+        self.assertEqual(
+            release.SOURCE,
+            'https://github.com/RogerBelman/Workout-Tracker-Webapp',
+        )
+
     def test_rejects_incomplete_or_injected_image_versions(self):
         for field, value in [('commit', 'main'), ('commit', 'a' * 40 + ';id'),
                              ('backend_digest', 'latest'),
