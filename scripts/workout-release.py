@@ -21,7 +21,7 @@ ROOT = Path('/opt/workout-tracker/container-releases')
 CONFIG = Path('/etc/workout-tracker')
 NGINX = Path('/etc/nginx/sites-available/workouts.rogerbelman.com')
 SITE = 'https://workouts.rogerbelman.com'
-SOURCE = 'https://github.com/RogerBelman/Fitness-Webapp'
+SOURCE = 'https://github.com/RogerBelman/Workout-Tracker-Webapp'
 IMAGES = 'ghcr.io/rogerbelman/workout-tracker-'
 
 
