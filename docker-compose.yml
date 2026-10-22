@@ -1,3 +1,6 @@
+# Keep the existing local database volume when the checkout folder is renamed.
+name: fitness-webapp
+
 services:
   postgres:
     image: postgres:17-alpine

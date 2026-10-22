@@ -127,7 +127,31 @@ class CardioTrackingTests {
 	}
 
 	@Test
-	void preventsTypeChangesWithHistoryButAllowsOtherEditsAndChangesAfterRemoval() throws Exception {
+	void preventsTypeChangesBeforeAnyEntriesAreLogged() throws Exception {
+		for (TrainingType type : TrainingType.values()) {
+			Exercise exercise = exercises.saveAndFlush(new Exercise(testUsers.owner(), "Type " + UUID.randomUUID(),
+					type == TrainingType.STRENGTH ? "Chest" : null, "None", "Original instructions", type));
+			long id = exercise.getId();
+			String originalName = exercise.getName();
+			TrainingType otherType = type == TrainingType.STRENGTH ? TrainingType.CARDIO : TrainingType.STRENGTH;
+			mvc.perform(put("/api/exercises/{id}", id).contentType(MediaType.APPLICATION_JSON)
+					.content(exerciseBody("Changed " + UUID.randomUUID(), otherType.name())))
+					.andExpect(status().isConflict())
+					.andExpect(jsonPath("$.message").value(
+							"Training type cannot be changed after creation. Create a separate exercise for a different type."));
+			flush();
+			mvc.perform(get("/api/exercises/{id}", id)).andExpect(status().isOk())
+					.andExpect(jsonPath("$.trainingType").value(type.name()))
+					.andExpect(jsonPath("$.name").value(originalName))
+					.andExpect(jsonPath("$.instructions").value("Original instructions"));
+			mvc.perform(put("/api/exercises/{id}", id).contentType(MediaType.APPLICATION_JSON)
+					.content(exerciseBody(originalName, type.name())))
+					.andExpect(status().isOk()).andExpect(jsonPath("$.trainingType").value(type.name()));
+		}
+	}
+
+	@Test
+	void preventsTypeChangesWithHistoryAndAfterRemovingEntriesButAllowsOtherEdits() throws Exception {
 		Workout workout = newWorkout();
 		WorkoutExercise cardio = addExercise(workout, TrainingType.CARDIO, 1);
 		WorkoutExercise strength = addExercise(workout, TrainingType.STRENGTH, 2);
@@ -149,10 +173,9 @@ class CardioTrackingTests {
 		mvc.perform(delete("/api/cardio-entries/{id}", entryId)).andExpect(status().isNoContent());
 		flush();
 		mvc.perform(put("/api/exercises/{id}", exerciseId).contentType(MediaType.APPLICATION_JSON)
-				.content(exerciseBody(cardioName, "STRENGTH"))).andExpect(status().isOk())
-				.andExpect(jsonPath("$.trainingType").value("STRENGTH"));
+				.content(exerciseBody(cardioName, "STRENGTH"))).andExpect(status().isConflict());
 		flush();
-		assertThat(exercises.findById(exerciseId).orElseThrow().getTrainingType()).isEqualTo(TrainingType.STRENGTH);
+		assertThat(exercises.findById(exerciseId).orElseThrow().getTrainingType()).isEqualTo(TrainingType.CARDIO);
 	}
 
 	@Test

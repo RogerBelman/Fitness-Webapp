@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Exercise } from '../../types/exercise'
 import type { AddWorkoutExerciseRequest } from '../../types/workout'
-import { getTrainingTypeOptionLabel } from '../../utils/trainingTypeDisplay'
+import { ExerciseOptions } from '../ExerciseOptions'
 
 type AddWorkoutExerciseFormProps = {
   exercises: Exercise[]
@@ -59,13 +59,7 @@ export function AddWorkoutExerciseForm({
                     ? 'Choose from your library'
                     : 'No saved exercises yet'}
               </option>
-              {exercises.map((exercise) => (
-                <option key={exercise.id} value={exercise.id}>
-                  {getTrainingTypeOptionLabel(exercise.trainingType)} —{' '}
-                  {exercise.name}
-                  {exercise.muscleGroup ? ` (${exercise.muscleGroup})` : ''}
-                </option>
-              ))}
+              <ExerciseOptions exercises={exercises} />
             </select>
           </label>
         </div>

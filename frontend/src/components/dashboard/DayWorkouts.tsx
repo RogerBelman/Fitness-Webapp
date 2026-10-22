@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useMeasurementPreferences } from '../../hooks/useMeasurementPreferences'
 import type { Workout, WorkoutDetail } from '../../types/workout'
 import { formatCalendarDate } from '../../utils/workoutCalendar'
-import { TrainingTypeBadge } from '../TrainingTypeBadge'
+import { ExerciseMetadata } from '../ExerciseMetadata'
 import { formatWeight } from '../../utils/weightMeasurement'
 
 type DayWorkoutsProps = {
@@ -115,14 +115,7 @@ export function DayWorkouts({
                       <li key={item.id}>
                         <div>
                           <strong>{item.exercise.name}</strong>
-                          <div className="ExerciseTypeLine">
-                            <TrainingTypeBadge
-                              trainingType={item.exercise.trainingType}
-                            />
-                            {item.exercise.muscleGroup ? (
-                              <span>{item.exercise.muscleGroup}</span>
-                            ) : null}
-                          </div>
+                          <ExerciseMetadata exercise={item.exercise} showFocus />
                         </div>
                         <span>
                           {item.exercise.trainingType === 'CARDIO'

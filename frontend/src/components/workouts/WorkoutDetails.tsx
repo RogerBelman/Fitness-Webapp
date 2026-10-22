@@ -9,7 +9,8 @@ import type {
   WorkoutDetail,
 } from '../../types/workout'
 import { DeleteButton } from '../DeleteButton'
-import { TrainingTypeBadge } from '../TrainingTypeBadge'
+import { ExerciseMetadata } from '../ExerciseMetadata'
+import { ExerciseGuidance } from '../ExerciseGuidance'
 import { AddSetForm } from './AddSetForm'
 import { CardioEntries } from './CardioEntries'
 import { formatWeight } from '../../utils/weightMeasurement'
@@ -139,14 +140,10 @@ export function WorkoutDetails({
                       Exercise {index + 1}
                     </span>
                     <h3>{workoutExercise.exercise.name}</h3>
-                    <div className="ExerciseTypeLine">
-                      <TrainingTypeBadge
-                        trainingType={workoutExercise.exercise.trainingType}
-                      />
-                      {workoutExercise.exercise.muscleGroup ? (
-                        <span>{workoutExercise.exercise.muscleGroup}</span>
-                      ) : null}
-                    </div>
+                    <ExerciseMetadata exercise={workoutExercise.exercise} />
+                    {!isReordering ? (
+                      <ExerciseGuidance exercise={workoutExercise.exercise} />
+                    ) : null}
                   </div>
                   <div className="RowActions">
                     {isReordering ? (

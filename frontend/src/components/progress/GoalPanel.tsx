@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { useMeasurementPreferences } from '../../hooks/useMeasurementPreferences'
 import { DeleteButton } from '../DeleteButton'
+import { ExerciseOptions } from '../ExerciseOptions'
 import type { Exercise } from '../../types/exercise'
 import type { ExerciseGoal, ExerciseGoalRequest, GoalMetric } from '../../types/goal'
 import {
@@ -110,11 +111,7 @@ export function GoalPanel(props: GoalPanelProps) {
                 required
               >
                 <option value="">Select exercise</option>
-                {props.exercises.map((exercise) => (
-                  <option key={exercise.id} value={exercise.id}>
-                    {exercise.name}
-                  </option>
-                ))}
+                <ExerciseOptions exercises={props.exercises} />
               </select>
             </label>
             <label>

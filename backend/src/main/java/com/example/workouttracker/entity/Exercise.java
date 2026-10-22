@@ -1,6 +1,7 @@
 package com.example.workouttracker.entity;
 
 import java.time.Instant;
+import java.math.BigDecimal;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -34,6 +35,9 @@ public class Exercise {
 	@Column(name = "muscle_group", length = 80)
 	private String muscleGroup;
 
+	@Column(name = "muscle_focus", length = 80)
+	private String muscleFocus;
+
 	@Column(nullable = false, length = 80)
 	private String category;
 
@@ -43,6 +47,25 @@ public class Exercise {
 	@Enumerated(EnumType.STRING)
 	@Column(name = "training_type", nullable = false, length = 16)
 	private TrainingType trainingType = TrainingType.STRENGTH;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "movement_type", length = 16)
+    private MovementType movementType;
+
+    @Column(name = "target_working_sets")
+    private Integer targetWorkingSets;
+
+    @Column(name = "rep_range_min")
+    private Integer repRangeMin;
+
+    @Column(name = "rep_range_max")
+    private Integer repRangeMax;
+
+    @Column(name = "duration_min_minutes", precision = 7, scale = 2)
+    private BigDecimal durationMinMinutes;
+
+    @Column(name = "duration_max_minutes", precision = 7, scale = 2)
+    private BigDecimal durationMaxMinutes;
 
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
@@ -94,6 +117,14 @@ public class Exercise {
 		return muscleGroup;
 	}
 
+	public String getMuscleFocus() {
+		return muscleFocus;
+	}
+
+	public void updateMuscleFocus(String muscleFocus) {
+		this.muscleFocus = muscleFocus;
+	}
+
 	public String getCategory() {
 		return category;
 	}
@@ -105,6 +136,23 @@ public class Exercise {
 	public TrainingType getTrainingType() {
 		return trainingType;
 	}
+
+    public MovementType getMovementType() { return movementType; }
+    public Integer getTargetWorkingSets() { return targetWorkingSets; }
+    public Integer getRepRangeMin() { return repRangeMin; }
+    public Integer getRepRangeMax() { return repRangeMax; }
+    public BigDecimal getDurationMinMinutes() { return durationMinMinutes; }
+    public BigDecimal getDurationMaxMinutes() { return durationMaxMinutes; }
+
+    public void updateDefaults(MovementType movementType, Integer repRangeMin, Integer repRangeMax,
+            BigDecimal durationMinMinutes, BigDecimal durationMaxMinutes, Integer targetWorkingSets) {
+        this.movementType = movementType;
+        this.targetWorkingSets = targetWorkingSets;
+        this.repRangeMin = repRangeMin;
+        this.repRangeMax = repRangeMax;
+        this.durationMinMinutes = durationMinMinutes;
+        this.durationMaxMinutes = durationMaxMinutes;
+    }
 
 	public Instant getCreatedAt() {
 		return createdAt;

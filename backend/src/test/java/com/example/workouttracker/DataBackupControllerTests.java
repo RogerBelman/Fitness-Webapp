@@ -60,7 +60,7 @@ class DataBackupControllerTests {
 		mvc.perform(get("/api/data-backup"))
 				.andExpect(status().isOk())
 				.andExpect(header().string("Content-Disposition", "attachment; filename=workout-tracker-backup.json"))
-				.andExpect(jsonPath("$.version").value(1))
+				.andExpect(jsonPath("$.version").value(2))
 				.andExpect(jsonPath("$.exercises[?(@.name == '%s')]", name).value(hasSize(1)))
 				.andExpect(jsonPath("$.workouts[?(@.title == 'Backup Day')].exercises[0].sets[0].weight").value(135.0))
 				.andExpect(jsonPath("$.templates[?(@.name == 'Backup Routine')]", name).value(hasSize(1)))

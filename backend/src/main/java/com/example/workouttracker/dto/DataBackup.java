@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.example.workouttracker.entity.GoalMetric;
+import com.example.workouttracker.entity.MovementType;
 import com.example.workouttracker.entity.TrainingType;
 
 public record DataBackup(
@@ -21,7 +22,14 @@ public record DataBackup(
 			String muscleGroup,
 			String category,
 			String instructions,
-			TrainingType trainingType) { }
+			TrainingType trainingType,
+			MovementType movementType,
+			Integer repRangeMin,
+			Integer repRangeMax,
+			BigDecimal durationMinMinutes,
+			BigDecimal durationMaxMinutes,
+			Integer targetWorkingSets,
+			String muscleFocus) { }
 
 	public record WorkoutData(
 			LocalDate workoutDate,

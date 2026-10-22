@@ -1,4 +1,4 @@
-const muscleGroups = ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core']
+import { MUSCLE_GROUPS } from '../../utils/muscleGroups'
 
 type ExerciseFiltersProps = {
   trainingType: string
@@ -54,7 +54,7 @@ export function ExerciseFilters({
             value={muscleGroup}
           >
             <option value="">All</option>
-            {muscleGroups.map((group) => (
+            {MUSCLE_GROUPS.map((group) => (
               <option key={group} value={group}>
                 {group}
               </option>
